@@ -1,0 +1,8 @@
+.DS_Store
+*.swp*
+*.xls
+*.xlsx
+*.xlsx#
+
+npm-debug.log
+node_modules
