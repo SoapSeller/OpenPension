@@ -35,10 +35,12 @@ var readSheet = function(uz, sheetId, handler) {
       handler(err, null);
       return;
     }
+    console.log(sheet.worksheet.dimension)
 
     handler(null, readSheetCell.bind(this, sheet));
   });
 };
+
 
 // handler = function(err, result)
 exports.readFile = function(filename, handler) {
@@ -67,10 +69,11 @@ exports.readFile = function(filename, handler) {
         sheets: []
       };
       workbook.workbook.sheets[0].sheet.forEach(function(s){
-        console.log(s);
+        // console.log(s);
         result.sheets.push({
           name: s.$.name,
           read: readSheet.bind(this, uz, s.$.sheetId)
+          // bounderies: cellName.bind(this, )
         });
       });
       handler(null, result);
@@ -78,3 +81,22 @@ exports.readFile = function(filename, handler) {
   });
 
 };
+
+
+exports.getFileSheetsNames = function(fileName, callback){
+  exports.readFile(fileName, function(err, result) {
+    callback(null,result.sheets.map(function(s){return s.name}));
+  })
+}
+
+exports.getCellValue = function(filename, sheet, cellName, callback){
+  exports.readFile(filename, function(err, result) {
+    var _sheet = result.sheets.filter(function(s){return s.name == sheet})[0]
+    if (!_sheet) throw new Error("sheet not found!");
+    _sheet.read(function(err,result){
+      var value = result(cellName);
+      callback(null,value);
+    })
+  })
+}
+

@@ -14,7 +14,7 @@
 
 
 
-var xlsx = require('xlsxparser.js');
+var xlsx = require('./xlsxparser.js');
 
 xlsx.readFile(process.argv[2], function(err, result) {
   if (err) {

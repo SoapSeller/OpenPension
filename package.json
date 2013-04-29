@@ -1,0 +1,24 @@
+{
+    "name" : "OpenPension",
+    "version" : "0.0.1",
+    "description" : "This will annoy pention funds (we hope)",
+    "main" : "./index.js",
+    "keywords" : [
+        "pension"
+    ],
+    "repository" : {
+        "type" : "git",
+        "url" : "git://github.com/SoapSeller/OpenPension.git"
+    },
+    "dependencies" : {
+	"node-zip" : "latest",
+	"xml2js" : "latest",
+	"commander": "latest"
+    },
+    "devDependencies" : {},
+    "scripts" : {},
+    "engine" : {"node" : ">=0.9.0"},
+    "author" : {}
+}
+
+
