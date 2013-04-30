@@ -70,6 +70,7 @@ exports.readFile = function(filename, handler) {
         console.log(s);
         result.sheets.push({
           name: s.$.name,
+          id: s.$.sheetId,
           read: readSheet.bind(this, uz, s.$.sheetId)
         });
       });
