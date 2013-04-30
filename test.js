@@ -12,9 +12,7 @@
 //   });
 // });
 
-
-
-var xlsx = require('xlsxparser.js');
+var xlsx = require('./xlsxparser.js');
 
 xlsx.readFile(process.argv[2], function(err, result) {
   if (err) {
@@ -25,7 +23,7 @@ xlsx.readFile(process.argv[2], function(err, result) {
   console.log('Sheets in file: ');
 
   result.sheets.forEach(function(s) {
-    console.log(s.name);
+    console.log(s.id + ": " + s.name);
   });
 
   var sheetNum = parseInt(process.argv[3], 10) - 1;
