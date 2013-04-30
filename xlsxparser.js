@@ -90,3 +90,22 @@ exports.readFile = function(filename, handler) {
   });
 
 };
+
+
+exports.getFileSheetsNames = function(fileName, callback){
+  exports.readFile(fileName, function(err, result) {
+    callback(null,result.sheets.map(function(s){return s.name}));
+  })
+}
+
+exports.getCellValue = function(filename, sheet, cellName, callback){
+  exports.readFile(filename, function(err, result) {
+    var _sheet = result.sheets.filter(function(s){return s.name == sheet})[0]
+    if (!_sheet) throw new Error("sheet not found!");
+    _sheet.read(function(err,result){
+      var value = result(cellName);
+      callback(null,value);
+    })
+  })
+}
+
