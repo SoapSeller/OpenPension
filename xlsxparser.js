@@ -23,7 +23,18 @@ var readSheetCell = function(sheet, cell) {
 
   row = parseInt(cell.substr(i), 10) - 1;
 
-  return sheet.worksheet.sheetData[0].row[row].c[col].v[0];
+
+  var cellValue = sheet.worksheet.sheetData[0].row[row].c[col].v;
+  
+  if(cellValue===undefined){ //cell is empty
+    console.log("CELL :" + JSON.stringify( sheet.worksheet.sheetData[0].row[row].c[col]));
+    return "";
+  }
+  else{
+    console.log("CELL :" + JSON.stringify( sheet.worksheet.sheetData[0].row[row].c[col]));
+    return cellValue[0];
+  }
+
 };
 
 
