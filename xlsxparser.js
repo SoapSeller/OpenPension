@@ -78,11 +78,12 @@ exports.readFile = function(filename, handler) {
         sheets: []
       };
       workbook.workbook.sheets[0].sheet.forEach(function(s){
-        console.log(s);
+        // console.log(s);
         result.sheets.push({
           name: s.$.name,
           id: s.$.sheetId,
           read: readSheet.bind(this, uz, s.$.sheetId)
+          // bounderies: cellName.bind(this, )
         });
       });
       handler(null, result);
