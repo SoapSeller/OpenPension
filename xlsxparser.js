@@ -208,3 +208,16 @@ exports.getDimensions = function(filename, sheet, callback){
     });
   });
 };
+
+exports.openSheet = function(filename, sheet, callback){
+  exports.readFile(filename, function(err, result) {
+    var _sheet = result.sheets.filter(function(s){return s.name == sheet;})[0];
+    if (!_sheet){
+      callback(new Error("sheet not found!"));
+      return;
+    }
+    _sheet.read(callback);
+  });
+};
+
+
