@@ -7,8 +7,7 @@ var fileDataInUtf8 = function(uz, fname) {
 };
 
 
-var readSheetCell = function(uz, sharedStrings, sheet, cellId) {
-
+var cellIdToCellIdx = function(sheet, cellId) {
   var row = 0,
       col = 0;
 
@@ -22,36 +21,41 @@ var readSheetCell = function(uz, sharedStrings, sheet, cellId) {
     col += cellId.charCodeAt(i) - 65; // cell[i] - 'A';
   }
 
-
-  rowNumber = parseInt(cellId.substr(i), 10); // the row number the user is looking for (1-based)
+  var rowNumber = parseInt(cellId.substr(i), 10); // the row number the user is looking for (1-based)
 
   if(rowNumber < 1){  //check for row number validity, TODO: check outer bounds
      throw ("Index out of bounds: "+ rowNumber);
   }
 
-//patch, sometimes not all columns are present under row node in the xml structure.
-//for example, first column under row 6 can be B6 and A6 is missing :
-//<row r="6" spans="1:15" ht="15" x14ac:dyDescent="0.25">
-//  <c r="B6" s="25" t="s">
-//    <v>103</v> 
-//  </c>
-//  ...
-//in this case, look for column iteratively by cell id.
-//since columns might only be missing, 
-//the requested cell must be in a lower col index
-//
-//as this is kinda ugly, we might want to iteratively look for the cell in the first place 
+  //patch, sometimes not all columns are present under row node in the xml structure.
+  //for example, first column under row 6 can be B6 and A6 is missing :
+  //<row r="6" spans="1:15" ht="15" x14ac:dyDescent="0.25">
+  //  <c r="B6" s="25" t="s">
+  //    <v>103</v> 
+  //  </c>
+  //  ...
+  //in this case, look for column iteratively by cell id.
+  //since columns might only be missing, 
+  //the requested cell must be in a lower col index
+  //
+  //as this is kinda ugly, we might want to iteratively look for the cell in the first place 
 
-  zeroBasedRowNumber = rowNumber - 1;   //zero based row number
+  row = rowNumber - 1;   //zero based row number
 
-  candidateCell = sheet.worksheet.sheetData[0].row[zeroBasedRowNumber].c[col];
+  while (sheet.worksheet.sheetData[0].row[row] === undefined)
+    --row;
+  while (sheet.worksheet.sheetData[0].row[row].c[col] === undefined)
+    --col;
 
-  candidateCellAddress = candidateCell.$.r;
+  var candidateCell = sheet.worksheet.sheetData[0].row[row].c[col];
+
+  var candidateCellAddress = candidateCell.$.r;
+
 
   if(candidateCellAddress != cellId){ //cell address is not as expected, find cell iteratively
   //  console.log("looking for :"+ cellId);
     for(j=col; j >= 0; j--){
-      if(sheet.worksheet.sheetData[0].row[zeroBasedRowNumber].c[j].$.r == cellId){ //found requested cell id!
+      if(sheet.worksheet.sheetData[0].row[row].c[j].$.r == cellId){ //found requested cell id!
         col = j;
         break;
       }
@@ -61,20 +65,25 @@ var readSheetCell = function(uz, sharedStrings, sheet, cellId) {
     }
   }
 
-  var cellValue = sheet.worksheet.sheetData[0].row[zeroBasedRowNumber].c[col].v;
-  var cellStyle = sheet.worksheet.sheetData[0].row[zeroBasedRowNumber].c[col].$.s;
-  var cellType = sheet.worksheet.sheetData[0].row[zeroBasedRowNumber].c[col].$.t;
+  return {
+    row: row,
+    col: col
+  };
+};
+
+var readSheetCell = function(uz, sharedStrings, sheet, cellId) {
+
+  var idx = cellIdToCellIdx(sheet, cellId);
+
+  var cellValue = sheet.worksheet.sheetData[0].row[idx.row].c[idx.col].v;
+  var cellStyle = sheet.worksheet.sheetData[0].row[idx.row].c[idx.col].$.s;
+  var cellType = sheet.worksheet.sheetData[0].row[idx.row].c[idx.col].$.t;
 
   // console.log("cellStyle:"+cellStyle);
   // console.log("cellType:"+cellType);
   // console.log("cellValue:"+cellValue);
 
-
-//TODO: move this up in function call trace?
-
-
-  if(cellType == "s"){ //value is stored in sharedSting.xml, get value from file
-
+  if(cellType == "s"){
     return sharedStrings[cellValue].t;
   }
 
@@ -88,6 +97,15 @@ var readSheetCell = function(uz, sharedStrings, sheet, cellId) {
 
 };
 
+var getDimension = function(sheet) {
+  var splt = sheet.worksheet.dimension[0].$.ref.split(":");
+  return {
+    min: splt[0],
+    max: splt[1],
+    minIdx: cellIdToCellIdx(sheet, splt[0]),
+    maxIdx: cellIdToCellIdx(sheet, splt[1])
+  };
+};
 
 // handler = function(err, result)
 var readSheet = function(uz, sharedStrings,sheetId, handler) {
@@ -98,7 +116,7 @@ var readSheet = function(uz, sharedStrings,sheetId, handler) {
       return;
     }
 
-    handler(null, readSheetCell.bind(this, uz, sharedStrings, sheet));
+    handler(null, readSheetCell.bind(this, uz, sharedStrings, sheet), getDimension(sheet));
   });
 };
 
