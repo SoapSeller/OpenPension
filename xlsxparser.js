@@ -84,7 +84,7 @@ var readSheetCell = function(uz, sharedStrings, sheet, cellId) {
   // console.log("cellValue:"+cellValue);
 
   if(cellType == "s"){
-    return sharedStrings[cellValue].t;
+    return sharedStrings[cellValue].t[0];
   }
 
 
