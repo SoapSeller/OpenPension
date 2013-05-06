@@ -23,4 +23,16 @@ program
 		});
 	})
 
+program
+	.command("get-dim")
+	.description("List dimentions of given sheet")
+	.option("-f, --file <path>","file nane")
+	.option("-s, --sheet <sheet>","sheet name")
+	.action(function(args){
+		xlsx.getDimensions(args.file, args.sheet, function(err, dim){
+			console.log(dim);
+			// console.log("Sheet names:",sheets.join(","));
+		});
+	})
+
 program.parse(process.argv);
