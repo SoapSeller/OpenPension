@@ -7,8 +7,8 @@ var fileDataInUtf8 = function(uz, fname) {
 };
 
 
-var readSheetCell = function(uz, sheet, cellId) {
-  
+var readSheetCell = function(uz, sharedStrings, sheet, cellId) {
+
   var row = 0,
       col = 0;
 
@@ -24,7 +24,7 @@ var readSheetCell = function(uz, sheet, cellId) {
 
 
   rowNumber = parseInt(cellId.substr(i), 10); // the row number the user is looking for (1-based)
-  
+
   if(rowNumber < 1){  //check for row number validity, TODO: check outer bounds
      throw ("Index out of bounds: "+ rowNumber);
   }
@@ -65,29 +65,20 @@ var readSheetCell = function(uz, sheet, cellId) {
   var cellStyle = sheet.worksheet.sheetData[0].row[zeroBasedRowNumber].c[col].$.s;
   var cellType = sheet.worksheet.sheetData[0].row[zeroBasedRowNumber].c[col].$.t;
 
-  console.log("cellStyle:"+cellStyle);
-  console.log("cellType:"+cellType);
-  console.log("cellValue:"+cellValue);
+  // console.log("cellStyle:"+cellStyle);
+  // console.log("cellType:"+cellType);
+  // console.log("cellValue:"+cellValue);
 
 
 //TODO: move this up in function call trace?
 
 
-  var sharedStringsArray;
-
   if(cellType == "s"){ //value is stored in sharedSting.xml, get value from file
-      parseString(fileDataInUtf8(uz, 'xl/sharedStrings.xml'), function (err, sheet) {
-        if (err) {
-          handler(err, null);
-          return;
-        }
 
-        sharedStringsArray = sheet.sst.si;
-      });    
-    return sharedStringsArray[cellValue].t;
+    return sharedStrings[cellValue].t;
   }
 
-  
+
   if(cellValue===undefined){ //cell is empty
     return "";
   }
@@ -99,15 +90,15 @@ var readSheetCell = function(uz, sheet, cellId) {
 
 
 // handler = function(err, result)
-var readSheet = function(uz, sheetId, handler) {
-  
+var readSheet = function(uz, sharedStrings,sheetId, handler) {
+
   parseString(fileDataInUtf8(uz, 'xl/worksheets/sheet' + sheetId + '.xml'), function (err, sheet) {
     if (err) {
       handler(err, null);
       return;
     }
 
-    handler(null, readSheetCell.bind(this, uz, sheet));
+    handler(null, readSheetCell.bind(this, uz, sharedStrings, sheet));
   });
 };
 
@@ -127,25 +118,31 @@ exports.readFile = function(filename, handler) {
     }
 
 
-
-    parseString(fileDataInUtf8(uz, 'xl/workbook.xml'), function (err, workbook) {
+    parseString(fileDataInUtf8(uz, 'xl/sharedStrings.xml'), function (err, sharedStrings) {
       if (err) {
         handler(err, null);
         return;
       }
 
-      var result = {
-        sheets: []
-      };
-      workbook.workbook.sheets[0].sheet.forEach(function(s){
-        //console.log(s);
-        result.sheets.push({
-          name: s.$.name,
-          id: s.$.sheetId,
-          read: readSheet.bind(this, uz, s.$.sheetId)
+      parseString(fileDataInUtf8(uz, 'xl/workbook.xml'), function (err, workbook) {
+        if (err) {
+          handler(err, null);
+          return;
+        }
+
+        var result = {
+          sheets: []
+        };
+        workbook.workbook.sheets[0].sheet.forEach(function(s){
+          //console.log(s);
+          result.sheets.push({
+            name: s.$.name,
+            id: s.$.sheetId,
+            read: readSheet.bind(this, uz, sharedStrings.sst.si, s.$.sheetId)
+          });
         });
+        handler(null, result);
       });
-      handler(null, result);
     });
   });
 
@@ -154,18 +151,18 @@ exports.readFile = function(filename, handler) {
 
 exports.getFileSheetsNames = function(fileName, callback){
   exports.readFile(fileName, function(err, result) {
-    callback(null,result.sheets.map(function(s){return s.name}));
-  })
-}
+    callback(null,result.sheets.map(function(s){return s.name;}));
+  });
+};
 
 exports.getCellValue = function(filename, sheet, cellName, callback){
   exports.readFile(filename, function(err, result) {
-    var _sheet = result.sheets.filter(function(s){return s.name == sheet})[0]
+    var _sheet = result.sheets.filter(function(s){return s.name == sheet;})[0];
     if (!_sheet) throw new Error("sheet not found!");
     _sheet.read(function(err,result){
       var value = result(cellName);
       callback(null,value);
-    })
-  })
-}
+    });
+  });
+};
 
