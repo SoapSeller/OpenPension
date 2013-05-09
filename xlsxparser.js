@@ -1,3 +1,5 @@
+var NOT_FOUND = -1;
+
 var fs = require('fs'),
     zip = require('node-zip'),
     parseString = require('xml2js').parseString;
@@ -7,9 +9,30 @@ var fileDataInUtf8 = function(uz, fname) {
 };
 
 
-var cellIdToCellIdx = function(sheet, cellId) {
+var trim = function (s) {
+  s = s.replace(/(^\s*)|(\s*$)/gi, "");
+  s = s.replace(/[ ]{2,}/gi, " ");
+  s = s.replace(/\n /, "\n");
+  return s;
+}
+
+
+
+/*
+Sometimes empty cells are reduced and ommitted from the xml structure.
+this can cause a single row->column (cell) to be reduced,
+or the whole row is reduced.
+This will ruin the corellation between cell index and cell id.
+Thus when looking the fetched cell by index doesnt fit the cell id
+we will have to manually look for it.
+
+as this is kinda ugly, we might want to iteratively look for the cell in the first place 
+
+*/
+  
+var cellIdToCellIdx = function (sheet, cellId) {
   var row = 0,
-      col = 0;
+    col = 0;
 
   var i;
   for (i = 0; i < cellId.length; ++i) {
@@ -23,57 +46,64 @@ var cellIdToCellIdx = function(sheet, cellId) {
 
   var rowNumber = parseInt(cellId.substr(i), 10); // the row number the user is looking for (1-based)
 
-  if(rowNumber < 1){  //check for row number validity, TODO: check outer bounds
-     throw ("Index out of bounds: "+ rowNumber);
+  if (rowNumber < 1) { //check for row number validity, TODO: check outer bounds
+    throw ("Index out of bounds: " + rowNumber);
   }
 
-  //patch, sometimes not all columns are present under row node in the xml structure.
-  //for example, first column under row 6 can be B6 and A6 is missing :
-  //<row r="6" spans="1:15" ht="15" x14ac:dyDescent="0.25">
-  //  <c r="B6" s="25" t="s">
-  //    <v>103</v> 
-  //  </c>
-  //  ...
-  //in this case, look for column iteratively by cell id.
-  //since columns might only be missing, 
-  //the requested cell must be in a lower col index
-  //
-  //as this is kinda ugly, we might want to iteratively look for the cell in the first place 
+  var origRowNumber = rowNumber;
+  row = rowNumber - 1; //zero based row number
 
-  row = rowNumber - 1;   //zero based row number
-
+  //handle case where cellId is out of bounds, might occur when rows or columns have been reduced
   while (sheet.worksheet.sheetData[0].row[row] === undefined)
-    --row;
+  --row;
   while (sheet.worksheet.sheetData[0].row[row].c[col] === undefined)
-    --col;
+  --col;
 
   var candidateCell = sheet.worksheet.sheetData[0].row[row].c[col];
-
   var candidateCellAddress = candidateCell.$.r;
 
+  //cell address is not as expected, find cell iteratively
+  if (candidateCellAddress != cellId) { 
 
-  if(candidateCellAddress != cellId){ //cell address is not as expected, find cell iteratively
-  //  console.log("looking for :"+ cellId);
-    for(j=col; j >= 0; j--){
-      if(sheet.worksheet.sheetData[0].row[row].c[j].$.r == cellId){ //found requested cell id!
-        col = j;
-        break;
+    //row is not as expected, look for row iteratively
+    if (sheet.worksheet.sheetData[0].row[row].$.r != origRowNumber) {
+      for (i = row; i >= 0; i--) {
+        if (sheet.worksheet.sheetData[0].row[i].$.r == origRowNumber) { //found requested row id!
+          row = i;
+          break;
+        }
+      }
+      if (i < 0) { //row not found, maybe missing in xml structure
+        row = NOT_FOUND;
       }
     }
-    if(j<0){ //cell not found, maybe missing in xml structure, return empty string
-      return "";
-    }
+    //row is found and column is not as expected, look for column iteratively
+    if (row != NOT_FOUND && sheet.worksheet.sheetData[0].row[row].c[col].$.r != cellId) {
+        for (j = col; j >= 0; j--) { 
+          if (sheet.worksheet.sheetData[0].row[row].c[j].$.r == cellId) { //found requested cell id!
+            col = j;
+            break;
+          }
+        }
+        if (j < 0) { //cell not found, maybe missing in xml structure
+          col = NOT_FOUND;
+        }
+      }
   }
-
   return {
     row: row,
     col: col
   };
 };
 
-var readSheetCell = function(uz, sharedStrings, sheet, cellId) {
+var readSheetCell = function (uz, sharedStrings, sheet, cellId) {
 
   var idx = cellIdToCellIdx(sheet, cellId);
+
+  //if row or column are not found, maybe have been reduced, return empty string
+  if (idx.row == NOT_FOUND || idx.col == NOT_FOUND) {
+    return "";
+  }
 
   var cellValue = sheet.worksheet.sheetData[0].row[idx.row].c[idx.col].v;
   var cellStyle = sheet.worksheet.sheetData[0].row[idx.row].c[idx.col].$.s;
@@ -83,15 +113,26 @@ var readSheetCell = function(uz, sharedStrings, sheet, cellId) {
   // console.log("cellType:"+cellType);
   // console.log("cellValue:"+cellValue);
 
-  if(cellType == "s"){
-    return sharedStrings[cellValue].t[0];
+  if (cellType == "s") { //cell type is shared string value
+    if (sharedStrings[cellValue].t[0].hasOwnProperty("$")) { //cells with xml:space="preserve"
+      if (sharedStrings[cellValue].t[0].hasOwnProperty("_")) { //has inner value
+        return trim(sharedStrings[cellValue].t[0]._); //return trimmed value
+      } 
+      else{ //empty string, only space
+        return "";
+      }
+    } 
+    else{ //regular cell, not having xml:space="preserve"
+      return sharedStrings[cellValue].t[0];
+    }
+
   }
 
 
-  if(cellValue===undefined){ //cell is empty
+  if (cellValue === undefined) { //cell is empty
     return "";
-  }
-  else{
+  } 
+  else {
     return cellValue[0];
   }
 
@@ -208,3 +249,15 @@ exports.getDimensions = function(filename, sheet, callback){
     });
   });
 };
+
+exports.openSheet = function(filename, sheet, callback){
+  exports.readFile(filename, function(err, result) {
+    var _sheet = result.sheets.filter(function(s){return s.name == sheet;})[0];
+    if (!_sheet){
+      callback(new Error("sheet not found!"));
+      return;
+    }
+    _sheet.read(callback);
+  });
+};
+
