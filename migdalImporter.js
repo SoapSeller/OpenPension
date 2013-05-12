@@ -1,97 +1,141 @@
-// var fs = require('fs'),
-//     parseString = require('xml2js').parseString;
-
-// var filename = "xl/worksheets/sheet6.xml";
-
-// fs.readFile(filename, "utf8", function(err, data) {
-
-
 var xlsx = require("./xlsxparser.js");
 
+var fileName = "./res/migdal.xlsx"
+var sheetName = "16";
 
-  //TODO: find programmatically
-  var headerLine = 12;
+//TODO load from file
+var dictionary = {
+	/*: "management"
+	 : "fund",
+	 : "financial_product_number",
+	 : "symbol",
+	 : "rating",
+	 : "rating_body",
+	 : "interest_rate",
+	 : "duration",
+	 : "yield",*/
+	"שווי שוק (אלפי ₪)" : "market_cap",
+	"סוג מטבע" : "currency",
+	"ענף מסחר" : "market",
+	"מס. נייר ערך" : "financial_product_number",
+	"מנפיק" : "issuer",
+	"שיעור מנכסי הקרן (אחוזים)" : "amount_of_public_shares"
+};
 
+var mandatoryFields = ["currency"];
 
-  //TODO load from file
-  var dictionary = {
-    /*: "management"
-    : "fund",
-    : "financial_product_number",
-    : "symbol",
-    : "market",
-    : "rating",
-    : "rating_body",
-    : "currency",
-    : "interest_rate",
-    : "duration",
-    : "yield",
-    : "market_cap",*/
-
-    "מס. נייר ערך" : "financial_product_number",
-    "מנפיק" : "issuer",
-    "שיעור מנכסי הקרן (אחוזים)" : "amount_of_public_shares"
-  };
-
-
-//TODO: find by %like%
-  var findInDictionary = function(dictionary, key){
-    for(dictionaryKey in dictionary){
-      if(dictionary.hasOwnProperty(key)){
-        return dictionary[key];
-      }
-
-    }
-  }
-
-var translatedHeader = {};
-
-//TODO:
-//translateHeader
-//for()
+//TODO load from file
+var defaultColumn = {
+	"B" : "description"
+};
 
 
+//get default value for column by column id char 
+var getDefaultColumnName = function(columnId) {
 
-xlsx.readFile(process.argv[2], function(err, result) {
-  if (err) {
-    console.log(err);
-    return;
-  }
+	if (defaultColumn.hasOwnProperty(columnId)) {
+		return defaultColumn[columnId];
+	}
+}
 
-  var sheetNum = parseInt(process.argv[3], 10) - 1;
+//get translated column name by column id
+var translateColumnName = function(columnName) {
+	if (dictionary.hasOwnProperty(columnName)) {
+		return dictionary[columnName];
+	} else {
+		var result = Object.keys(dictionary).filter(
+		function(k){
+		return k.indexOf(columnName) != -1;
+		})[0];
 
-  console.log('Reading sheet ' + sheetNum );
-  result.sheets[sheetNum].read(function(err, sheet) {
-    
+		return result || "";
+	}
+}
 
-    if (err) {
-      console.log(err);
-      return;
-    }
+var normalizeHeader = function(columnIndex, dim, getCell) {
+
+	var normalizedHeader = {};
+	var headerLineNumber = 12; //TODO: find programatically
+	
+	for (var columnIndex = 0; columnIndex <= dim.maxIdx.col; columnIndex++) {
+
+		//index + 'A'
+		var columnString = String.fromCharCode(columnIndex + 65);
+
+		var headerCellData = getCell(columnString + headerLineNumber);
+		if (headerCellData == "") {
+			translatedColumnName = getDefaultColumnName(columnString);
+		} else {
+			//read header name for column and normalize it
+			translatedColumnName = translateColumnName(getCell(columnString + headerLineNumber));
+		}
+
+		if (translatedColumnName == undefined || translatedColumnName == "") {
+			continue;
+		}
+
+		//read value of column
+		normalizedHeader[columnString] = translatedColumnName;
+
+	}
+
+	return normalizedHeader;
+}
 
 
-    //example:
-    dataLineNumber = 17;
-    headerLineNumber = 12;
 
+console.log('Reading sheet name:' + sheetName);
 
-    var result = {};
+xlsx.openSheet(fileName, sheetName, function(err, getCell, dim) {
 
-    columnId = "C"; 
+	if (err) {
+		console.log(err);
+		return;
+	}
 
-    //TODO: iterate
-    //TODO 2: translate the header instead of findInDictionary each iteration
-    translatedFieldName = findInDictionary(dictionary, sheet(columnId + headerLineNumber));
-    result[translatedFieldName] = sheet(columnId + dataLineNumber);
+	//example:
+	var dataLineNumber = 17;
 
-  columnId = "D";
-    translatedFieldName = findInDictionary(dictionary, sheet(columnId + headerLineNumber));
-    result[translatedFieldName] = sheet(columnId + dataLineNumber);
+	var normalizedHeader = normalizeHeader(columnIndex, dim, getCell);
+	// console.log(JSON.stringify(normalizedHeader));
+	
+	var result = new Array();
 
+	for (var lineNumber = dataLineNumber; lineNumber < dim.max.row; lineNumber++) {
 
-    console.log(JSON.stringify(result));
+		var line = {};
+		var skipLine;
 
-  });
+		for (var columnIndex = 0; columnIndex <= dim.max.col; columnIndex++) {
 
+			skipLine = false;
+
+			//index + 'A'
+			columnString = String.fromCharCode(columnIndex + 65);
+
+			var translatedColumnName = normalizedHeader[columnString];
+
+			//ignore fields not having translated or default column name
+			if (translatedColumnName == undefined || translatedColumnName == "") {
+				continue;
+			}
+
+			//read value of column
+			line[translatedColumnName] = getCell(columnString + lineNumber);
+
+			//skip lines missing mandatory fields
+			if (mandatoryFields.indexOf(translatedColumnName) != -1 && line[translatedColumnName] == "") {
+				skipLine = true;
+				break;
+			}
+
+		}
+
+		if (!skipLine) {
+			result.push(line);
+		}
+	}
+	console.log("===========================================================================");
+	console.log(JSON.stringify(result, null, "\t"));
 
 });
