@@ -29,29 +29,42 @@ we will have to manually look for it.
 as this is kinda ugly, we might want to iteratively look for the cell in the first place 
 
 */
-  
-var cellIdToCellIdx = function (sheet, cellId) {
-  var row = 0,
-    col = 0;
 
-  var i;
-  for (i = 0; i < cellId.length; ++i) {
+var cellIdToCellIdxLogical = function(cellId) {
+
+  var i, col = 0;
+  for ( i = 0; i < cellId.length; ++i) {
     if (cellId[i] < 65) {
       break;
     }
 
     col *= 10;
-    col += cellId.charCodeAt(i) - 65; // cell[i] - 'A';
+    col += cellId.charCodeAt(i) - 65;  // cell[i] - 'A'; zero based
   }
 
-  var rowNumber = parseInt(cellId.substr(i), 10); // the row number the user is looking for (1-based)
+  var row = parseInt(cellId.substr(i), 10) - 1;  // the row number the user is looking for (zero-based)
 
-  if (rowNumber < 1) { //check for row number validity, TODO: check outer bounds
+  return {
+    row : row,
+    col : col
+  };
+}
+
+var cellIdToCellIdx = function(sheet, cellId) {
+  var row = 0, 
+      col = 0;
+
+  var logicalIndex = cellIdToCellIdxLogical(cellId);
+
+  col = logicalIndex.col;
+  row = logicalIndex.row;
+
+  if (row < 0) {//check for row number validity, TODO: check outer bounds
     throw ("Index out of bounds: " + rowNumber);
   }
 
-  var origRowNumber = rowNumber;
-  row = rowNumber - 1; //zero based row number
+  var origRowNumber = row + 1;
+  //referenced row number is 1-based
 
   //handle case where cellId is out of bounds, might occur when rows or columns have been reduced
   while (sheet.worksheet.sheetData[0].row[row] === undefined)
@@ -59,16 +72,16 @@ var cellIdToCellIdx = function (sheet, cellId) {
   while (sheet.worksheet.sheetData[0].row[row].c[col] === undefined)
   --col;
 
-  var candidateCell = sheet.worksheet.sheetData[0].row[row].c[col];
-  var candidateCellAddress = candidateCell.$.r;
+  var candidateCellAddress = sheet.worksheet.sheetData[0].row[row].c[col].$.r;
+
 
   //cell address is not as expected, find cell iteratively
   if (candidateCellAddress != cellId) { 
 
     //row is not as expected, look for row iteratively
-    if (sheet.worksheet.sheetData[0].row[row].$.r != origRowNumber) {
-      for (i = row; i >= 0; i--) {
-        if (sheet.worksheet.sheetData[0].row[i].$.r == origRowNumber) { //found requested row id!
+    if (sheet.worksheet.sheetData[0].row[row] === undefined || sheet.worksheet.sheetData[0].row[row].$.r != origRowNumber) {
+      for (var i = row; i >= 0; i--) {
+        if (sheet.worksheet.sheetData[0].row[i].$.r == origRowNumber) {//found requested row id!
           row = i;
           break;
         }
@@ -77,18 +90,21 @@ var cellIdToCellIdx = function (sheet, cellId) {
         row = NOT_FOUND;
       }
     }
+
+    // console.log(JSON.stringify(sheet.worksheet.sheetData[0].row[row]));
+   
     //row is found and column is not as expected, look for column iteratively
-    if (row != NOT_FOUND && sheet.worksheet.sheetData[0].row[row].c[col].$.r != cellId) {
-        for (j = col; j >= 0; j--) { 
-          if (sheet.worksheet.sheetData[0].row[row].c[j].$.r == cellId) { //found requested cell id!
-            col = j;
-            break;
-          }
-        }
-        if (j < 0) { //cell not found, maybe missing in xml structure
-          col = NOT_FOUND;
+    if (row != NOT_FOUND && (sheet.worksheet.sheetData[0].row[row].c[col] === undefined || sheet.worksheet.sheetData[0].row[row].c[col].$.r != cellId)) {
+      for (var j = col; j >= 0; j--) {
+        if (sheet.worksheet.sheetData[0].row[row].c[j] != undefined && sheet.worksheet.sheetData[0].row[row].c[j].$.r == cellId) {//found requested cell id!
+          col = j;
+          break;
         }
       }
+      if (j < 0) {//cell not found, maybe missing in xml structure
+        col = NOT_FOUND;
+      }
+    }
   }
   return {
     row: row,
@@ -141,10 +157,10 @@ var readSheetCell = function (uz, sharedStrings, sheet, cellId) {
 var getDimension = function(sheet) {
   var splt = sheet.worksheet.dimension[0].$.ref.split(":");
   return {
-    min: splt[0],
-    max: splt[1],
-    minIdx: cellIdToCellIdx(sheet, splt[0]),
-    maxIdx: cellIdToCellIdx(sheet, splt[1])
+    min : cellIdToCellIdxLogical(splt[0]),
+    max : cellIdToCellIdxLogical(splt[1]),
+    minIdx : cellIdToCellIdx(sheet, splt[0]),
+    maxIdx : cellIdToCellIdx(sheet, splt[1])
   };
 };
 
@@ -163,46 +179,55 @@ var readSheet = function(uz, sharedStrings,sheetId, handler) {
 
 // handler = function(err, result)
 exports.readFile = function(filename, handler) {
-  fs.readFile(filename, "binary", function(err, data) {
-    if (err) {
-      handler(err, null);
-      return;
-    }
-    var uz;
-    try{
-      uz = new zip(data, { base64: false, checkCRC32: true});
-    } catch(e) {
-      handler(null, e);
-      return;
-    }
 
-
-    parseString(fileDataInUtf8(uz, 'xl/sharedStrings.xml'), function (err, sharedStrings) {
-      if (err) {
-        handler(err, null);
-        return;
-      }
-
-      parseString(fileDataInUtf8(uz, 'xl/workbook.xml'), function (err, workbook) {
+  fs.exists(filename, function(fileok) {
+    if (fileok)
+      fs.readFile(filename, "binary", function(err, data) {
         if (err) {
           handler(err, null);
           return;
         }
+        var uz;
+        try {
+          uz = new zip(data, {
+            base64 : false,
+            checkCRC32 : true
+          });
+        } catch(e) {
+          handler(null, e);
+          return;
+        }
 
-        var result = {
-          sheets: []
-        };
-        workbook.workbook.sheets[0].sheet.forEach(function(s){
-          //console.log(s);
-          result.sheets.push({
-            name: s.$.name,
-            id: s.$.sheetId,
-            read: readSheet.bind(this, uz, sharedStrings.sst.si, s.$.sheetId)
+        parseString(fileDataInUtf8(uz, 'xl/sharedStrings.xml'), function(err, sharedStrings) {
+          if (err) {
+            handler(err, null);
+            return;
+          }
+
+          parseString(fileDataInUtf8(uz, 'xl/workbook.xml'), function(err, workbook) {
+            if (err) {
+              handler(err, null);
+              return;
+            }
+
+            var result = {
+              sheets : []
+            };
+            workbook.workbook.sheets[0].sheet.forEach(function(s) {
+              //console.log(s);
+              result.sheets.push({
+                name : s.$.name,
+                id : s.$.sheetId,
+                read : readSheet.bind(this, uz, sharedStrings.sst.si, s.$.sheetId)
+              });
+            });
+            handler(null, result);
           });
         });
-        handler(null, result);
       });
-    });
+    
+else
+      console.log("file not found");
   });
 
 };
@@ -260,5 +285,4 @@ exports.openSheet = function(filename, sheet, callback){
     _sheet.read(callback);
   });
 };
-
 
