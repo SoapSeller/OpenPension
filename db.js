@@ -30,7 +30,10 @@ var allFields = {
   "duration": validators.forBond,
   "yield": validators.forBond,
   "market_cap": validators.always,
-  "amount_of_public_shares": validators.forBond
+  "amount_of_public_shares": validators.forBond,
+  "local" : validators.always,
+  "instrument_sub_type" : validators.always,
+  "instrument_type" : validators.always
 };
 
 var allFieldsNames = Object.keys(allFields);
