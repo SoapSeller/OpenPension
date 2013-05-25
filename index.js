@@ -2,11 +2,12 @@ var program = require('commander');
 var xlsx = require('./xlsxparser.js');
 var db = require('./db.js');
 
+
 var importers = {
 	"migdal" : "./migdalImporter.js",
 	"fenix" : "./fenixImporter.js",
 	"migdal11" : "./migdalImporter.js"
-}
+};
 program
 	.command("get-cell")
 	.description("Get data from a cell")
@@ -16,8 +17,8 @@ program
 	.action(function(args){
   xlsx.getCellValue(args.file, args.sheet, args.cell, function(err, result) {
     console.log("Cell value:", result);
-  })
-})
+  });
+});
 
 program
 	.command("list-sheets")
@@ -27,7 +28,7 @@ program
   xlsx.getFileSheetsNames(args.file, function(err, sheets) {
     console.log("Sheet names:", sheets.join(","));
   });
-})
+});
 
 program
 	.command("get-dim")
@@ -39,7 +40,7 @@ program
     console.log(dim);
     // console.log("Sheet names:",sheets.join(","));
   });
-})
+}),
 
 program
 	.command("to-csv")
@@ -49,38 +50,37 @@ program
 	.option("-s, --sheet <sheet name>", "sheet name")
 	.action(function(args) {
 
-				var sheetName = "מזומנים ושווי מזומנים";
+				// var sheetName = "מזומנים ושווי מזומנים";
+				var sheetName = args.sheet;
 				var type = args.type;
 				console.log("importers[type]"+importers[type]);
 				var importer = require(importers[type]);
 
-					xlsx.openSheet(args.file, sheetName, 
-						function(err, getCell, dim) {						
-						    var result = importer.convert(err, getCell, dim);
-						    var outputFileName = "output.csv";
-						    if (result == undefined ){
-						    	return;
-						    }
-						    var jsonRows = result.rows;
-						    var type = result.type;
-						    if (jsonRows == undefined){
-						    	return;
-						    }
-						    
-						    // console.log("got result size: " + jsonRows.length);
-						    var dbwriter = db.open(outputFileName);
-						    for (var j = 0; j < jsonRows.length; j++) {
-						    	var err = dbwriter.writeRecord(type, jsonRows[j]);
-						      if (err) {
-						      	console.log(err);
-						      	// return;
-						      }
+					xlsx.openSheet(args.file, sheetName,
+						function(err, getCell, dim){
+							var result = importer.convert(err, getCell, dim);
+							var outputFileName = "output.csv";
+							if (result === undefined ){
+								return;
+							}
+							var jsonRows = result.rows;
+							var type = result.type;
+							if (jsonRows === undefined){
+								return;
+							}
+
+							// console.log("got result size: " + jsonRows.length);
+							var dbwriter = db.open(outputFileName);
+							for (var j = 0; j < jsonRows.length; j++){
+								err = dbwriter.writeRecord(type, jsonRows[j]);
+								if (err) {
+									console.log(err);
+								// return;
 								}
-						    dbwriter.close();
-						  }
-						 );
-			
-	  
+							}
+							dbwriter.close();
+						}
+			);
 });
 
 
