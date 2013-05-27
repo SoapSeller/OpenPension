@@ -7,6 +7,7 @@ exports.getMetaTable = function(){
 	var metaTable = {
 		hebrewColumns: 			parsedLines.shift().split(",").slice(2,parsedLines[0].length),
 		englishColumns: 		parsedLines.shift().split(",").slice(2,parsedLines[0].length),
+		dataTypes: 				parsedLines.shift().split(",").slice(2,parsedLines[0].length),
 		instrumentTypes: 		parsedLines.map(function(l){return l.split(",")[0]}),
 		instrumentSubTypes : 	parsedLines.map(function(l){return l.split(",")[1]}),
 		dataMapping: parsedLines.map(function(l){ return l.split(",").slice(2,l.split(",").length) })
@@ -14,3 +15,5 @@ exports.getMetaTable = function(){
 
 	return metaTable;
 }
+
+console.log(exports.getMetaTable())
