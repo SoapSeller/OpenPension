@@ -30,6 +30,8 @@ as this is kinda ugly, we might want to iteratively look for the cell in the fir
 
 */
 
+
+
 var cellIdToCellIdxLogical = function(cellId) {
 
   var i, col = 0;
@@ -285,4 +287,10 @@ exports.openSheet = function(filename, sheet, callback){
     _sheet.read(callback);
   });
 };
+
+exports.getSheets = function(filename, callback){
+  exports.readFile(filename, function(err, result) {
+    callback(result.sheets);
+  })
+}
 

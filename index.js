@@ -43,6 +43,12 @@ program
 }),
 
 program
+	.command("debug")
+	.action(function(){
+		require('./genericImporter').parseXls("res/migdal.xlsx")
+	});
+
+program
 	.command("to-csv")
 	.description("Convert sheets in file to CSV")
 	.option("-f, --file <path>", "file name")

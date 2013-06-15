@@ -1,7 +1,7 @@
 קטגוריית נכס,נכס,שם נייר ערך,מספר נייר ערך,נכס הבסיס,ענף מסחר,דירוג,שם המדרג,תאריך רכישה,"מח""מ",סוג מטבע,שיעור ריבית,תשואה לפדיון,ערך נקוב,שער,שווי שוק,שווי הוגן,שיעור מהערך הנקוב המונפק,שיעור מנכסי ההשקעה,תאריך שערוך אחרון,אופי הנכס,שעור תשואה במהלך התקופה
-Instrument Type,Instrument Sub Type,Instrument Symbol,Instrument ID,Underlying Asset,Industry,Rating,Rating Agency,Date of Purchase,Time to Maturity,Currency,Intrest Rate,Yield,,,Market Cap,,Rate of IPO,Rate of Fund,,,
+Instrument Type,Instrument Sub Type,Instrument Symbol,Instrument ID,Underlying Asset,Industry,Rating,Rating Agency,Date of Purchase,Average of Duration,Currency,Intrest Rate,Yield,Par Value,Rate,Market Cap,Fair Value,Rate of IPO,Rate of Fund,Date of Revaluation,Type of Asset,
 סוג משתנה,,string,string,,string,string,string,date,number,string,number,number,number,number,number,number,number,number,date,,number
-יחידה,,,,,,,,,שנים,,%,&,"ש""ח",אג',"אלפי ש""ח",,%,%,,,
+יחידה,,,,,,,,,שנים,,%,&,₪,אג',אלפי ₪,,%,%,,,
 סכום נכסי הקרן,,,,,,,,,,,,,,,,1,,2,,,
 מזומנים,,0,1,,,2,3,,,4,5,6,,,7,,,8,,,
 ניירות ערך סחירים,תעודות התחייבות ממשלתיות,0,1,,,2,3,4,5,6,7,8,9,10,11,,12,13,,,
@@ -14,6 +14,7 @@ Instrument Type,Instrument Sub Type,Instrument Symbol,Instrument ID,Underlying A
 ניירות ערך סחירים,אופציות,0,1,,2,,,,,3,,,4,5,6,,7,8,,,
 ניירות ערך סחירים,חוזים עתידיים,0,1,,2,,,,,3,,,4,5,,,,,,,
 ניירות ערך סחירים,מוצרים מובנים,0,1,2,,3,4,5,6,7,8,9,10,11,12,,13,14,,,
+ניירות ערך לא סחירים,,,,,,,,,,,,,,,,,,,,,
 ניירות ערך לא סחירים,תעודות התחייבות ממשלתיות,0,1,,,2,3,4,5,6,7,8,9,10,,11,12,13,,,
 ניירות ערך לא סחירים,תעודות חוב מסחריות,0,1,,2,3,4,5,6,7,8,9,10,11,,12,13,14,,,
 ניירות ערך לא סחירים,"אג""ח קונצרני",0,1,,2,3,4,5,6,7,8,9,10,11,,12,13,14,,,
