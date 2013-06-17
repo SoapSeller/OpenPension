@@ -2,10 +2,10 @@ exports.getMetaTable = function(){
 
 	var parsedLines = require('fs').readFileSync('mt_source.csv').toString().split("\n")
 
-	// trim all values
+	//TODO: trim all values
 	var metaTable = {
 		hebrewColumns: 			parsedLines.shift().split(",").slice(2,parsedLines[0].length),
-		// make english words lower case and underscore instead of spaces + trim
+		//TODO: make english words lower case and underscore instead of spaces + trim
 		englishColumns: 		parsedLines.shift().split(",").slice(2,parsedLines[0].length),
 		dataTypes: 				parsedLines.shift().split(",").slice(2,parsedLines[0].length),
 		measures: 				parsedLines.shift().split(",").slice(2,parsedLines[0].length),
