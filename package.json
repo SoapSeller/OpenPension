@@ -11,9 +11,11 @@
         "url" : "git://github.com/SoapSeller/OpenPension.git"
     },
     "dependencies" : {
+	"underscore": "latest",
 	"node-zip" : "latest",
 	"xml2js" : "latest",
-	"commander": "latest"
+	"commander": "latest",
+	"pg": "latest"
     },
     "devDependencies" : {},
     "scripts" : {},
