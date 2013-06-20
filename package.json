@@ -12,6 +12,7 @@
     },
     "dependencies" : {
 	"underscore": "latest",
+	"moment": "latest",
 	"node-zip" : "latest",
 	"xml2js" : "latest",
 	"commander": "latest",

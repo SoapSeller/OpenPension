@@ -3,6 +3,7 @@ var config = require('./config'),
     fs = require('fs'),
     pg = require('pg'),
     _ = require('underscore'),
+    moment = require('moment'),
     metaTable = require('./MetaTable').getMetaTable(),
     columnsNames = metaTable.englishColumns,
     columnsTypes = metaTable.dataTypes;
@@ -55,14 +56,15 @@ db.csv.prototype = {
 
 var columnsTypesMappings = {
   number: "numeric",
-  date: "varchar(40)",
+  date: "date",
   string: "varchar(128)"
 };
 
 var columnsTypesPreperares = {
-  number: function(n) { return n; },
-  date: function(d) { return '"' + d + '"'; },
-  string: function(s) { return '"' + s + '"'; }
+  date: function(d) { return moment(d, "DD-MM-YYYY"); }
+};
+var identityPreperare = function(o) {
+  return o;
 };
 
 var mapColumnType2Sql = function(type) {
@@ -93,7 +95,12 @@ db.pg.prototype = {
     var fieldsPreps = [];
     mapping.forEach(function(m) {
       var idx = columnsNames.indexOf(m.columnName);
-      fieldsPreps.push(columnsTypesPreperares[columnsTypes[idx]]);
+      var prep = columnsTypesPreperares[columnsTypes[idx]];
+      if (prep !== undefined) {
+        fieldsPreps.push(prep);
+      } else {
+        fieldsPreps.push(identityPreperare);
+      }
     });
 
     var sql = "INSERT INTO data (" + mapping.map(function(m) { return m.columnName; }).join(',') + ")  " +
@@ -103,7 +110,7 @@ db.pg.prototype = {
 
     return function(objects) {
       objects.forEach(function(object) {
-        statment.values = object;
+        statment.values = object.map(function(f, i) { return fieldsPreps[i](f); });
         that.client.query(statment);
       });
     };

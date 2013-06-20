@@ -58,8 +58,8 @@ program
 		var db = require('./db').open(true);
 		var tableWriter = db.openTable(map);
 		tableWriter([
-			["inst1", "date1"],
-			["inst2", "date2"]
+			["inst1", "1/10/2004"],
+			["inst2", "2/10/2004 x"]
 		]);
 	});
 
