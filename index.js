@@ -45,7 +45,22 @@ program
 program
 	.command("debug")
 	.action(function(){
-		require('./genericImporter').parseXls("res/migdal.xlsx")
+		require('./genericImporter').parseXls("res/migdal.xlsx");
+	});
+
+program
+	.command("db")
+	.action(function(){
+		var map = [
+			{ columnName: "instrument_id" },
+			{ columnName: "date_of_purchase" }
+		];
+		var db = require('./db').open(true);
+		var tableWriter = db.openTable(map);
+		tableWriter([
+			["inst1", "1/10/2004"],
+			["inst2", "2/10/2004 x"]
+		]);
 	});
 
 program
