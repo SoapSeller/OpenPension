@@ -17,7 +17,8 @@ var parsingState = {
 }
 
 var aliasMap = {
-	"שיעור מנכסי ההשקעה" : [ "שיעור מנכסי הקרן" ]
+	"שיעור מנכסי ההשקעה" : [ "שיעור מנכסי הקרן" ],
+	"מספר נייר ערך" : [ "מספר ני\"ע" ]
 }
 
 var columnLetterFromNumber = function(number){
@@ -47,49 +48,99 @@ var cleanColumnHeaderStr = function(inputStr){
 		return ""
 }
 
+var debug = true;
+
 var cleanDataStr = function(inputStr){
 	return inputStr;
 }
+
+var findInHeaders = function(headers, cleanCell){
+
+	var levTolerance = 3;
+
+	if (headers.indexOf(cleanCell) >= 0) {
+		return cleanCell;
+	} else {
+		var _res = null;
+		headers.some(function(h){
+			
+			if (LevDistance.calc(h,cleanCell) < levTolerance) {
+				_res = h;
+				return true;
+			} else if (aliasMap[h]) {
+				return aliasMap[h].some(function(ah){
+					
+					if (ah == cleanCell || LevDistance.calc(ah,cleanCell) < levTolerance){
+						_res = h;
+						return true;
+					} else {
+						return false;
+					}
+				})
+			} else {
+				return false;
+			}
+		})
+		return _res;
+	}
+};
+
+
 // TODO: print out found matches 
 var parseSheets = function(sheets){
+
 	var metaTable = MetaTable.getMetaTable();
-	var sheetCounter = 0;
+	var sheetCounter = 1;
 
 	var parseSingleSheet = function(cellReader, dim){
 
-		var sheetRows = [];
 		var headers = metaTable.columnMappingForRow(sheetCounter);
-		console.log(headers)
-		var headersToColumn = [];
+		if (debug) console.log("headers >> ",headers)
 
+		var foundColumnMapping = [];
+		var sheetData = [];
+
+		// for(var row = 5 || 1; row < 20; row++){
 		for(var row = dim.min.row || 1; row < dim.max.row; row++){
+			if (headers.length < metaTable.columnMappingForRow(sheetCounter) && headers.length != 0){
+				console.log("found partial mapping of headers, moving to next sheet");
+				process.exit();
+			} else if (headers.length == 0) { // headers have been found, were parsing content
+				sheetData.push([])
+			}
 			for (var column = dim.min.col || 1; column < dim.max.col; column ++){
 				var letter = columnLetterFromNumber(column);
 				var cellId = letter + row;
-				if (!sheetRows[row]) sheetRows[row] = [];
-				sheetRows[row][column] = cellReader(cellId);
-				var cleanHeaderCell = cleanColumnHeaderStr(sheetRows[row][column])
-				if (headers.indexOf(cleanHeaderCell) >= 0){
-					var foundIndex = headers.indexOf(cleanHeaderCell);
-					headers = headers.slice( , )
- 					headersToColumn[cleanHeaderCell] = column;
+				var cellContent = cellReader(cellId);
+
+				if (!cellContent) continue;
+				// LevDistance.calc("שיעור הריבית","שיעור ריבית")
+				if (headers.length > 0) { //###>> enter the following while we have not found the headers yet!
+
+					var cleanHeaderCell = cleanColumnHeaderStr(cellContent);
+					if (debug) console.log("clean cell >> ",cleanHeaderCell);
+
+					var foundInHeader = findInHeaders(headers, cleanHeaderCell);
+					if (foundInHeader) {
+						headers.splice( headers.indexOf(foundInHeader), headers.indexOf(foundInHeader) +1 )
+						foundColumnMapping.push({ row: row, column: column, origCell: cleanHeaderCell, foundCell: foundInHeader });
+					}
+
+				} else { 
+					//###>> Enter here to collect actual data
+					if (foundColumnMapping.some(function(x){ return x.column == column })) {
+						sheetData[sheetData.length -1].push(cellContent)
+					}
 				}
 			}
 		}
-		console.log(headersToColumn);
-
-		// var headerRow = findHeaderRow(sheetRows,);
-
-		// sheetRows.forEach(function(row){
-		// 	row.forEach(function(column){
-		// 		console.log(column,">>>>", cleanDataStr(column));
-		// 	})
-		// })
+		if (debug) console.log("headerToColumn >> ",foundColumnMapping);
+		if (debug) console.log("sheetData >> ",sheetData);
 		
 	}
 
 
-	sheets[1].read(function(err, sheetCB,dim){ parseSingleSheet(sheetCB,dim); })
+	sheets[2].read(function(err, sheetCB,dim){ parseSingleSheet(sheetCB,dim); })
 
 	// sheets.map(function(so){ so.read(function(err, sheetCB,dim){ parseSingleSheet(sheetCB,dim); }) });
 
