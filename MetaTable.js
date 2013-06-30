@@ -15,8 +15,8 @@ exports.getMetaTable = function(){
 			var output = [];
 			for (var i = 0; i < this.dataMapping[rowId].length ; i++ ){
 				var rowValue = parseInt(this.dataMapping[rowId][i]);
-				if (rowValue){
-					output[rowValue -1] = this.hebrewColumns[i];
+				if (!isNaN(rowValue)){
+					output[rowValue] = this.hebrewColumns[i];
 				}
 			}
 			return output;

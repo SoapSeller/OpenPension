@@ -35,13 +35,14 @@ db.csv.prototype = {
       }
       indexes.push(idx);
     });
+    console.log(_.zip(columnsNames, indexes))
     return function(objects) {
       objects.forEach(function(object) {
         for (i = 0; i < indexes.length; ++i) {
           var idx = indexes[i];
           if (idx >= 0)
           {
-            that.stream.write(object[idx]);
+            that.stream.write(object[idx] ? object[idx] : "");
           }
           if (i != indexes.length-1) {
             that.stream.write(",");

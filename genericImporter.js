@@ -6,20 +6,6 @@ exports.parseXls = function(filename){
 	xlsx.getSheets(filename, parseSheets);
 }
 
-var curTableData = null;
-
-var advanceTableDataSheet = function(){
-	curTableData.sheet++;
-}
-
-var parsingState = {
-	sheet : 0
-}
-
-var aliasMap = {
-	"שיעור מנכסי ההשקעה" : [ "שיעור מנכסי הקרן" ],
-	"מספר נייר ערך" : [ "מספר ני\"ע" ]
-}
 
 var columnLetterFromNumber = function(number){
 
@@ -41,36 +27,53 @@ var columnLetterFromNumber = function(number){
 		return thisLetter
 }
 
-var cleanColumnHeaderStr = function(inputStr){
-	if (inputStr)
-		return inputStr.replace(/\(.*\)/g,"").trim()
-	else 
-		return ""
+
+/* CONFIGURATION */
+var debug = true;
+var strictMode = false;
+var levTolerance = 3;
+var aliasMap = {
+	"שם נייר ערך" : [ "מזומנים ושווי מזומנים","שם ני''ע" ],
+	"שיעור מנכסי ההשקעה" : [ "שיעור מנכסי הקרן" ],
+	"מספר נייר ערך" : [ "מספר ני\"ע" ],
+	"שיעור מהערך הנקוב המונפק" : [ "שיעור מהע.נ המונפק" ]
 }
 
-var debug = true;
+var detectorsMap = {
+	"שם נייר ערך" : [ "ב. ניירות ערך סחירים" ]
+}
+
+/* DATA MANIPULATION */
 
 var cleanDataStr = function(inputStr){
 	return inputStr;
 }
 
-var findInHeaders = function(headers, cleanCell){
+var cleanColumnHeaderStr = function(inputStr){
+	if (inputStr)
+		return inputStr.replace(/\(.*\)/g,"").replace(/["']/g,"").trim()
+	else 
+		return ""
+}
 
-	var levTolerance = 3;
 
-	if (headers.indexOf(cleanCell) >= 0) {
-		return cleanCell;
+var findInHeaders = function(headers, cellContent){
+	var _cleanCell = cleanColumnHeaderStr(cellContent);
+
+	if (headers.indexOf(_cleanCell) > -1) {
+		return _cleanCell;
 	} else {
 		var _res = null;
 		headers.some(function(h){
-			
-			if (LevDistance.calc(h,cleanCell) < levTolerance) {
+			var _h = cleanColumnHeaderStr(h);
+			console.log(_h);
+			if (LevDistance.calc(_h,_cleanCell) < levTolerance) {
 				_res = h;
 				return true;
 			} else if (aliasMap[h]) {
 				return aliasMap[h].some(function(ah){
-					
-					if (ah == cleanCell || LevDistance.calc(ah,cleanCell) < levTolerance){
+					var _ah = cleanColumnHeaderStr(ah)
+					if (_ah == _cleanCell || LevDistance.calc(_ah,_cleanCell) < levTolerance){
 						_res = h;
 						return true;
 					} else {
@@ -86,88 +89,123 @@ var findInHeaders = function(headers, cleanCell){
 };
 
 
-// TODO: print out found matches 
 var parseSheets = function(sheets){
 
 	var metaTable = MetaTable.getMetaTable();
-	var sheetCounter = 1;
+	var sheetCounter = 2;
 
 	var parseSingleSheet = function(cellReader, dim){
 
+
 		var headers = metaTable.columnMappingForRow(sheetCounter);
-		if (debug) console.log("headers >> ",headers)
-
+		if (debug) console.log("headers >> ",metaTable.columnMappingForRow(sheetCounter));
 		var foundColumnMapping = [];
-		var sheetData = [];
+		var sheetData = [[]];
+		var remainingHeaders = [];
 
-		// for(var row = 5 || 1; row < 20; row++){
+		// for(var row = 1 || 1; row < 15; row++){
 		for(var row = dim.min.row || 1; row < dim.max.row; row++){
-			if (headers.length < metaTable.columnMappingForRow(sheetCounter) && headers.length != 0){
-				console.log("found partial mapping of headers, moving to next sheet");
-				process.exit();
-			} else if (headers.length == 0) { // headers have been found, were parsing content
-				sheetData.push([])
+			if (headers.length > 0 && headers.length < metaTable.columnMappingForRow(sheetCounter).length) {
+				if (headers.length < metaTable.columnMappingForRow(sheetCounter).length / 2){
+					if (strictMode) {
+						console.log("found only partial match of headers, exiting..");
+						console.log("found mapping",foundColumnMapping);
+						console.log("remaining headers", headers);
+						process.exit();
+					} else {
+						console.log("found only partial match of headers, not in strict mode.. continue");
+						console.log("found mapping",foundColumnMapping);
+						console.log("remaining headers", headers);
+						remainingHeaders = headers;
+						headers = [];
+					}
+				} else {
+					headers = metaTable.columnMappingForRow(sheetCounter);
+					foundColumnMapping = [];
+				}
+			} else if (headers.length == 0) {
+				// headers have been found, were parsing content, add new line to output data
+				sheetData.push([]);
 			}
-			for (var column = dim.min.col || 1; column < dim.max.col; column ++){
+
+			for (var column = dim.min.col || 0; column < dim.max.col; column++){
 				var letter = columnLetterFromNumber(column);
 				var cellId = letter + row;
 				var cellContent = cellReader(cellId);
+				
+				if (headers.length != 0) { 
+					//###>> enter the following while we have not found the headers yet!
+					// TODO: check this works with value 0 in cell
+					if (cellContent) {	
+						
+						if (debug) console.log("cell content>> ",cellContent);
 
-				if (!cellContent) continue;
-				// LevDistance.calc("שיעור הריבית","שיעור ריבית")
-				if (headers.length > 0) { //###>> enter the following while we have not found the headers yet!
-
-					var cleanHeaderCell = cleanColumnHeaderStr(cellContent);
-					if (debug) console.log("clean cell >> ",cleanHeaderCell);
-
-					var foundInHeader = findInHeaders(headers, cleanHeaderCell);
-					if (foundInHeader) {
-						headers.splice( headers.indexOf(foundInHeader), headers.indexOf(foundInHeader) +1 )
-						foundColumnMapping.push({ row: row, column: column, origCell: cleanHeaderCell, foundCell: foundInHeader });
+						var foundInHeader = findInHeaders(headers, cellContent);
+						if (foundInHeader) {
+							headers.splice( headers.indexOf(foundInHeader), headers.indexOf(foundInHeader) +1 )
+							foundColumnMapping.push({ row: row, column: column, origCell: cellContent, foundCell: foundInHeader });
+						}
 					}
+
 
 				} else { 
 					//###>> Enter here to collect actual data
 					if (foundColumnMapping.some(function(x){ return x.column == column })) {
 						sheetData[sheetData.length -1].push(cellContent)
+					} else if (remainingHeaders.length > 0){ // do detection of missing headers by content, due to random data BS
+						remainingHeaders.some(function(rh){
+							if (detectorsMap[rh] && detectorsMap[rh].some(function(dtc){
+								if (dtc == cellContent) {
+									console.log("detected new column by content! ", rh," ", cellContent)
+
+									var placeAfter = null;
+
+									if (!foundColumnMapping.some(function(fcm){ 
+										if (fcm.column > column){
+											placeAfter = foundColumnMapping.indexOf(fcm);
+											return true;
+										} else {
+											return false;
+										}
+									})) {
+										placeAfter = foundColumnMapping.length;
+									}
+									foundColumnMapping.splice(placeAfter,0, 
+										{ row: row, column: column, origCell: "", foundCell: rh })
+
+									remainingHeaders.splice( remainingHeaders.indexOf(rh), remainingHeaders.indexOf(rh) +1 );
+
+									sheetData[placeAfter].push(cellContent)
+									return true;
+								} else {
+									return false;
+								}
+							})){
+								return true;
+							} else {
+								return false;
+							};
+						});
 					}
 				}
 			}
 		}
 		if (debug) console.log("headerToColumn >> ",foundColumnMapping);
 		if (debug) console.log("sheetData >> ",sheetData);
+		process.exit();
+
+		var engMap = foundColumnMapping.map(function(cm){ return { "columnName" : metaTable.englishColumns[ metaTable.hebrewColumns.indexOf(cm.foundCell) ] } })
+		console.log("<><><<><",engMap);
+		var db = require('./db').open();
+		var tableWriter = db.openTable(engMap)
+		tableWriter(sheetData);
 		
 	}
 
 
-	sheets[2].read(function(err, sheetCB,dim){ parseSingleSheet(sheetCB,dim); })
+	sheets[3].read(function(err, sheetCB,dim){ parseSingleSheet(sheetCB,dim); })
 
 	// sheets.map(function(so){ so.read(function(err, sheetCB,dim){ parseSingleSheet(sheetCB,dim); }) });
-
-	
-}
-
-/* 
-@param String[String[]] sheetRows - two dimentional array of rows and columns 
-@param String[] columNames
-*/
-var findHeaderRow = function(sheetRows,columNames){
-
-	sheetRows.forEach(function(row){
-		var rowMatcher = []
-		row.slice(0,3).forEach(function(columnCell){
-			
-			var cleanCell = cleanColumnHeaderStr(columnCell)
-			console.log(cleanCell)
-			if (columNames.indexOf(cleanCell) >= 0){
-				console.log("YAY");
-				process.exit();
-			}
-			
-			// console.log(columNames)
-			// console.log(columnCell,">>>>", cleanCell);
-		})
-	})
 
 	
 }
