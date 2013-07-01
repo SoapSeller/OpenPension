@@ -2,9 +2,16 @@ var MetaTable = require('./MetaTable')
 var xlsx = require("./xlsxparser");
 var LevDistance = require('./LevDistance')
 
-exports.parseXls = function(filename){
+var provider = null;
+var sheetCounter = 0;
+
+exports.parseXls = function(filename,givenProvider){
+	provider = givenProvider;
 	xlsx.getSheets(filename, parseSheets);
 }
+
+
+
 
 
 var columnLetterFromNumber = function(number){
@@ -29,7 +36,7 @@ var columnLetterFromNumber = function(number){
 
 
 /* CONFIGURATION */
-var debug = true;
+var debug = false;
 var strictMode = false;
 var levTolerance = 3;
 var aliasMap = {
@@ -66,7 +73,6 @@ var findInHeaders = function(headers, cellContent){
 		var _res = null;
 		headers.some(function(h){
 			var _h = cleanColumnHeaderStr(h);
-			console.log(_h);
 			if (LevDistance.calc(_h,_cleanCell) < levTolerance) {
 				_res = h;
 				return true;
@@ -92,11 +98,11 @@ var findInHeaders = function(headers, cellContent){
 var parseSheets = function(sheets){
 
 	var metaTable = MetaTable.getMetaTable();
-	var sheetCounter = 2;
+	
 
 	var parseSingleSheet = function(cellReader, dim){
 
-
+		var foundMatchingSheet = false;
 		var headers = metaTable.columnMappingForRow(sheetCounter);
 		if (debug) console.log("headers >> ",metaTable.columnMappingForRow(sheetCounter));
 		var foundColumnMapping = [];
@@ -105,6 +111,14 @@ var parseSheets = function(sheets){
 
 		// for(var row = 1 || 1; row < 15; row++){
 		for(var row = dim.min.row || 1; row < dim.max.row; row++){
+
+			if (!foundMatchingSheet){
+				if (headers.length < metaTable.columnMappingForRow(sheetCounter).length / 2){
+					foundMatchingSheet = true;
+					sheetCounter++;
+				}
+			}
+
 			if (headers.length > 0 && headers.length < metaTable.columnMappingForRow(sheetCounter).length) {
 				if (headers.length < metaTable.columnMappingForRow(sheetCounter).length / 2){
 					if (strictMode) {
@@ -120,7 +134,7 @@ var parseSheets = function(sheets){
 						headers = [];
 					}
 				} else {
-					headers = metaTable.columnMappingForRow(sheetCounter);
+					header = metaTable.columnMappingForRow(sheetCounter);
 					foundColumnMapping = [];
 				}
 			} else if (headers.length == 0) {
@@ -148,7 +162,7 @@ var parseSheets = function(sheets){
 					}
 
 
-				} else { 
+				} else {
 					//###>> Enter here to collect actual data
 					if (foundColumnMapping.some(function(x){ return x.column == column })) {
 						sheetData[sheetData.length -1].push(cellContent)
@@ -190,22 +204,25 @@ var parseSheets = function(sheets){
 				}
 			}
 		}
-		if (debug) console.log("headerToColumn >> ",foundColumnMapping);
-		if (debug) console.log("sheetData >> ",sheetData);
-		process.exit();
+		// console.log("headerToColumn >> ",foundColumnMapping);
+		// console.log("sheetData >> ",sheetData);
 
 		var engMap = foundColumnMapping.map(function(cm){ return { "columnName" : metaTable.englishColumns[ metaTable.hebrewColumns.indexOf(cm.foundCell) ] } })
-		console.log("<><><<><",engMap);
-		var db = require('./db').open();
-		var tableWriter = db.openTable(engMap)
-		tableWriter(sheetData);
+		console.log(provider, sheetCounter, engMap, sheetData);
+		if (sheetCounter == 2) process.exit();
+		
+		// console.log("<><><<><",engMap);
+		// var db = require('./db').open();
+		// var tableWriter = db.openTable(engMap)
+		// tableWriter(sheetData);
 		
 	}
 
 
-	sheets[3].read(function(err, sheetCB,dim){ parseSingleSheet(sheetCB,dim); })
-
-	// sheets.map(function(so){ so.read(function(err, sheetCB,dim){ parseSingleSheet(sheetCB,dim); }) });
+	// sheets[3].read(function(err, sheetCB,dim){ parseSingleSheet(sheetCB,dim); })
+	sheets.map(function(so){ 
+		so.read(function(err, sheetCB,dim){ parseSingleSheet(sheetCB,dim); }) 
+	});
 
 	
 }
