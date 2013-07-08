@@ -4,6 +4,7 @@ var LevDistance = require('./LevDistance')
 
 var provider = null;
 var sheetCounter = 0;
+var sheetIterator = 0;
 
 exports.parseXls = function(filename,givenProvider){
 	provider = givenProvider;
@@ -99,11 +100,12 @@ var parseSheets = function(sheets){
 
 	var metaTable = MetaTable.getMetaTable();
 	
+	
 
 	var parseSingleSheet = function(cellReader, dim){
 
 		var foundMatchingSheet = false;
-		var headers = metaTable.columnMappingForRow(sheetCounter);
+		var headers = metaTable.columnMappingForRow(sheetCounter).map(function(x){return x});
 		if (debug) console.log("headers >> ",metaTable.columnMappingForRow(sheetCounter));
 		var foundColumnMapping = [];
 		var sheetData = [[]];
@@ -111,14 +113,15 @@ var parseSheets = function(sheets){
 
 		// for(var row = 1 || 1; row < 15; row++){
 		for(var row = dim.min.row || 1; row < dim.max.row; row++){
-
+			
 			if (!foundMatchingSheet){
-				if (headers.length < metaTable.columnMappingForRow(sheetCounter).length / 2){
+				if (headers.length == 0 || headers.length < metaTable.columnMappingForRow(sheetCounter).length / 2){
+					console.log("found matching sheet ", sheetCounter, " iterator:",sheetIterator)
 					foundMatchingSheet = true;
 					sheetCounter++;
 				}
 			}
-
+			
 			if (headers.length > 0 && headers.length < metaTable.columnMappingForRow(sheetCounter).length) {
 				if (headers.length < metaTable.columnMappingForRow(sheetCounter).length / 2){
 					if (strictMode) {
@@ -134,7 +137,7 @@ var parseSheets = function(sheets){
 						headers = [];
 					}
 				} else {
-					header = metaTable.columnMappingForRow(sheetCounter);
+					headers = metaTable.columnMappingForRow(sheetCounter);
 					foundColumnMapping = [];
 				}
 			} else if (headers.length == 0) {
@@ -156,7 +159,8 @@ var parseSheets = function(sheets){
 
 						var foundInHeader = findInHeaders(headers, cellContent);
 						if (foundInHeader) {
-							headers.splice( headers.indexOf(foundInHeader), headers.indexOf(foundInHeader) +1 )
+							console.log("found matching header, removing it..", foundInHeader);
+							headers.splice( headers.indexOf(foundInHeader), headers.indexOf(foundInHeader) +1 );
 							foundColumnMapping.push({ row: row, column: column, origCell: cellContent, foundCell: foundInHeader });
 						}
 					}
@@ -170,7 +174,7 @@ var parseSheets = function(sheets){
 						remainingHeaders.some(function(rh){
 							if (detectorsMap[rh] && detectorsMap[rh].some(function(dtc){
 								if (dtc == cellContent) {
-									console.log("detected new column by content! ", rh," ", cellContent)
+									if (debug) console.log("detected new column by content! ", rh," ", cellContent)
 
 									var placeAfter = null;
 
@@ -204,26 +208,20 @@ var parseSheets = function(sheets){
 				}
 			}
 		}
-		// console.log("headerToColumn >> ",foundColumnMapping);
-		// console.log("sheetData >> ",sheetData);
 
-		var engMap = foundColumnMapping.map(function(cm){ return { "columnName" : metaTable.englishColumns[ metaTable.hebrewColumns.indexOf(cm.foundCell) ] } })
 		
+		var engMap = foundColumnMapping.map(function(cm){ return { "columnName" : metaTable.englishColumns[ metaTable.hebrewColumns.indexOf(cm.foundCell) ] }  });
+
 		var validator = require('./validator').validate(provider, sheetCounter, engMap, sheetData);
-		// console.log(provider, sheetCounter, engMap, sheetData);
-		if (sheetCounter == 5) process.exit();
-		
-		// console.log("<><><<><",engMap);
-		// var db = require('./db').open();
-		// var tableWriter = db.openTable(engMap)
-		// tableWriter(sheetData);
-		
+		if (sheetCounter == 1) process.exit();
 	}
 
 
 	// sheets[3].read(function(err, sheetCB,dim){ parseSingleSheet(sheetCB,dim); })
-	sheets.map(function(so){ 
+	sheets.map(function(so){
+		console.log("trying sheet:",sheetIterator);
 		so.read(function(err, sheetCB,dim){ parseSingleSheet(sheetCB,dim); }) 
+		sheetIterator++; 
 	});
 
 	
