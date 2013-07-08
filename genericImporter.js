@@ -208,8 +208,10 @@ var parseSheets = function(sheets){
 		// console.log("sheetData >> ",sheetData);
 
 		var engMap = foundColumnMapping.map(function(cm){ return { "columnName" : metaTable.englishColumns[ metaTable.hebrewColumns.indexOf(cm.foundCell) ] } })
-		console.log(provider, sheetCounter, engMap, sheetData);
-		if (sheetCounter == 2) process.exit();
+		
+		var validator = require('./validator').validate(provider, sheetCounter, engMap, sheetData);
+		// console.log(provider, sheetCounter, engMap, sheetData);
+		if (sheetCounter == 5) process.exit();
 		
 		// console.log("<><><<><",engMap);
 		// var db = require('./db').open();
