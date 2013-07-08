@@ -11,16 +11,7 @@ exports.validate = function(supplier, tabIndex, headers, content) {
 // 			]
 
 	// validate all content arrays have same length as headers
-	validStatus = {valid: true}
-	headercount = headers.length;
-
-	for (var i = 0; i < content.length; i++){
-		line = content[i];
-		if (line.length !== headercount){
-			validStatus['valid'] = false;
-			validStatus['error'] = 'line ' + i + ' has ' + line.length + ' columns. expected ' + headercount + '.';
-		}
-	}
+	removeBadLengthLines(content, headers.length);
 
 	removeEmptyLines(content)
 	removeSumLines(content)
@@ -33,7 +24,16 @@ exports.validate = function(supplier, tabIndex, headers, content) {
 
 	console.log("<><><<>< headers", headers)
 	console.log("<><><<>< Sheet Data",content);
-	console.log("<><><<>< Validation", validStatus);
+}
+
+function removeBadLengthLines(content, numColumns)
+{
+	for (var i = content.length - 1 ; i > -1; i--){
+		if (content[i].length !== numColumns){
+			content.splice(i, 1);
+			console.log ('line ' + i + ' has ' + content[i].length + ' columns. expected ' + numColumns + '.');
+		}
+	}
 }
 
 function removeEmptyLines(content){
