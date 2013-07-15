@@ -79,12 +79,12 @@ db.pg = function() {
 
   this.tablesCounter = 0;
 
-  var createTable = "CREATE TABLE IF NOT EXISTS data(id BIGSERIAL PRIMARY KEY, ";
+  var createTable = "CREATE TABLE data(id BIGSERIAL PRIMARY KEY, ";
   var fields = _.zip(columnsNames, columnsTypes.map(mapColumnType2Sql));
   createTable += fields.filter(function(f) { return !!f[0] && !!f[1]; }).map(function(f) { return f[0] + " " + f[1]; }).join(',');
   createTable += ");";
 
-  this.client.query(createTable);
+  this.client.query(createTable, function() {});
 };
 
 db.pg.prototype = {
