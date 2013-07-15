@@ -12,9 +12,6 @@ exports.parseXls = function(filename,givenProvider){
 }
 
 
-
-
-
 var columnLetterFromNumber = function(number){
 
 	var enStart = 65;
@@ -44,7 +41,9 @@ var aliasMap = {
 	"שם נייר ערך" : [ "מזומנים ושווי מזומנים","שם ני''ע" ],
 	"שיעור מנכסי ההשקעה" : [ "שיעור מנכסי הקרן" ],
 	"מספר נייר ערך" : [ "מספר ני\"ע", "מס' נייר ערך"],
-	"שיעור מהערך הנקוב המונפק" : [ "שיעור מהע.נ המונפק", "שיעור מהע.נ המונפק" ]
+	"שיעור מהערך הנקוב המונפק" : [ "שיעור מהע.נ המונפק", "שיעור מהע.נ המונפק" ],
+	"שווי הוגן" : [ "שווי שוק" ],
+	"תשואה לפדיון" : [ "ת. לפדיון" ]
 }
 
 var detectorsMap = {
@@ -74,19 +73,19 @@ var findInHeaders = function(headers, cellContent){
 		var _res = null;
 		headers.some(function(h){
 			var _h = cleanColumnHeaderStr(h);
-			if (LevDistance.calc(_h,_cleanCell) < levTolerance) {
-				_res = h;
-				return true;
-			} else if (aliasMap[h]) {
+			if (aliasMap[h]) {
 				return aliasMap[h].some(function(ah){
 					var _ah = cleanColumnHeaderStr(ah)
-					if (_ah == _cleanCell || LevDistance.calc(_ah,_cleanCell) < levTolerance){
+					if (_ah == _cleanCell || LevDistance.calc(_ah,_cleanCell) <= levTolerance){
 						_res = h;
 						return true;
 					} else {
 						return false;
 					}
 				})
+			} else if (LevDistance.calc(_h,_cleanCell) <= levTolerance) {
+				_res = h;
+				return true;
 			} else {
 				return false;
 			}
@@ -117,7 +116,7 @@ var parseSheets = function(sheets){
 
 					var called = metaTable.instrumentTypes[sheetCounter] + " " + metaTable.instrumentSubTypes[sheetCounter];
 
-					console.log("found matching sheet ", sheetCounter, " iterator:",sheetIterator," called",called)
+					console.log("** found matching sheet ", sheetCounter, " iterator:",sheetIterator," called",called)
 					foundMatchingSheet = true;
 					sheetCounter++;
 				}
@@ -212,22 +211,29 @@ var parseSheets = function(sheets){
 			}
 		}
 
+		console.log(">>>>>>>>>>>>>>>");
 		console.log("finished parsing sheet, match count:",sheetCounter -1, "sheet count:",sheetIterator, " remaining headers:", remainingHeaders)
-		
 		var engMap = foundColumnMapping.map(function(cm){ return { "columnName" : metaTable.englishColumns[ metaTable.hebrewColumns.indexOf(cm.foundCell) ] }  });
-
+		console.log("output headers:",foundColumnMapping.map(function(x){return x.foundCell}).join(" | "));
+		console.log("output data sample:",sheetData.slice(0,10).map(function(x){return x.join(" | ")}));
+		console.log("==============================================");
+		console.log("==============================================");
+		console.log("==============================================");
+		console.log("==============================================");
 		// var validator = require('./validator').validate(provider, sheetCounter, engMap, sheetData);
-		if (sheetCounter == 1) {
+		if (sheetCounter == 25) {
 			// console.log(metaTable)
-			process.exit();
+			// process.exit();
 		}
 	}
 
 
 	// sheets[3].read(function(err, sheetCB,dim){ parseSingleSheet(sheetCB,dim); })
-	sheets.map(function(so){
-		console.log("trying sheet:",sheetIterator);
-		so.read(function(err, sheetCB,dim){ parseSingleSheet(sheetCB,dim); }) 
+	sheets.forEach(function(so){
+		console.log("parsing sheet:",sheetIterator);
+		if (sheetCounter < metaTable.getDataSheetsCount()){
+			so.read(function(err, sheetCB,dim){ parseSingleSheet(sheetCB,dim); }) 
+		}
 		sheetIterator++; 
 	});
 
