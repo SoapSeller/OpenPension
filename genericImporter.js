@@ -47,7 +47,7 @@ var aliasMap = {
 }
 
 var detectorsMap = {
-	"שם נייר ערך" : [ "ב. ניירות ערך סחירים","בישראל" ]
+	"שם נייר ערך" : [ "ב. ניירות ערך סחירים","בישראל","סעיף 1. נכסים המוצגים לפי שווי הוגן:" ]
 }
 
 /* DATA MANIPULATION */
@@ -241,8 +241,7 @@ var parseSheets = function(sheets){
 										{ row: row, column: column, origCell: "", foundCell: rh })
 
 									remainingHeaders.splice( remainingHeaders.indexOf(rh), remainingHeaders.indexOf(rh) +1 );
-
-									sheetData[placeAfter].push(cellContent)
+									sheetData[sheetData.length -1].push(cellContent)
 									return true;
 								} else {
 									return false;
@@ -264,21 +263,30 @@ var parseSheets = function(sheets){
 		console.log("output headers:",foundColumnMapping.map(function(x){return x.foundCell}).join(" | "));
 		console.log("output data sample:",sheetData.slice(0,10).map(function(x){return x.join(" | ")}));
 		console.log("==============================================");
-		// var validator = require('./validator').validate(provider, sheetCounter, engMap, sheetData);
-		if (sheetCounter == 2) {
-			// console.log(metaTable)
+		var validator = require('./validator').validate(provider, sheetCounter, engMap, sheetData,sheetCounter);
+		if (sheetCounter == 1) {
+			
 			// process.exit();
+			
 		}
 	}
 
 
 	// sheets[3].read(function(err, sheetCB,dim){ parseSingleSheet(sheetCB,dim); })
-	sheets.forEach(function(so){
+
+	sheets.some(function(so){
 		console.log("parsing sheet:",sheetIterator);
-		if (sheetCounter < metaTable.getDataSheetsCount()){
-			so.read(function(err, sheetCB,dim){ parseSingleSheet(sheetCB,dim); }) 
+		if (sheetCounter < 30){
+			if (sheetCounter < metaTable.getDataSheetsCount()){
+				so.read(function(err, sheetCB,dim){ parseSingleSheet(sheetCB,dim); }) 
+			}
+			sheetIterator++; 
+			return false;
+		} else {
+			return true;
 		}
-		sheetIterator++; 
+		
+		
 	});
 
 	
