@@ -39,16 +39,16 @@ var columnLetterFromNumber = function(number){
 /* CONFIGURATION */
 var debug = false;
 var strictMode = false;
-var levTolerance = 3;
+var levTolerance = 2;
 var aliasMap = {
 	"שם נייר ערך" : [ "מזומנים ושווי מזומנים","שם ני''ע" ],
 	"שיעור מנכסי ההשקעה" : [ "שיעור מנכסי הקרן" ],
-	"מספר נייר ערך" : [ "מספר ני\"ע" ],
-	"שיעור מהערך הנקוב המונפק" : [ "שיעור מהע.נ המונפק" ]
+	"מספר נייר ערך" : [ "מספר ני\"ע", "מס' נייר ערך"],
+	"שיעור מהערך הנקוב המונפק" : [ "שיעור מהע.נ המונפק", "שיעור מהע.נ המונפק" ]
 }
 
 var detectorsMap = {
-	"שם נייר ערך" : [ "ב. ניירות ערך סחירים" ]
+	"שם נייר ערך" : [ "ב. ניירות ערך סחירים","בישראל" ]
 }
 
 /* DATA MANIPULATION */
@@ -100,8 +100,6 @@ var parseSheets = function(sheets){
 
 	var metaTable = MetaTable.getMetaTable();
 	
-	
-
 	var parseSingleSheet = function(cellReader, dim){
 
 		var foundMatchingSheet = false;
@@ -116,7 +114,10 @@ var parseSheets = function(sheets){
 			
 			if (!foundMatchingSheet){
 				if (headers.length == 0 || headers.length < metaTable.columnMappingForRow(sheetCounter).length / 2){
-					console.log("found matching sheet ", sheetCounter, " iterator:",sheetIterator)
+
+					var called = metaTable.instrumentTypes[sheetCounter] + " " + metaTable.instrumentSubTypes[sheetCounter];
+
+					console.log("found matching sheet ", sheetCounter, " iterator:",sheetIterator," called",called)
 					foundMatchingSheet = true;
 					sheetCounter++;
 				}
@@ -149,6 +150,8 @@ var parseSheets = function(sheets){
 				var letter = columnLetterFromNumber(column);
 				var cellId = letter + row;
 				var cellContent = cellReader(cellId);
+
+				
 				
 				if (headers.length != 0) { 
 					//###>> enter the following while we have not found the headers yet!
@@ -209,11 +212,15 @@ var parseSheets = function(sheets){
 			}
 		}
 
+		console.log("finished parsing sheet, match count:",sheetCounter -1, "sheet count:",sheetIterator, " remaining headers:", remainingHeaders)
 		
 		var engMap = foundColumnMapping.map(function(cm){ return { "columnName" : metaTable.englishColumns[ metaTable.hebrewColumns.indexOf(cm.foundCell) ] }  });
 
-		var validator = require('./validator').validate(provider, sheetCounter, engMap, sheetData);
-		if (sheetCounter == 1) process.exit();
+		// var validator = require('./validator').validate(provider, sheetCounter, engMap, sheetData);
+		if (sheetCounter == 1) {
+			// console.log(metaTable)
+			process.exit();
+		}
 	}
 
 
