@@ -42,7 +42,7 @@ var aliasMap = {
 	"שיעור מנכסי ההשקעה" : [ "שיעור מנכסי הקרן" ],
 	"מספר נייר ערך" : [ "מספר ני\"ע", "מס' נייר ערך"],
 	"שיעור מהערך הנקוב המונפק" : [ "שיעור מהע.נ המונפק", "שיעור מהע.נ המונפק" ],
-	"שווי הוגן" : [ "שווי שוק" ],
+	"שווי הוגן" : [ "שווי שוק", "שווי השקעה" ],
 	"תשואה לפדיון" : [ "ת. לפדיון" ]
 }
 
@@ -63,34 +63,81 @@ var cleanColumnHeaderStr = function(inputStr){
 		return ""
 }
 
+var findFromAliasMap = function(input, headers, headersAliasMap){
+	var res = headers.filter( function(h){
+		if (headersAliasMap[h]){
+			return headersAliasMap[h].some(function(ah){
+				var _ah = cleanColumnHeaderStr(ah);
+				return input == _ah;
+			});
+		} else {
+			return false;
+		}
+	});
 
-var findInHeaders = function(headers, cellContent){
+	if (res.length > 0){
+		return res[0]
+	} else {
+		return null
+	}
+}
+
+findFromHeadersLev = function(input, headers){
+	var res = headers.filter(function(h){
+		var _h = cleanColumnHeaderStr(h);
+		if (LevDistance.calc(_h,input) <= levTolerance){
+			return h;
+		} else {
+			return false;
+		}
+	});
+
+	if (res.length > 0){
+		return res[0];
+	} else {
+		return null;
+	}
+}
+
+var findFromAliasMapLev = function(input, headers, headersAliasMap){
+	var res = headers.filter( function(h){
+		if (headersAliasMap[h]){
+			return headersAliasMap[h].some(function(ah){
+				var _ah = cleanColumnHeaderStr(ah);
+				return LevDistance.calc(_ah,input) <= levTolerance;
+			});
+		} else {
+			return false;
+		}
+	});
+
+	if (res.length > 0){
+		return res[0]
+	} else {
+		return null
+	}
+};
+
+
+
+var findInHeaders = function(headers, cellContent, aliasMap){
 	var _cleanCell = cleanColumnHeaderStr(cellContent);
 
 	if (headers.indexOf(_cleanCell) > -1) {
 		return _cleanCell;
 	} else {
-		var _res = null;
-		headers.some(function(h){
-			var _h = cleanColumnHeaderStr(h);
-			if (aliasMap[h]) {
-				return aliasMap[h].some(function(ah){
-					var _ah = cleanColumnHeaderStr(ah)
-					if (_ah == _cleanCell || LevDistance.calc(_ah,_cleanCell) <= levTolerance){
-						_res = h;
-						return true;
-					} else {
-						return false;
-					}
-				})
-			} else if (LevDistance.calc(_h,_cleanCell) <= levTolerance) {
-				_res = h;
-				return true;
+		var headerFromAliasMap = findFromAliasMap(_cleanCell, headers,aliasMap);
+		if (headerFromAliasMap){
+			return headerFromAliasMap;
+		} else {
+			var headerFromHeaderLev = findFromHeadersLev(_cleanCell, headers);
+			if (headerFromHeaderLev) {
+				return headerFromHeaderLev;
 			} else {
-				return false;
+				return findFromAliasMapLev(_cleanCell, headers,aliasMap);
+				
 			}
-		})
-		return _res;
+		}
 	}
 };
 
@@ -159,9 +206,9 @@ var parseSheets = function(sheets){
 						
 						if (debug) console.log("cell content>> ",cellContent);
 
-						var foundInHeader = findInHeaders(headers, cellContent);
+						var foundInHeader = findInHeaders(headers, cellContent, aliasMap);
 						if (foundInHeader) {
-							console.log("found matching header, removing it..", foundInHeader);
+							console.log("* found matching header, removing it..", foundInHeader);
 							headers.splice( headers.indexOf(foundInHeader), headers.indexOf(foundInHeader) +1 );
 							foundColumnMapping.push({ row: row, column: column, origCell: cellContent, foundCell: foundInHeader });
 						}
@@ -176,7 +223,7 @@ var parseSheets = function(sheets){
 						remainingHeaders.some(function(rh){
 							if (detectorsMap[rh] && detectorsMap[rh].some(function(dtc){
 								if (dtc == cellContent) {
-									if (debug) console.log("detected new column by content! ", rh," ", cellContent)
+									if (debug) console.log("* detected new column by content! ", rh," ", cellContent)
 
 									var placeAfter = null;
 
@@ -211,17 +258,14 @@ var parseSheets = function(sheets){
 			}
 		}
 
-		console.log(">>>>>>>>>>>>>>>");
+
 		console.log("finished parsing sheet, match count:",sheetCounter -1, "sheet count:",sheetIterator, " remaining headers:", remainingHeaders)
 		var engMap = foundColumnMapping.map(function(cm){ return { "columnName" : metaTable.englishColumns[ metaTable.hebrewColumns.indexOf(cm.foundCell) ] }  });
 		console.log("output headers:",foundColumnMapping.map(function(x){return x.foundCell}).join(" | "));
 		console.log("output data sample:",sheetData.slice(0,10).map(function(x){return x.join(" | ")}));
 		console.log("==============================================");
-		console.log("==============================================");
-		console.log("==============================================");
-		console.log("==============================================");
 		// var validator = require('./validator').validate(provider, sheetCounter, engMap, sheetData);
-		if (sheetCounter == 25) {
+		if (sheetCounter == 5) {
 			// console.log(metaTable)
 			// process.exit();
 		}
