@@ -45,7 +45,7 @@ program
 program
 	.command("debug")
 	.action(function(){
-		require('./genericImporter').parseXls("res/migdal.xlsx","migdal");
+		require('./genericImporter').parseXls("res/menora.xlsx","menora");
 	});
 
 program

@@ -265,7 +265,7 @@ var parseSheets = function(sheets){
 		console.log("output data sample:",sheetData.slice(0,10).map(function(x){return x.join(" | ")}));
 		console.log("==============================================");
 		// var validator = require('./validator').validate(provider, sheetCounter, engMap, sheetData);
-		if (sheetCounter == 5) {
+		if (sheetCounter == 2) {
 			// console.log(metaTable)
 			// process.exit();
 		}
