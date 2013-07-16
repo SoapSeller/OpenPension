@@ -12,10 +12,11 @@ exports.validate = function(supplier, tabIndex, headers, content,tabIndex) {
 
 	// validate all content arrays have same length as headers
 	removeBadLengthLines(content, headers.length);
-
-	removeEmptyLines(content)
-	removeSumLines(content)
-	validateTypes();
+	removeEmptyLines(content);
+	removeLinesWithoutInstrumentSymbol(content, headers);
+	removeSpecialChars(content);
+	
+	// validateTypes();
 
 	var DB =  require('./db');
 	var db = new DB.csv(supplier + "_tab_" + tabIndex + ".csv");
@@ -26,8 +27,22 @@ exports.validate = function(supplier, tabIndex, headers, content,tabIndex) {
 	// console.log("<><><<>< Sheet Data",content);
 }
 
-function removeBadLengthLines(content, numColumns)
-{
+function removeSpecialChars(content, numColumns){
+	for (var rowIndex = content.length - 1 ; rowIndex > -1; rowIndex--){
+		var numColumns = content[rowIndex].length;
+		for (var columnIndex = numColumns -1; columnIndex > -1; columnIndex--){
+			var cellContent = content[rowIndex][columnIndex];
+			content[rowIndex][columnIndex] = getCleanValue(cellContent);
+		}
+	}
+}
+
+function getCleanValue(value){
+	// remove %$
+	return value.replace("$", "").replace("%", "");
+}
+
+function removeBadLengthLines(content, numColumns){
 	for (var i = content.length - 1 ; i > -1; i--){
 		if (content[i].length !== numColumns){
 			content.splice(i, 1);
@@ -56,8 +71,20 @@ function lineIsEmpty(line)
 	return true;
 }
 
-function removeSumLines(content){
-	
+function removeLinesWithoutInstrumentSymbol(content, headers){
+	var instrumentSymbolIndex = getInstrumentSymbolIndex(headers);
+	for (var rowIndex = content.length - 1 ; rowIndex > -1; rowIndex--){
+		if (content[rowIndex][instrumentSymbolIndex] == '')
+		{
+			console.log('@@ removing: ' + content[rowIndex]);
+			content.splice(rowIndex, 1);
+		}
+	}
+}
+
+function getInstrumentSymbolIndex(headers){
+	var INSTRUMENT_SYMBOL = "instrument_symbol";
+	return 0;
 }
 
 function validateTypes(){
