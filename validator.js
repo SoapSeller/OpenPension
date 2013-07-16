@@ -61,10 +61,8 @@ function removeEmptyLines(content){
 
 function lineIsEmpty(line)
 {
-	for (var i = 0; i < line.length; i++)
-	{
-		if (line[i] != '')
-		{
+	for (var i = 0; i < line.length; i++){
+		if (line[i] != ''){
 			return false;
 		}
 	}
@@ -73,9 +71,11 @@ function lineIsEmpty(line)
 
 function removeLinesWithoutInstrumentSymbol(content, headers){
 	var instrumentSymbolIndex = getInstrumentSymbolIndex(headers);
+	if (instrumentSymbolIndex == -1){
+		console.log('missing instrument symbol in headers. ');
+	}
 	for (var rowIndex = content.length - 1 ; rowIndex > -1; rowIndex--){
-		if (content[rowIndex][instrumentSymbolIndex] == '')
-		{
+		if (content[rowIndex][instrumentSymbolIndex] == ''){
 			console.log('@@ removing: ' + content[rowIndex]);
 			content.splice(rowIndex, 1);
 		}
@@ -84,7 +84,14 @@ function removeLinesWithoutInstrumentSymbol(content, headers){
 
 function getInstrumentSymbolIndex(headers){
 	var INSTRUMENT_SYMBOL = "instrument_symbol";
-	return 0;
+	for (var i=0; i < headers.length; i++){
+		for (key in headers[i]){
+			if (headers[i][key] == INSTRUMENT_SYMBOL){
+				return i;
+			}
+		}
+	}
+	return -1;
 }
 
 function validateTypes(){
