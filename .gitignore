@@ -10,3 +10,5 @@ node_modules
 output.csv
 dump.csv
 res/test
+
+dump.csv
