@@ -11,16 +11,28 @@ exports.validate = function(supplier, tabIndex, headers, content,tabIndex) {
 // 			]
 
 	// validate all content arrays have same length as headers
+
 	removeBadLengthLines(content, headers.length);
 	removeEmptyLines(content);
 	removeLinesWithoutInstrumentSymbol(content, headers);
 	removeSpecialChars(content);
 	
 	// validateTypes();
+	// removeBadLengthLines(content, headers.length);
+	// console.log(content);
+	// var goodData = removeRowsWithLittleData(content, headers);
+	// console.log(goodData);
+	// process.exit();
+
+	removeEmptyLines(content)
+	// removeSumLines(content)
+	validateTypes();
 
 	var DB =  require('./db');
-	var db = new DB.csv(supplier + "_tab_" + tabIndex + ".csv");
-	var tableWriter = db.openTable(headers)
+
+	// var db = new DB.csv(supplier + "_tab_" + tabIndex + ".csv");
+	var db = DB.open();
+	var tableWriter = db.openTable(headers);
 	tableWriter(content);
 
 	// console.log("<><><<>< headers", headers)
@@ -42,7 +54,17 @@ function getCleanValue(value){
 	return value.replace("$", "").replace("%", "");
 }
 
-function removeBadLengthLines(content, numColumns){
+var removeRowsWithLittleData = function(data, headers){
+	var goodData = data.filter(function(row){
+		if (row.filter(function(x){return x != null && x != undefined && x != "" }).length < headers.length / 2)
+			return false
+		else return true
+	});
+	return goodData;
+}
+
+function removeBadLengthLines(content, numColumns)
+{
 	for (var i = content.length - 1 ; i > -1; i--){
 		if (content[i].length !== numColumns){
 			content.splice(i, 1);

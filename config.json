@@ -1,4 +1,4 @@
 {
-    "db_mode": "csv",
-    "connection_string": "tcp://opublic:public@:54.217.236.50:5432/op"
+    "db_mode": "pg",
+    "connection_string": "tcp://op:thepowerofasquareinch@54.217.236.50:5432/op"
 }
