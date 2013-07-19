@@ -1,4 +1,4 @@
-var MetaTable = require('./MetaTable')
+var MetaTable = require('./MetaTable');
 
 exports.validate = function(managingBody, tabIndex, headers, data, tabIndex, year, quarter) {
 // managingBody; (string) 'Migdal' לדגמ
@@ -10,21 +10,23 @@ exports.validate = function(managingBody, tabIndex, headers, data, tabIndex, yea
 // 				["instrument 2"] 
 // 			]
 
-	
-	
+	var metaTable = MetaTable.getMetaTable();
+
+	var instrument = metaTable.instrumentTypes[tabIndex];
+	var instrumentSub = metaTable.instrumentSubTypes[tabIndex];
 	
 	var cleanData = data.filter(function(l){
 		return (
 			!isLineEmpty(l)
 		)
-	})
+	});
 	// var goodData = removeRowsWithLittleData(data, headers);
 	// console.log(cleanData);
 	// process.exit();
 
 	var DB =  require('./db');
-	var db = new DB.csv(managingBody + "_tab_" + tabIndex + ".csv");
-	// var db = DB.open();
+	// var db = new DB.csv(managingBody + "_tab_" + tabIndex + ".csv");
+	var db = DB.open();
 	var tableWriter = db.openTable(headers);
 	tableWriter(managingBody, year, quarter, data);
 
