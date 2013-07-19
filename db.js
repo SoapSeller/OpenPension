@@ -97,7 +97,11 @@ db.pg = function() {
   createTable += fields.filter(function(f) { return !!f[0] && !!f[1]; }).map(function(f) { return f[0] + " " + f[1]; }).join(',');
   createTable += ");";
 
-  this.client.query(createTable, function() {});
+  this.client.query(createTable, function(err) {
+    if(!err) {
+      this.client.query('GRANT SELECT ON data TO opublic;');
+    }
+  });
 };
 
 db.pg.prototype = {
