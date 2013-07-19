@@ -45,7 +45,7 @@ program
 program
 	.command("debug")
 	.action(function(){
-		require('./genericImporter').parseXls("res/fenix.xlsx","fenix");
+		require('./genericImporter').parseXls("res/fenix.xlsx","fenix",2012,4);
 	});
 
 program

@@ -3,11 +3,15 @@ var xlsx = require("./xlsxparser");
 var LevDistance = require('./LevDistance')
 
 var provider = null;
+var year = null;
+var quarter = null;
 var sheetCounter = 0;
 var sheetIterator = 0;
 
-exports.parseXls = function(filename,givenProvider){
+exports.parseXls = function(filename,givenProvider,givenYear, givenQuarter){
 	provider = givenProvider;
+	year = givenYear;
+	quarter = givenQuarter;
 	xlsx.getSheets(filename, parseSheets);
 }
 

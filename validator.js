@@ -1,39 +1,32 @@
 var MetaTable = require('./MetaTable')
 
-exports.validate = function(supplier, tabIndex, headers, content,tabIndex) {
+exports.validate = function(supplier, tabIndex, headers, data, tabIndex) {
 // supplier; (string) 'Migdal' לדגמ
 // tabIndex; (integer) the tab number in the suppliers xls sheet
 // headers; (array of objects) [{columnName: 'instrument_id'}] 
 //  
-// content; (array of arrays - each of which has the same length as headers) [
+// data; (array of arrays - each of which has the same length as headers) [
 // 				["instrument 1"],
 // 				["instrument 2"] 
 // 			]
 
-	// validate all content arrays have same length as headers
-
-	removeBadLengthLines(content, headers.length);
-	removeEmptyLines(content);
-	removeLinesWithoutInstrumentSymbol(content, headers);
-	removeSpecialChars(content);
 	
-	// validateTypes();
-	// removeBadLengthLines(content, headers.length);
-	// console.log(content);
-	// var goodData = removeRowsWithLittleData(content, headers);
-	// console.log(goodData);
+	
+	
+	var cleanData = data.filter(function(l){
+		return (
+			!isLineEmpty(l)
+		)
+	})
+	// var goodData = removeRowsWithLittleData(data, headers);
+	// console.log(cleanData);
 	// process.exit();
 
-	removeEmptyLines(content)
-	// removeSumLines(content)
-	validateTypes();
-
 	var DB =  require('./db');
-
-	// var db = new DB.csv(supplier + "_tab_" + tabIndex + ".csv");
-	var db = DB.open();
+	var db = new DB.csv(supplier + "_tab_" + tabIndex + ".csv");
+	// var db = DB.open();
 	var tableWriter = db.openTable(headers);
-	tableWriter(content);
+	tableWriter(data);
 
 	// console.log("<><><<>< headers", headers)
 	// console.log("<><><<>< Sheet Data",content);
@@ -52,6 +45,13 @@ function removeSpecialChars(content, numColumns){
 function getCleanValue(value){
 	// remove %$
 	return value.replace("$", "").replace("%", "");
+}
+
+var isLineEmpty = function(line){
+	if (line.filter(function(x){ return x != null && x != undefined && x != "" }).length > 0)
+		return false;
+	else
+		return true;
 }
 
 var removeRowsWithLittleData = function(data, headers){
@@ -73,23 +73,7 @@ function removeBadLengthLines(content, numColumns)
 	}
 }
 
-function removeEmptyLines(content){
-	for (var i = content.length - 1 ; i > -1; i--){
-		if (lineIsEmpty(content[i])){
-			content.splice(i, 1);
-		}
-	}
-}
 
-function lineIsEmpty(line)
-{
-	for (var i = 0; i < line.length; i++){
-		if (line[i] != ''){
-			return false;
-		}
-	}
-	return true;
-}
 
 function removeLinesWithoutInstrumentSymbol(content, headers){
 	var instrumentSymbolIndex = getInstrumentSymbolIndex(headers);
