@@ -112,7 +112,11 @@ db.pg.prototype = {
     return function(objects) {
       objects.forEach(function(object) {
         statment.values = object.map(function(f, i) { return fieldsPreps[i](f); });
-        that.client.query(statment);
+        that.client.query(statment, function(err) {
+          console.log("Error in DB of object:", err);
+          console.log(object);
+          console.log("***********************************");
+        });
       });
     };
   }
