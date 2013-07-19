@@ -8,8 +8,8 @@ var config = require('./config'),
     columnsNames = metaTable.englishColumns,
     columnsTypes = metaTable.dataTypes;
 
-var defaultColumnnNames = ['managing_body', 'report_year', 'report_qurater'];
-var defaultColumnnTypes = ['string', 'number', 'number'];
+var defaultColumnnNames = ['managing_body', 'report_year', 'report_qurater', 'instrument_type', 'instrument_sub_type'];
+var defaultColumnnTypes = ['string', 'number', 'number', 'string', 'string'];
 
 columnsNames = defaultColumnnNames.concat(columnsNames);
 columnsTypes = defaultColumnnTypes.concat(columnsTypes);
@@ -46,9 +46,9 @@ db.csv.prototype = {
       indexes.push(idx);
     });
     console.log(_.zip(columnsNames, indexes));
-    return function(managing_body, report_year, report_qurater, objects) {
+    return function(managing_body, report_year, report_qurater, instrument_type, instrument_sub_type, objects) {
       objects.forEach(function(object) {
-        object = [managing_body, report_year.toString(), report_qurater.toString()].concat(object);
+        object = [managing_body, report_year.toString(), report_qurater.toString(), instrument_type, instrument_sub_type].concat(object);
         console.log(object);
 
         for (i = 0; i < indexes.length; ++i) {
@@ -119,14 +119,14 @@ db.pg.prototype = {
       }
     });
 
-    var sql = "INSERT INTO data (" + mapping.map(function(m) { return m.columnName; }).join(',') + ")  " +
+    var sql = "INSERT INTO data(" + mapping.map(function(m) { return m.columnName; }).join(',') + ")  " +
                    "VALUES (" + _.range(mapping.length).map(function(n) { return "$" + (n+1);}) + ");";
 
     var statment = { name: name, text: sql, values: null };
 
-    return function(managing_body, report_year, report_qurater, objects) {
+    return function(managing_body, report_year, report_qurater, instrument_type, instrument_sub_type, objects) {
       objects.forEach(function(object) {
-        statment.values = [managing_body, report_year, report_qurater].concat(object.map(function(f, i) { return fieldsPreps[i](f); }));
+        statment.values = [managing_body, report_year, report_qurater, instrument_type, instrument_sub_type].concat(object.map(function(f, i) { return fieldsPreps[i](f); }));
         that.client.query(statment, function(err) {
           if (err){
             console.log("Error in DB of object:", err);

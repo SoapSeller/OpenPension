@@ -57,7 +57,7 @@ program
 		];
 		var db = require('./db').open(true);
 		var tableWriter = db.openTable(map);
-		tableWriter("migdal", 2013, 1, [
+		tableWriter("migdal", 2013, 1, "in_id", "in_sub_id", [
 			["inst1", "1/10/2004"],
 			["inst2", "2/10/2004 x"]
 		]);
