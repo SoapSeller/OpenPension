@@ -1,6 +1,6 @@
 var MetaTable = require('./MetaTable');
 
-exports.validate = function(managingBody, tabIndex, headers, data, tabIndex, year, quarter) {
+exports.validate = function(headers,data,managingBody,tabIndex,year,quarter) {
 // managingBody; (string) 'Migdal' לדגמ
 // tabIndex; (integer) the tab number in the managingBody xls sheet
 // headers; (array of objects) [{columnName: 'instrument_id'}] 
@@ -25,8 +25,8 @@ exports.validate = function(managingBody, tabIndex, headers, data, tabIndex, yea
 	// process.exit();
 
 	var DB =  require('./db');
-	var db = new DB.csv(managingBody + "_tab_" + tabIndex + ".csv");
-	// var db = DB.open();
+	// var db = new DB.csv(managingBody + "_tab_" + tabIndex + ".csv");
+	var db = DB.open();
 	var tableWriter = db.openTable(headers);
 	tableWriter(managingBody, year, quarter, instrument, instrumentSub, data);
 

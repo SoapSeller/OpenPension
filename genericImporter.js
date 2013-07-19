@@ -267,7 +267,7 @@ var parseSheets = function(sheets){
 		console.log("output headers:",foundColumnMapping.map(function(x){return x.foundCell}).join(" | "));
 		console.log("output data sample:",sheetData.slice(0,10).map(function(x){return x.join(" | ")}));
 		console.log("==============================================");
-		var validator = require('./validator').validate(managingBody, sheetCounter, engMap, sheetData,sheetCounter,year,quarter);
+		var validator = require('./validator').validate(engMap,sheetData,managingBody,sheetCounter -1,year,quarter);
 		if (sheetCounter == 1) {
 			
 			// process.exit();
