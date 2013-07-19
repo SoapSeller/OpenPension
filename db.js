@@ -8,6 +8,14 @@ var config = require('./config'),
     columnsNames = metaTable.englishColumns,
     columnsTypes = metaTable.dataTypes;
 
+var defaultColumnnNames = ['managing_body', 'report_year', 'report_qurater'];
+var defaultColumnnTypes = ['string', 'number', 'number'];
+
+columnsNames = defaultColumnnNames.concat(columnsNames);
+columnsTypes = defaultColumnnTypes.concat(columnsTypes);
+
+var defaultColumnsNamesMapping = defaultColumnnNames.map(function(c) { return { columnName: c }; });
+
 var db = {};
 
 db.csv = function(filename) {
@@ -24,6 +32,8 @@ db.csv.prototype = {
   openTable: function(mapping) {
     var that = this;
 
+    mapping = defaultColumnsNamesMapping.concat(mapping);
+
     var indexes = [];
     columnsNames.forEach(function(column) {
       var idx = -1;
@@ -35,14 +45,17 @@ db.csv.prototype = {
       }
       indexes.push(idx);
     });
-    console.log(_.zip(columnsNames, indexes))
-    return function(objects) {
+    console.log(_.zip(columnsNames, indexes));
+    return function(managing_body, report_year, report_qurater, objects) {
       objects.forEach(function(object) {
+        object = [managing_body, report_year.toString(), report_qurater.toString()].concat(object);
+        console.log(object);
+
         for (i = 0; i < indexes.length; ++i) {
           var idx = indexes[i];
           if (idx >= 0)
           {
-            that.stream.write(object[idx] ? object[idx] : "");
+            that.stream.write(object[idx] ?  object[idx] : "");
           }
           if (i != indexes.length-1) {
             that.stream.write(",");
@@ -79,7 +92,7 @@ db.pg = function() {
 
   this.tablesCounter = 0;
 
-  var createTable = "CREATE TABLE data(id BIGSERIAL PRIMARY KEY, ";
+  var createTable = "CREATE TABLE data2(id BIGSERIAL PRIMARY KEY, ";
   var fields = _.zip(columnsNames, columnsTypes.map(mapColumnType2Sql));
   createTable += fields.filter(function(f) { return !!f[0] && !!f[1]; }).map(function(f) { return f[0] + " " + f[1]; }).join(',');
   createTable += ");";
@@ -93,6 +106,8 @@ db.pg.prototype = {
 
     var name = "table_" + (++this.tablesCounter);
 
+    mapping = defaultColumnsNamesMapping.concat(mapping);
+
     var fieldsPreps = [];
     mapping.forEach(function(m) {
       var idx = columnsNames.indexOf(m.columnName);
@@ -104,14 +119,14 @@ db.pg.prototype = {
       }
     });
 
-    var sql = "INSERT INTO data (" + mapping.map(function(m) { return m.columnName; }).join(',') + ")  " +
+    var sql = "INSERT INTO data2 (" + mapping.map(function(m) { return m.columnName; }).join(',') + ")  " +
                    "VALUES (" + _.range(mapping.length).map(function(n) { return "$" + (n+1);}) + ");";
 
     var statment = { name: name, text: sql, values: null };
 
-    return function(objects) {
+    return function(managing_body, report_year, report_qurater, objects) {
       objects.forEach(function(object) {
-        statment.values = object.map(function(f, i) { return fieldsPreps[i](f); });
+        statment.values = [managing_body, report_year, report_qurater].concat(object.map(function(f, i) { return fieldsPreps[i](f); }));
         that.client.query(statment, function(err) {
           if (err){
             console.log("Error in DB of object:", err);
