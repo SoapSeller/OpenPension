@@ -1,4 +1,4 @@
 {
     "db_mode": "csv",
-    "connection_string": "tcp://localhost/op"
+    "connection_string": "tcp://opublic:public@:54.217.236.50:5432/op"
 }
