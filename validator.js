@@ -1,8 +1,8 @@
 var MetaTable = require('./MetaTable')
 
-exports.validate = function(supplier, tabIndex, headers, data, tabIndex) {
-// supplier; (string) 'Migdal' לדגמ
-// tabIndex; (integer) the tab number in the suppliers xls sheet
+exports.validate = function(managingBody, tabIndex, headers, data, tabIndex, year, quarter) {
+// managingBody; (string) 'Migdal' לדגמ
+// tabIndex; (integer) the tab number in the managingBody xls sheet
 // headers; (array of objects) [{columnName: 'instrument_id'}] 
 //  
 // data; (array of arrays - each of which has the same length as headers) [
@@ -23,10 +23,10 @@ exports.validate = function(supplier, tabIndex, headers, data, tabIndex) {
 	// process.exit();
 
 	var DB =  require('./db');
-	var db = new DB.csv(supplier + "_tab_" + tabIndex + ".csv");
+	var db = new DB.csv(managingBody + "_tab_" + tabIndex + ".csv");
 	// var db = DB.open();
 	var tableWriter = db.openTable(headers);
-	tableWriter(data);
+	tableWriter(managingBody, year, quarter, data);
 
 	// console.log("<><><<>< headers", headers)
 	// console.log("<><><<>< Sheet Data",content);

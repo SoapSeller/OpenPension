@@ -92,7 +92,7 @@ db.pg = function() {
 
   this.tablesCounter = 0;
 
-  var createTable = "CREATE TABLE data2(id BIGSERIAL PRIMARY KEY, ";
+  var createTable = "CREATE TABLE data(id BIGSERIAL PRIMARY KEY, ";
   var fields = _.zip(columnsNames, columnsTypes.map(mapColumnType2Sql));
   createTable += fields.filter(function(f) { return !!f[0] && !!f[1]; }).map(function(f) { return f[0] + " " + f[1]; }).join(',');
   createTable += ");";
@@ -119,7 +119,7 @@ db.pg.prototype = {
       }
     });
 
-    var sql = "INSERT INTO data2 (" + mapping.map(function(m) { return m.columnName; }).join(',') + ")  " +
+    var sql = "INSERT INTO data (" + mapping.map(function(m) { return m.columnName; }).join(',') + ")  " +
                    "VALUES (" + _.range(mapping.length).map(function(n) { return "$" + (n+1);}) + ");";
 
     var statment = { name: name, text: sql, values: null };

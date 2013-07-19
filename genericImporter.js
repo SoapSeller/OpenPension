@@ -2,14 +2,14 @@ var MetaTable = require('./MetaTable')
 var xlsx = require("./xlsxparser");
 var LevDistance = require('./LevDistance')
 
-var provider = null;
+var managingBody = null;
 var year = null;
 var quarter = null;
 var sheetCounter = 0;
 var sheetIterator = 0;
 
-exports.parseXls = function(filename,givenProvider,givenYear, givenQuarter){
-	provider = givenProvider;
+exports.parseXls = function(filename,givenManagingBody,givenYear, givenQuarter){
+	managingBody = givenManagingBody;
 	year = givenYear;
 	quarter = givenQuarter;
 	xlsx.getSheets(filename, parseSheets);
@@ -267,7 +267,7 @@ var parseSheets = function(sheets){
 		console.log("output headers:",foundColumnMapping.map(function(x){return x.foundCell}).join(" | "));
 		console.log("output data sample:",sheetData.slice(0,10).map(function(x){return x.join(" | ")}));
 		console.log("==============================================");
-		var validator = require('./validator').validate(provider, sheetCounter, engMap, sheetData,sheetCounter);
+		var validator = require('./validator').validate(managingBody, sheetCounter, engMap, sheetData,sheetCounter,year,quarter);
 		if (sheetCounter == 1) {
 			
 			// process.exit();
