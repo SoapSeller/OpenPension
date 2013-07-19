@@ -25,10 +25,10 @@ exports.validate = function(managingBody, tabIndex, headers, data, tabIndex, yea
 	// process.exit();
 
 	var DB =  require('./db');
-	// var db = new DB.csv(managingBody + "_tab_" + tabIndex + ".csv");
-	var db = DB.open();
+	var db = new DB.csv(managingBody + "_tab_" + tabIndex + ".csv");
+	// var db = DB.open();
 	var tableWriter = db.openTable(headers);
-	tableWriter(managingBody, year, quarter, data);
+	tableWriter(managingBody, year, quarter, instrument, instrumentSub, data);
 
 	// console.log("<><><<>< headers", headers)
 	// console.log("<><><<>< Sheet Data",content);
