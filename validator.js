@@ -26,25 +26,49 @@ exports.validate = function(headers,data,managingBody,tabIndex,year,quarter) {
 	var tabData = parseTabSpecificData(tabIndex, headers, data);
 	if ((tabData || []).length > 0){
 
-		console.log(">!>!>!>!>!>!>!>","\n",tabData.map(function(l){ return l.join(" | ") }));
+		console.log(">!>!>!>!>!>!>!>","\n", tabData.map(function(l){ return l.join(" | ") }));
 		// var DB =  require('./db');
 		// var db = new DB.csv(managingBody + "_tab_" + tabIndex + ".csv");
 		// var db = DB.open();
 		// var tableWriter = db.openTable(headers);
 		// tableWriter(managingBody, year, quarter, instrument, instrumentSub, data);
 		
+	} else {
+		console.log(">!>!>!>!>!>!>!>", "no tab data found");
 	}
 	
-	if (tabIndex == 2) process.exit();
+	// if (tabIndex == 24) process.exit();
 
 }
 
 var parseTabSpecificData = function(tabIndex, headers, data){
 
 	switch(tabIndex){
-		case 0: return shumNehaseiHakerenCleaner(headers, data);
+		case 0: return shumNehaseiHakeren(headers, data);
 		case 1: return mezumanim(headers, data);
-
+		case 2: return teudatHihayvutMimshalti(headers,data);
+		case 3: return taudatHovMisharit(headers,data);
+		case 4: return agahKontzerni(headers,data);
+		case 5: return menayot(headers,data);
+		case 6: return teudotSal(headers,data);
+		case 7: return kranotNemanut(headers,data);
+		case 8: return kitveiOptzia(headers,data);
+		case 9: return opttziyot(headers,data);
+		case 10: return hozimAtidiim(headers,data);
+		case 11: return motzarimMuvnim(headers,data);
+		case 12: return teudatHihayvutMimshaltiLoSahir(headers,data);
+		case 13: return taudatHovMisharitLoSahir(headers,data);
+		case 14: return agahKontzerniLoSahir(headers,data);
+		case 15: return menayotLoSahir(headers,data);
+		case 16: return kranotHashkaaLoSahir(headers, data);
+		case 17: return kitveiOptziaLoSahir(headers, data);
+		case 18: return opttziyotLoSahir(headers, data);
+		case 19: return hozimAtidiimLoSahir(headers, data);
+		case 20: return motzarimMuvnimLoSahir(headers, data);
+		case 21: return halvaot(headers, data);
+		case 22: return pikdonot(headers, data);
+		case 23: return zhuyotMekarkein(headers, data);
+		case 24: return haskaotAherot(headers, data);
 	}
 }
 
@@ -159,7 +183,7 @@ var schumNehasimNames = [
 ]
 
 
-var shumNehaseiHakerenCleaner = function(headers,lines){
+var shumNehaseiHakeren = function(headers,lines){
 	var symbolIndex = headers.map(function(h){return h.columnName}).indexOf("instrument_symbol");
 	
 	lines.forEach(function(l){
@@ -168,37 +192,372 @@ var shumNehaseiHakerenCleaner = function(headers,lines){
 }
 
 
+
 var currencyMap = {
 	"₪" : "NIS",
 	"שקל" : "NIS"
 }
 
+var cleanCurrency = function(input){
+	if (currencyMap[input])
+		return currencyMap[input];
+	else 
+		return input;
+}
+
 var mezumanim = function(headers, dataLines){
 	var enHeaders = headers.map(function(h){return h.columnName});
-	// console.log(enHeaders);
 	return dataLines.filter(function(l){
 		return (
 			isNotEmpty(l[ enHeaders.indexOf("currency") ])
 			&& l[ enHeaders.indexOf("currency") ] != 0
 		)
 	}).map(function(l){
-		return l.map(function(c,i){
-			switch(enHeaders[i]){
-				case 'rate_of_fund': 	return c;
-				case 'market_cap': 		return c;
-				case 'yield': 			return c;
-				case 'intrest_rate': 	return c;
-				case 'currency': 		
-					if (currencyMap[c]) return currencyMap[c] 
-						else return c;
-				case 'rating_agency': 	return c;
-				case 'rating': 			return c;
-				case 'instrument_id': 	return c; // ????
-				case 'instrument_symbol':return c;
-				default:
-					throw new Error("Unexpected column header value given: \"" + c + "\"")
-			}
-		})
+		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c) });
 	})
 
+}
+
+
+var teudatHihayvutMimshalti = function(headers, dataLines){
+	var enHeaders = headers.map(function(h){return h.columnName});
+	return dataLines.filter(function(l){
+		return (
+			isNotEmpty(l[ enHeaders.indexOf("par_value") ])
+			&& l[ enHeaders.indexOf("par_value") ] != 0
+			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
+			&& l[ enHeaders.indexOf("rate") ] != 0
+		);
+	}).map(function(l){
+		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c) });
+	})
+}
+
+var taudatHovMisharit = function(headers, dataLines){
+	var enHeaders = headers.map(function(h){return h.columnName});
+	return dataLines.filter(function(l){
+		return (
+			isNotEmpty(l[ enHeaders.indexOf("par_value") ])
+			&& l[ enHeaders.indexOf("par_value") ] != 0
+			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
+			&& l[ enHeaders.indexOf("rate") ] != 0
+		);
+	}).map(function(l){
+		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c) });
+	});
+}
+
+var agahKontzerni = function(headers, dataLines){
+	var enHeaders = headers.map(function(h){return h.columnName});
+	return dataLines.filter(function(l){
+		return (
+			isNotEmpty(l[ enHeaders.indexOf("par_value") ])
+			&& l[ enHeaders.indexOf("par_value") ] != 0
+			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
+			&& l[ enHeaders.indexOf("rate") ] != 0
+		);
+	}).map(function(l){
+		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c) });
+	});
+}
+
+var menayot = function(headers, dataLines){
+	var enHeaders = headers.map(function(h){return h.columnName});
+	return dataLines.filter(function(l){
+		return (
+			isNotEmpty(l[ enHeaders.indexOf("par_value") ])
+			&& l[ enHeaders.indexOf("par_value") ] != 0
+			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
+			&& l[ enHeaders.indexOf("rate") ] != 0
+		);
+	}).map(function(l){
+		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c) });
+	});
+}
+
+var teudotSal = function(headers, dataLines){
+	var enHeaders = headers.map(function(h){return h.columnName});
+	return dataLines.filter(function(l){
+		return (
+			isNotEmpty(l[ enHeaders.indexOf("par_value") ])
+			&& l[ enHeaders.indexOf("par_value") ] != 0
+			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
+			&& l[ enHeaders.indexOf("rate") ] != 0
+		);
+	}).map(function(l){
+		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c) });
+	});
+}
+
+var kranotNemanut = function(headers, dataLines){
+	var enHeaders = headers.map(function(h){return h.columnName});
+	return dataLines.filter(function(l){
+		return (
+			isNotEmpty(l[ enHeaders.indexOf("par_value") ])
+			&& l[ enHeaders.indexOf("par_value") ] != 0
+			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
+			&& l[ enHeaders.indexOf("rate") ] != 0
+		);
+	}).map(function(l){
+		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c) });
+	});
+}
+
+var kitveiOptzia = function(headers, dataLines){
+	var enHeaders = headers.map(function(h){return h.columnName});
+	return dataLines.filter(function(l){
+		return (
+			isNotEmpty(l[ enHeaders.indexOf("par_value") ])
+			&& l[ enHeaders.indexOf("par_value") ] != 0
+			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
+			&& l[ enHeaders.indexOf("rate") ] != 0
+		);
+	}).map(function(l){
+		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c) });
+	});
+}
+
+var opttziyot = function(headers, dataLines){
+	var enHeaders = headers.map(function(h){return h.columnName});
+	return dataLines.filter(function(l){
+		return (
+			isNotEmpty(l[ enHeaders.indexOf("par_value") ])
+			&& l[ enHeaders.indexOf("par_value") ] != 0
+			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
+			&& l[ enHeaders.indexOf("rate") ] != 0
+		);
+	}).map(function(l){
+		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c) });
+	});
+}
+
+var hozimAtidiim = function(headers, dataLines){
+	var enHeaders = headers.map(function(h){return h.columnName});
+	return dataLines.filter(function(l){
+		return (
+			isNotEmpty(l[ enHeaders.indexOf("par_value") ])
+			&& l[ enHeaders.indexOf("par_value") ] != 0
+			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
+			&& l[ enHeaders.indexOf("rate") ] != 0
+		);
+	}).map(function(l){
+		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c) });
+	});
+}
+
+var motzarimMuvnim = function(headers, dataLines){
+	var enHeaders = headers.map(function(h){return h.columnName});
+	return dataLines.filter(function(l){
+		return (
+			isNotEmpty(l[ enHeaders.indexOf("par_value") ])
+			&& l[ enHeaders.indexOf("par_value") ] != 0
+			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
+			&& l[ enHeaders.indexOf("rate") ] != 0
+		);
+	}).map(function(l){
+		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c) });
+	});
+}
+
+var teudatHihayvutMimshaltiLoSahir = function(headers, dataLines){
+	var enHeaders = headers.map(function(h){return h.columnName});
+	return dataLines.filter(function(l){
+		return (
+			isNotEmpty(l[ enHeaders.indexOf("par_value") ])
+			&& l[ enHeaders.indexOf("par_value") ] != 0
+			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
+			&& l[ enHeaders.indexOf("rate") ] != 0
+		);
+	}).map(function(l){
+		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c) });
+	});
+}
+
+var taudatHovMisharitLoSahir = function(headers, dataLines){
+	var enHeaders = headers.map(function(h){return h.columnName});
+	return dataLines.filter(function(l){
+		return (
+			isNotEmpty(l[ enHeaders.indexOf("par_value") ])
+			&& l[ enHeaders.indexOf("par_value") ] != 0
+			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
+			&& l[ enHeaders.indexOf("rate") ] != 0
+		);
+	}).map(function(l){
+		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c) });
+	});
+}
+
+var agahKontzerniLoSahir = function(headers, dataLines){
+	var enHeaders = headers.map(function(h){return h.columnName});
+	return dataLines.filter(function(l){
+		return (
+			isNotEmpty(l[ enHeaders.indexOf("par_value") ])
+			&& l[ enHeaders.indexOf("par_value") ] != 0
+			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
+			&& l[ enHeaders.indexOf("rate") ] != 0
+		);
+	}).map(function(l){
+		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c) });
+	});
+}
+
+var menayotLoSahir = function(headers, dataLines){
+	var enHeaders = headers.map(function(h){return h.columnName});
+	return dataLines.filter(function(l){
+		return (
+			isNotEmpty(l[ enHeaders.indexOf("par_value") ])
+			&& l[ enHeaders.indexOf("par_value") ] != 0
+			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
+			&& l[ enHeaders.indexOf("rate") ] != 0
+		);
+	}).map(function(l){
+		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c) });
+	});
+}
+
+var kranotHashkaaLoSahir = function(headers, dataLines){
+	var enHeaders = headers.map(function(h){return h.columnName});
+	return dataLines.filter(function(l){
+		return (
+			isNotEmpty(l[ enHeaders.indexOf("par_value") ])
+			&& l[ enHeaders.indexOf("par_value") ] != 0
+			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
+			&& l[ enHeaders.indexOf("rate") ] != 0
+		);
+	}).map(function(l){
+		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c) });
+	});
+}
+
+var kitveiOptziaLoSahir = function(headers, dataLines){
+	var enHeaders = headers.map(function(h){return h.columnName});
+	return dataLines.filter(function(l){
+		return (
+			isNotEmpty(l[ enHeaders.indexOf("par_value") ])
+			&& l[ enHeaders.indexOf("par_value") ] != 0
+			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
+			&& l[ enHeaders.indexOf("rate") ] != 0
+		);
+	}).map(function(l){
+		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c) });
+	});
+}
+
+var opttziyotLoSahir = function(headers, dataLines){
+	var enHeaders = headers.map(function(h){return h.columnName});
+	return dataLines.filter(function(l){
+		return (
+			isNotEmpty(l[ enHeaders.indexOf("par_value") ])
+			&& l[ enHeaders.indexOf("par_value") ] != 0
+			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
+			&& l[ enHeaders.indexOf("rate") ] != 0
+		);
+	}).map(function(l){
+		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c) });
+	});
+}
+
+var hozimAtidiimLoSahir = function(headers, dataLines){
+	var enHeaders = headers.map(function(h){return h.columnName});
+	return dataLines.filter(function(l){
+		return (
+			isNotEmpty(l[ enHeaders.indexOf("par_value") ])
+			&& l[ enHeaders.indexOf("par_value") ] != 0
+			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
+			&& l[ enHeaders.indexOf("rate") ] != 0
+		);
+	}).map(function(l){
+		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c) });
+	});
+}
+
+var motzarimMuvnimLoSahir = function(headers, dataLines){
+	var enHeaders = headers.map(function(h){return h.columnName});
+	return dataLines.filter(function(l){
+		return (
+			isNotEmpty(l[ enHeaders.indexOf("par_value") ])
+			&& l[ enHeaders.indexOf("par_value") ] != 0
+			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
+			&& l[ enHeaders.indexOf("rate") ] != 0
+		);
+	}).map(function(l){
+		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c) });
+	});
+}
+
+var halvaot = function(headers, dataLines){
+	var enHeaders = headers.map(function(h){return h.columnName});
+	return dataLines.filter(function(l){
+		return (
+			isNotEmpty(l[ enHeaders.indexOf("par_value") ])
+			&& l[ enHeaders.indexOf("par_value") ] != 0
+			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
+			&& l[ enHeaders.indexOf("rate") ] != 0
+		);
+	}).map(function(l){
+		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c) });
+	});
+}
+
+var pikdonot = function(headers, dataLines){
+	var enHeaders = headers.map(function(h){return h.columnName});
+	return dataLines.filter(function(l){
+		return (
+			isNotEmpty(l[ enHeaders.indexOf("par_value") ])
+			&& l[ enHeaders.indexOf("par_value") ] != 0
+			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
+			&& l[ enHeaders.indexOf("rate") ] != 0
+		);
+	}).map(function(l){
+		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c) });
+	});
+}
+
+var zhuyotMekarkein = function(headers, dataLines){
+	var enHeaders = headers.map(function(h){return h.columnName});
+	return dataLines.filter(function(l){
+		return (
+			isNotEmpty(l[ enHeaders.indexOf("par_value") ])
+			&& l[ enHeaders.indexOf("par_value") ] != 0
+		);
+	}).map(function(l){
+		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c) });
+	});
+}
+
+var haskaotAherot = function(headers, dataLines){
+	var enHeaders = headers.map(function(h){return h.columnName});
+	return dataLines.filter(function(l){
+		return (
+			isNotEmpty(l[ enHeaders.indexOf("rating_agency") ])
+		);
+	}).map(function(l){
+		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c) });
+	});
+}
+
+var normalizeValues = function(enName, value){
+	switch(enName){
+		case 'instrument_symbol': 	return value;
+		case 'instrument_id': 		return value; //?????
+		case 'underlying_asset': 	return value;
+		case 'industry': 			return value;
+		case 'rating': 				return value;
+		case 'rating_agency': 		return value;
+		case 'date_of_purchase': 	return value;
+		case 'average_of_duration': return value;
+		case 'currency': 			return cleanCurrency(value);
+  		case 'intrest_rate': 		return value;
+		case 'yield': 				return value;
+		case 'par_value': 			return value;
+		case 'rate': 				return value;
+		case 'market_cap': 			return value;
+		case 'fair_value': 			return value;
+		case 'rate_of_ipo': 		return value;
+		case 'rate_of_fund': 		return value;
+		case 'date_of_revaluation': return value;
+		case 'type_of_asset': 		return value;
+		default:
+			throw new Error("Unexpected column header value given: \"" + c + "\"")
+	}
 }

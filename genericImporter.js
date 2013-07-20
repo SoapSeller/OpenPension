@@ -268,7 +268,7 @@ var parseSheets = function(sheets){
 		var engMap = foundColumnMapping.map(function(cm){ return { "columnName" : metaTable.englishColumns[ metaTable.hebrewColumns.indexOf(cm.foundCell) ] }  });
 		console.log("output headers:",foundColumnMapping.map(function(x){return x.foundCell}).join(" | "));
 		console.log("output headers:",engMap.map(function(x){return x.columnName}).join(" | "));
-		console.log("output data sample:",sheetData.slice(0,10).map(function(x){return x.join(" | ")}));
+		console.log("output data sample:",sheetData.slice(0,5).map(function(x){return x.join(" | ")}));
 		console.log("==============================================");
 		if (sheetCounter == 2) {
 			// console.log("###########");
@@ -283,10 +283,12 @@ var parseSheets = function(sheets){
 	// sheets[3].read(function(err, sheetCB,dim){ parseSingleSheet(sheetCB,dim); })
 
 	sheets.some(function(so){
-		console.log("%% parsing sheet:",sheetIterator);
-		if (sheetCounter < 30){
-			if (sheetCounter < metaTable.getDataSheetsCount()){
+		if (sheetCounter < 35){
+			if (sheetCounter < metaTable.getLastSheetNum()){
+				console.log("%%%%%% parsing sheet:",sheetIterator);
 				so.read(function(err, sheetCB,dim){ parseSingleSheet(sheetCB,dim); }) 
+			} else {
+				return true;
 			}
 			sheetIterator++; 
 			return false;

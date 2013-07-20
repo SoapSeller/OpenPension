@@ -11,7 +11,7 @@ exports.getMetaTable = function(){
 		instrumentTypes: 		parsedLines.map(function(l){return l.split(",")[0]}),
 		instrumentSubTypes : 	parsedLines.map(function(l){return l.split(",")[1]}),
 		dataMapping: 			parsedLines.map(function(l){ return l.split(",").slice(2,l.split(",").length) }),
-		getDataSheetsCount:		function(){ return this.dataMapping.length },
+		getLastSheetNum:		function(){ return this.dataMapping.length -1 },
 		columnMappingForRow: 	function(rowId){
 			var output = [];
 			for (var i = 0; i < this.dataMapping[rowId].length ; i++ ){
