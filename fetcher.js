@@ -73,9 +73,12 @@ var fetchFund = function(fund, onDone) {
 			//stream.end();
 
 			cp.exec("file " + filename, function (err, stdout, stderr) {
-				if (!err && stdout.toString().indexOf("CDF V2") !== -1) {
+				if (!err &&
+					(stdout.toString().indexOf("CDF V2") !== -1 ||
+					 stdout.toString().indexOf("Composite Document File V2 Document") !== -1)) {
 					var cmd = "ssconvert --export-type=Gnumeric_Excel:xlsx " + filename + " " + filenameX;
 					cp.exec(cmd, function(err, stdout, stderr) {
+						//console.log(cmd);
 						fs.unlink(filename);
 						onDone();
 					});
