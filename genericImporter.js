@@ -42,11 +42,13 @@ var debug = false;
 var strictMode = false;
 var levTolerance = 2;
 var aliasMap = {
+	"סוג מטבע" : ["מטבע"],
 	"שם נייר ערך" : [ "מזומנים ושווי מזומנים","שם ני''ע", "סוג נכס" ],
 	"שיעור מנכסי ההשקעה" : [ "שיעור מנכסי הקרן", "שיעור מהנכסים" ],
 	"מספר נייר ערך" : [ "מספר ני\"ע", "מס' נייר ערך"],
 	"שיעור מהערך הנקוב המונפק" : [ "שיעור מהע.נ המונפק", "שיעור מהע.נ המונפק" ],
 	"שווי הוגן" : [ "שווי שוק", "שווי השקעה", "שווי הוגן באלפי ש\"ח" ],
+	"שווי שוק" : [ "שווי הוגן" ],
 	"תשואה לפדיון" : [ "ת. לפדיון" ]
 }
 
@@ -154,6 +156,7 @@ var parseSheets = function(sheets){
 
 		var foundMatchingSheet = false;
 		var headers = metaTable.columnMappingForRow(sheetCounter).map(function(x){return x});
+
 		if (debug) console.log("headers >> ",metaTable.columnMappingForRow(sheetCounter));
 		var foundColumnMapping = [];
 		var sheetData = [[]];
@@ -180,7 +183,7 @@ var parseSheets = function(sheets){
 						console.log("found mapping",foundColumnMapping);
 						console.log("remaining headers", headers);
 						process.exit();
-					} else {
+					} else {	
 						console.log("found only partial match of headers, not in strict mode.. continue");
 						console.log("found mapping",foundColumnMapping);
 						console.log("remaining headers", headers);
@@ -211,7 +214,7 @@ var parseSheets = function(sheets){
 						var foundInHeader = findInHeaders(headers, cellContent, aliasMap);
 						if (foundInHeader) {
 							console.log("* found matching header, removing it..", foundInHeader);
-							headers.splice( headers.indexOf(foundInHeader), headers.indexOf(foundInHeader) +1 );
+							headers.splice( headers.indexOf(foundInHeader), 1 );
 							foundColumnMapping.push({ row: row, column: column, origCell: cellContent, foundCell: foundInHeader });
 						}
 					}
@@ -260,24 +263,27 @@ var parseSheets = function(sheets){
 		}
 
 
-		console.log("finished parsing sheet, match count:",sheetCounter -1, "sheet count:",sheetIterator, " remaining headers:", remainingHeaders)
+
+		console.log("finished parsing sheet, match count:",sheetCounter -1, "sheet count:",sheetIterator, " remaining headers:", remainingHeaders);
 		var engMap = foundColumnMapping.map(function(cm){ return { "columnName" : metaTable.englishColumns[ metaTable.hebrewColumns.indexOf(cm.foundCell) ] }  });
 		console.log("output headers:",foundColumnMapping.map(function(x){return x.foundCell}).join(" | "));
+		console.log("output headers:",engMap.map(function(x){return x.columnName}).join(" | "));
 		console.log("output data sample:",sheetData.slice(0,10).map(function(x){return x.join(" | ")}));
 		console.log("==============================================");
-		var validator = require('./validator').validate(engMap,sheetData,managingBody,sheetCounter -1,year,quarter);
-		if (sheetCounter == 1) {
-			
+		if (sheetCounter == 2) {
+			// console.log("###########");
+			// console.log(headers, engMap);
+			// console.log("###########");
 			// process.exit();
-			
 		}
+		var validator = require('./validator').validate(engMap,sheetData,managingBody,sheetCounter -1,year,quarter);
 	}
 
 
 	// sheets[3].read(function(err, sheetCB,dim){ parseSingleSheet(sheetCB,dim); })
 
 	sheets.some(function(so){
-		console.log("parsing sheet:",sheetIterator);
+		console.log("%% parsing sheet:",sheetIterator);
 		if (sheetCounter < 30){
 			if (sheetCounter < metaTable.getDataSheetsCount()){
 				so.read(function(err, sheetCB,dim){ parseSingleSheet(sheetCB,dim); }) 

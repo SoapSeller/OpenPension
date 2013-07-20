@@ -21,21 +21,31 @@ exports.validate = function(headers,data,managingBody,tabIndex,year,quarter) {
 		)
 	});
 
+	// console.log("en headers",headers);
 
-	// console.log(cleanData);
-	// process.exit();
-	// var goodData = removeRowsWithLittleData(data, headers);
-	// console.log(cleanData);
-	// process.exit();
+	var tabData = parseTabSpecificData(tabIndex, headers, data);
+	if ((tabData || []).length > 0){
 
-	// var DB =  require('./db');
-	// var db = new DB.csv(managingBody + "_tab_" + tabIndex + ".csv");
-	// var db = DB.open();
-	// var tableWriter = db.openTable(headers);
-	// tableWriter(managingBody, year, quarter, instrument, instrumentSub, data);
+		console.log(">!>!>!>!>!>!>!>","\n",tabData.map(function(l){ return l.join(" | ") }));
+		// var DB =  require('./db');
+		// var db = new DB.csv(managingBody + "_tab_" + tabIndex + ".csv");
+		// var db = DB.open();
+		// var tableWriter = db.openTable(headers);
+		// tableWriter(managingBody, year, quarter, instrument, instrumentSub, data);
+		
+	}
+	
+	if (tabIndex == 2) process.exit();
 
-	// console.log("<><><<>< headers", headers)
-	// console.log("<><><<>< Sheet Data",content);
+}
+
+var parseTabSpecificData = function(tabIndex, headers, data){
+
+	switch(tabIndex){
+		case 0: return shumNehaseiHakerenCleaner(headers, data);
+		case 1: return mezumanim(headers, data);
+
+	}
 }
 
 function removeSpecialChars(content, numColumns){
@@ -58,6 +68,10 @@ var isLineEmpty = function(line){
 		return false;
 	else
 		return true;
+}
+
+var isNotEmpty = function(value){
+	return value != null && value != undefined && value != ""
 }
 
 var removeRowsWithLittleData = function(data, headers){
@@ -110,7 +124,81 @@ function validateTypes(){
 	
 }
 
+var schumNehasimNames = [
+	"נכסים המוצגים לפי שווי הוגן",
+	"מזומנים ושווי מזומנים",
+	"ניירות ערך סחירים",
+	"תעודות התחייבות ממשלתיות",
+	"תעודות חוב מסחריות",
+	"אג\"ח קונצרני",
+	"מניות",
+	"תעודות סל",
+	"תעודות השתתפות בקרנות נאמנות",
+	"כתבי אופציה",
+	"אופציות",
+	"חוזים עתידיים",
+	"מוצרים מובנים",
+	"ניירות ערך לא סחירים",
+	"תעודות התחייבות ממשלתיות",
+	"תעודות חוב מסחריות",
+	"אג\"ח קונצרני",
+	"מניות",
+	"קרנות השקעה",
+	"כתבי אופציה",
+	"אופציות",
+	"חוזים עתידיים",
+	"מוצרים מובנים",
+	"הלוואות",
+	"פקדונות",
+	"זכויות מקרקעין",
+	"השקעות אחרות",
+	"נכסים המוצגים לפי עלות מתואמת",
+	"אג\"ח קונצרני סחיר",
+	"אג\"ח קונצרני לא סחיר",
+	"מסגרות אשראי מנוצלות ללווים"
+]
 
-var ShumLehaseiHakerenCleaner = function(headers,lines){
-	// sections
+
+var shumNehaseiHakerenCleaner = function(headers,lines){
+	var symbolIndex = headers.map(function(h){return h.columnName}).indexOf("instrument_symbol");
+	
+	lines.forEach(function(l){
+		console.log(l[symbolIndex]);
+	})
+}
+
+
+var currencyMap = {
+	"₪" : "NIS",
+	"שקל" : "NIS"
+}
+
+var mezumanim = function(headers, dataLines){
+	var enHeaders = headers.map(function(h){return h.columnName});
+	// console.log(enHeaders);
+	return dataLines.filter(function(l){
+		return (
+			isNotEmpty(l[ enHeaders.indexOf("currency") ])
+			&& l[ enHeaders.indexOf("currency") ] != 0
+		)
+	}).map(function(l){
+		return l.map(function(c,i){
+			switch(enHeaders[i]){
+				case 'rate_of_fund': 	return c;
+				case 'market_cap': 		return c;
+				case 'yield': 			return c;
+				case 'intrest_rate': 	return c;
+				case 'currency': 		
+					if (currencyMap[c]) return currencyMap[c] 
+						else return c;
+				case 'rating_agency': 	return c;
+				case 'rating': 			return c;
+				case 'instrument_id': 	return c; // ????
+				case 'instrument_symbol':return c;
+				default:
+					throw new Error("Unexpected column header value given: \"" + c + "\"")
+			}
+		})
+	})
+
 }
