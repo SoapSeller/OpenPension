@@ -42,11 +42,11 @@ var debug = false;
 var strictMode = false;
 var levTolerance = 2;
 var aliasMap = {
-	"שם נייר ערך" : [ "מזומנים ושווי מזומנים","שם ני''ע" ],
-	"שיעור מנכסי ההשקעה" : [ "שיעור מנכסי הקרן" ],
+	"שם נייר ערך" : [ "מזומנים ושווי מזומנים","שם ני''ע", "סוג נכס" ],
+	"שיעור מנכסי ההשקעה" : [ "שיעור מנכסי הקרן", "שיעור מהנכסים" ],
 	"מספר נייר ערך" : [ "מספר ני\"ע", "מס' נייר ערך"],
 	"שיעור מהערך הנקוב המונפק" : [ "שיעור מהע.נ המונפק", "שיעור מהע.נ המונפק" ],
-	"שווי הוגן" : [ "שווי שוק", "שווי השקעה" ],
+	"שווי הוגן" : [ "שווי שוק", "שווי השקעה", "שווי הוגן באלפי ש\"ח" ],
 	"תשואה לפדיון" : [ "ת. לפדיון" ]
 }
 
@@ -116,9 +116,9 @@ var findFromAliasMapLev = function(input, headers, headersAliasMap){
 	});
 
 	if (res.length > 0){
-		return res[0]
+		return res[0];
 	} else {
-		return null
+		return null;
 	}
 };
 
@@ -160,7 +160,7 @@ var parseSheets = function(sheets){
 		var remainingHeaders = [];
 
 		// for(var row = 1 || 1; row < 15; row++){
-		for(var row = dim.min.row || 1; row < dim.max.row; row++){
+		for(var row = dim.min.row || 1; row <= dim.max.row; row++){
 			
 			if (!foundMatchingSheet){
 				if (headers.length == 0 || headers.length < metaTable.columnMappingForRow(sheetCounter).length / 2){
@@ -196,12 +196,10 @@ var parseSheets = function(sheets){
 				sheetData.push([]);
 			}
 
-			for (var column = dim.min.col || 0; column < dim.max.col; column++){
+			for (var column = dim.min.col || 0; column <= dim.max.col; column++){
 				var letter = columnLetterFromNumber(column);
 				var cellId = letter + row;
 				var cellContent = cellReader(cellId);
-
-				
 				
 				if (headers.length != 0) { 
 					//###>> enter the following while we have not found the headers yet!

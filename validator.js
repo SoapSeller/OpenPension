@@ -20,15 +20,19 @@ exports.validate = function(headers,data,managingBody,tabIndex,year,quarter) {
 			!isLineEmpty(l)
 		)
 	});
+
+
+	// console.log(cleanData);
+	// process.exit();
 	// var goodData = removeRowsWithLittleData(data, headers);
 	// console.log(cleanData);
 	// process.exit();
 
-	var DB =  require('./db');
+	// var DB =  require('./db');
 	// var db = new DB.csv(managingBody + "_tab_" + tabIndex + ".csv");
-	var db = DB.open();
-	var tableWriter = db.openTable(headers);
-	tableWriter(managingBody, year, quarter, instrument, instrumentSub, data);
+	// var db = DB.open();
+	// var tableWriter = db.openTable(headers);
+	// tableWriter(managingBody, year, quarter, instrument, instrumentSub, data);
 
 	// console.log("<><><<>< headers", headers)
 	// console.log("<><><<>< Sheet Data",content);
@@ -104,4 +108,9 @@ function getInstrumentSymbolIndex(headers){
 
 function validateTypes(){
 	
+}
+
+
+var ShumLehaseiHakerenCleaner = function(headers,lines){
+	// sections
 }
