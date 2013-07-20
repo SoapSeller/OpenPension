@@ -26,7 +26,7 @@ exports.validate = function(headers,data,managingBody,tabIndex,year,quarter) {
 	var tabData = parseTabSpecificData(tabIndex, headers, data);
 	if ((tabData || []).length > 0){
 
-		console.log(">!>!>!>!>!>!>!>","\n", tabData.map(function(l){ return l.join(" | ") }));
+		// console.log(">!>!>!>!>!>!>!>","\n", tabData.map(function(l){ return l.join(" | ") }));
 		// var DB =  require('./db');
 		// var db = new DB.csv(managingBody + "_tab_" + tabIndex + ".csv");
 		// var db = DB.open();
@@ -187,7 +187,7 @@ var shumNehaseiHakeren = function(headers,lines){
 	var symbolIndex = headers.map(function(h){return h.columnName}).indexOf("instrument_symbol");
 	
 	lines.forEach(function(l){
-		console.log(l[symbolIndex]);
+		// console.log(l[symbolIndex]);
 	})
 }
 

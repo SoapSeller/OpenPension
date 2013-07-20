@@ -49,7 +49,9 @@ var aliasMap = {
 	"שיעור מהערך הנקוב המונפק" : [ "שיעור מהע.נ המונפק", "שיעור מהע.נ המונפק" ],
 	"שווי הוגן" : [ "שווי שוק", "שווי השקעה", "שווי הוגן באלפי ש\"ח" ],
 	"שווי שוק" : [ "שווי הוגן" ],
-	"תשואה לפדיון" : [ "ת. לפדיון" ]
+	"תשואה לפדיון" : [ "ת. לפדיון" ],
+	"שיעור ריבית": ["תנאי ושיעור ריבית","שיעור ריבית ממוצע"],
+	"שיעור מהערך הנקוב המונפק" : [ "שעור מערך נקוב מונפק" ]
 }
 
 var detectorsMap = {
@@ -64,7 +66,7 @@ var cleanDataStr = function(inputStr){
 
 var cleanColumnHeaderStr = function(inputStr){
 	if (inputStr)
-		return inputStr.replace(/\(.*\)/g,"").replace(/["']/g,"").trim()
+		return inputStr.replace(/\(.*\)/g,"").replace(/["'\n\r]/g,"").replace(/[ ]+/g," ").trim()
 	else 
 		return ""
 }
@@ -128,6 +130,17 @@ var findFromAliasMapLev = function(input, headers, headersAliasMap){
 
 var findInHeaders = function(headers, cellContent, aliasMap){
 	var _cleanCell = cleanColumnHeaderStr(cellContent);
+
+	
+	
+	
+	// var debugSheet = 3
+	// if (sheetCounter == debugSheet -1){
+	// 	console.log(cellContent, _cleanCell);
+	// }
+	// if (sheetCounter == debugSheet){
+	// 	process.exit();
+	// }
 
 	if (headers.indexOf(_cleanCell) > -1) {
 		return _cleanCell;
@@ -267,8 +280,8 @@ var parseSheets = function(sheets){
 		console.log("finished parsing sheet, match count:",sheetCounter -1, "sheet count:",sheetIterator, " remaining headers:", remainingHeaders);
 		var engMap = foundColumnMapping.map(function(cm){ return { "columnName" : metaTable.englishColumns[ metaTable.hebrewColumns.indexOf(cm.foundCell) ] }  });
 		console.log("output headers:",foundColumnMapping.map(function(x){return x.foundCell}).join(" | "));
-		console.log("output headers:",engMap.map(function(x){return x.columnName}).join(" | "));
-		console.log("output data sample:",sheetData.slice(0,5).map(function(x){return x.join(" | ")}));
+		console.log("output headers en:",engMap.map(function(x){return x.columnName}).join(" | "));
+		console.log("output data sample:",sheetData.slice(0,2).map(function(x){return x.join(" | ")}));
 		console.log("==============================================");
 		if (sheetCounter == 2) {
 			// console.log("###########");
