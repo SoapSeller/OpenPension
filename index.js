@@ -64,6 +64,12 @@ program
 	});
 
 program
+	.command("fetch")
+	.action(function(){
+		require('./fetcher').fetchAll();
+	});
+
+program
 	.command("to-csv")
 	.description("Convert sheets in file to CSV")
 	.option("-f, --file <path>", "file name")
