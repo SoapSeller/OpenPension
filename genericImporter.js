@@ -5,8 +5,8 @@ var LevDistance = require('./LevDistance')
 var managingBody = null;
 var year = null;
 var quarter = null;
-var sheetCounter = 0;
-var sheetIterator = 0;
+var indexMetaTable = 0;
+var indexFileTab = 0;
 
 exports.parseXls = function(filename,givenManagingBody,givenYear, givenQuarter){
 	managingBody = givenManagingBody;
@@ -134,11 +134,12 @@ var findInHeaders = function(headers, cellContent, aliasMap){
 	
 	
 	
-	// var debugSheet = 3
-	// if (sheetCounter == debugSheet -1){
+	// var debugSheet = 5
+	// var debugFileIndex = null
+	// if (indexMetaTable == debugSheet -1){
 	// 	console.log(cellContent, _cleanCell);
 	// }
-	// if (sheetCounter == debugSheet){
+	// if (indexMetaTable == debugSheet || ( debugFileIndex && indexFileTab == debugFileIndex) ){
 	// 	process.exit();
 	// }
 
@@ -168,9 +169,9 @@ var parseSheets = function(sheets){
 	var parseSingleSheet = function(cellReader, dim){
 
 		var foundMatchingSheet = false;
-		var headers = metaTable.columnMappingForRow(sheetCounter).map(function(x){return x});
+		var headers = metaTable.columnMappingForRow(indexMetaTable).map(function(x){return x});
 
-		if (debug) console.log("headers >> ",metaTable.columnMappingForRow(sheetCounter));
+		if (debug) console.log("headers >> ",metaTable.columnMappingForRow(indexMetaTable));
 		var foundColumnMapping = [];
 		var sheetData = [[]];
 		var remainingHeaders = [];
@@ -179,18 +180,17 @@ var parseSheets = function(sheets){
 		for(var row = dim.min.row || 1; row <= dim.max.row; row++){
 			
 			if (!foundMatchingSheet){
-				if (headers.length == 0 || headers.length < metaTable.columnMappingForRow(sheetCounter).length / 2){
+				if (headers.length == 0 || headers.length < metaTable.columnMappingForRow(indexMetaTable).length / 2){
 
-					var called = metaTable.instrumentTypes[sheetCounter] + " " + metaTable.instrumentSubTypes[sheetCounter];
+					var called = metaTable.instrumentTypes[indexMetaTable] + " " + metaTable.instrumentSubTypes[indexMetaTable];
 
-					console.log("** found matching sheet ", sheetCounter, " iterator:",sheetIterator," called",called)
+					console.log("** found matching meta table index ", indexMetaTable, " file tab index:",indexFileTab," called",called)
 					foundMatchingSheet = true;
-					sheetCounter++;
+					indexMetaTable++;
 				}
 			}
-			
-			if (headers.length > 0 && headers.length < metaTable.columnMappingForRow(sheetCounter).length) {
-				if (headers.length < metaTable.columnMappingForRow(sheetCounter).length / 2){
+			if (headers.length > 0 && headers.length < metaTable.columnMappingForRow(indexMetaTable).length) {
+				if (headers.length > 5 || headers.length <= metaTable.columnMappingForRow(indexMetaTable).length / 2){
 					if (strictMode) {
 						console.log("found only partial match of headers, exiting..");
 						console.log("found mapping",foundColumnMapping);
@@ -204,7 +204,7 @@ var parseSheets = function(sheets){
 						headers = [];
 					}
 				} else {
-					headers = metaTable.columnMappingForRow(sheetCounter);
+					headers = metaTable.columnMappingForRow(indexMetaTable);
 					foundColumnMapping = [];
 				}
 			} else if (headers.length == 0) {
@@ -226,7 +226,7 @@ var parseSheets = function(sheets){
 
 						var foundInHeader = findInHeaders(headers, cellContent, aliasMap);
 						if (foundInHeader) {
-							console.log("* found matching header, removing it..", foundInHeader);
+							console.log("* found matching header, removing it..", foundInHeader, " original content:",cellContent);
 							headers.splice( headers.indexOf(foundInHeader), 1 );
 							foundColumnMapping.push({ row: row, column: column, origCell: cellContent, foundCell: foundInHeader });
 						}
@@ -257,7 +257,6 @@ var parseSheets = function(sheets){
 									}
 									foundColumnMapping.splice(placeAfter,0, 
 										{ row: row, column: column, origCell: "", foundCell: rh })
-
 									remainingHeaders.splice( remainingHeaders.indexOf(rh), remainingHeaders.indexOf(rh) +1 );
 									sheetData[sheetData.length -1].push(cellContent)
 									return true;
@@ -277,33 +276,33 @@ var parseSheets = function(sheets){
 
 
 
-		console.log("finished parsing sheet, match count:",sheetCounter -1, "sheet count:",sheetIterator, " remaining headers:", remainingHeaders);
+		console.log("finished parsing sheet, match count:",indexMetaTable -1, "sheet count:",indexFileTab, " remaining headers:", remainingHeaders);
 		var engMap = foundColumnMapping.map(function(cm){ return { "columnName" : metaTable.englishColumns[ metaTable.hebrewColumns.indexOf(cm.foundCell) ] }  });
 		console.log("output headers:",foundColumnMapping.map(function(x){return x.foundCell}).join(" | "));
 		console.log("output headers en:",engMap.map(function(x){return x.columnName}).join(" | "));
 		console.log("output data sample:",sheetData.slice(0,2).map(function(x){return x.join(" | ")}));
-		console.log("==============================================");
-		if (sheetCounter == 2) {
+		console.log("==");
+		if (indexMetaTable == 2) {
 			// console.log("###########");
 			// console.log(headers, engMap);
 			// console.log("###########");
 			// process.exit();
 		}
-		var validator = require('./validator').validate(engMap,sheetData,managingBody,sheetCounter -1,year,quarter);
+		var validator = require('./validator').validate(engMap,sheetData,managingBody,indexMetaTable -1,year,quarter);
 	}
 
 
 	// sheets[3].read(function(err, sheetCB,dim){ parseSingleSheet(sheetCB,dim); })
 
 	sheets.some(function(so){
-		if (sheetCounter < 35){
-			if (sheetCounter < metaTable.getLastSheetNum()){
-				console.log("%%%%%% parsing sheet:",sheetIterator);
+		if (indexMetaTable < 35){
+			if (indexMetaTable < metaTable.getLastSheetNum()){
+				console.log("%%%%%% parsing file tab index:",indexFileTab, " looking for meta table tab:",indexMetaTable +1);
 				so.read(function(err, sheetCB,dim){ parseSingleSheet(sheetCB,dim); }) 
 			} else {
 				return true;
 			}
-			sheetIterator++; 
+			indexFileTab++; 
 			return false;
 		} else {
 			return true;
