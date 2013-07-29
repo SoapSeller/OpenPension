@@ -1,5 +1,6 @@
 var URL = require("url"),
 	http = require("http"),
+	https = require("https"),
 	fs = require("fs"),
 	cp = require("child_process");
 
@@ -48,6 +49,10 @@ var readFundsFile = function() {
 };
 
 var fetchFund = function(fund, onDone) {
+	if (fund.url.indexOf('http') !== 0) {
+		fund.url = 'http://' + fund.url;
+	}
+
 	url = URL.parse(fund.url);
 
 	var isHttps = url.protocol == "https:";
@@ -64,7 +69,9 @@ var fetchFund = function(fund, onDone) {
 
 	var stream = fs.createWriteStream(filename, { flags: 'w+', encoding: "binary", mode: 0666 });
 
-	var req = http.request(options, function(res) {
+	var client = isHttps ? https : http;
+
+	var req = client.request(options, function(res) {
 		//res.setEncoding('binary');
 		res.on('data', function (chunk) {
 			stream.write(chunk);
@@ -79,6 +86,7 @@ var fetchFund = function(fund, onDone) {
 					var cmd = "ssconvert --export-type=Gnumeric_Excel:xlsx " + filename + " " + filenameX;
 					cp.exec(cmd, function(err, stdout, stderr) {
 						//console.log(cmd);
+						//console.log(stdout);
 						fs.unlink(filename);
 						onDone();
 					});
@@ -93,7 +101,7 @@ var fetchFund = function(fund, onDone) {
 	});
 
 	req.on('error', function(e) {
-		console.log('problem with request: ' + e.message);
+		console.log('problem with request(' + fund.url +  '): ' + e.message, options);
 		onDone();
 	});
 
