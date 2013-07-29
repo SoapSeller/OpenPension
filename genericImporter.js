@@ -1,4 +1,4 @@
-var MetaTable = require('./MetaTable')
+var MetaTable = require('./common/MetaTable')
 var xlsx = require("./xlsxparser");
 var LevDistance = require('./LevDistance')
 

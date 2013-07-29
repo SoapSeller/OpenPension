@@ -1,4 +1,4 @@
-var MetaTable = require('./MetaTable');
+var MetaTable = require('./common/MetaTable');
 
 exports.validate = function(headers,data,managingBody,tabIndex,year,quarter) {
 // managingBody; (string) 'Migdal' לדגמ

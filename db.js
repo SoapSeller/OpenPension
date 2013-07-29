@@ -4,7 +4,7 @@ var config = require('./config'),
     pg = require('pg'),
     _ = require('underscore'),
     moment = require('moment'),
-    metaTable = require('./MetaTable').getMetaTable(),
+    metaTable = require('./common/MetaTable').getMetaTable(),
     columnsNames = metaTable.englishColumns,
     columnsTypes = metaTable.dataTypes;
 
