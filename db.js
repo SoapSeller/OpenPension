@@ -22,7 +22,7 @@ try {
   config = require('./config');
 }
 
-var tableName = 'data';
+var tableName = config.table || 'data';
 
 var db = {};
 
