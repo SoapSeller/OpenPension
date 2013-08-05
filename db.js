@@ -1,6 +1,5 @@
 
-var config = require('./config'),
-    fs = require('fs'),
+var fs = require('fs'),
     pg = require('pg'),
     _ = require('underscore'),
     moment = require('moment'),
@@ -15,6 +14,14 @@ columnsNames = defaultColumnnNames.concat(columnsNames);
 columnsTypes = defaultColumnnTypes.concat(columnsTypes);
 
 var defaultColumnsNamesMapping = defaultColumnnNames.map(function(c) { return { columnName: c }; });
+
+var config;
+try {
+  config = require("./_config")
+} catch (ignore){
+  config = require('./config') 
+}
+
 
 var db = {};
 

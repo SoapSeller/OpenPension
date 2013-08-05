@@ -27,11 +27,11 @@ exports.validate = function(headers,data,managingBody,tabIndex,year,quarter) {
 	if ((tabData || []).length > 0){
 
 		console.log(">!>!>!>!>!>!>!>","\n", tabData.map(function(l){ return l.join(" | ") }));
-		// var DB =  require('./db');
-		// var db = new DB.csv(managingBody + "_tab_" + tabIndex + ".csv");
-		// var db = DB.open();
-		// var tableWriter = db.openTable(headers);
-		// tableWriter(managingBody, year, quarter, instrument, instrumentSub, data);
+		 var DB =  require('./db');
+		 // var db = new DB.csv(managingBody + "_tab_" + tabIndex + ".csv");
+		var db = DB.open();
+		 var tableWriter = db.openTable(headers);
+		 tableWriter(managingBody, year, quarter, instrument, instrumentSub, data);
 		
 	} else {
 		console.log(">!>!>!>!>!>!>!>", "no tab data found");
