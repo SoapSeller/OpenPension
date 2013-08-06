@@ -158,14 +158,6 @@ var readSheetCell = function (uz, sharedStrings, sheet, cellId) {
   } 
   else {
 
-    /* special handling for dates, which are apperantly cell style 19.. */
-    if (cellStyle == 19){
-      var daysSince1900 = 25567;
-      var maginNumber = 2; // seems that the days figure I found seems to be 2 days from target.. hope this doesnt cause trouble *holds fingers
-      var zDate = new Date( (parseInt(cellValue) - daysSince1900 -maginNumber) * 24 * 60 * 60 * 1000 );
-      return zDate.toJSON();
-    }
-
     return cellValue[0];
   }
 
