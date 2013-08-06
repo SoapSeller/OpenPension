@@ -127,6 +127,12 @@ var readSheetCell = function (uz, sharedStrings, sheet, cellId) {
   var cellStyle = sheet.worksheet.sheetData[0].row[idx.row].c[idx.col].$.s;
   var cellType = sheet.worksheet.sheetData[0].row[idx.row].c[idx.col].$.t;
 
+  // if (cellStyle == 19)
+  //   console.log(cellValue);
+
+  // console.log(sheet.worksheet.sheetData[0].row[idx.row].c[idx.col]);
+  // console.log(sheet.sharedStrings)
+  //25567 - 2
   // console.log("cellStyle:"+cellStyle);
   // console.log("cellType:"+cellType);
   // console.log("cellValue:"+cellValue);
@@ -151,6 +157,15 @@ var readSheetCell = function (uz, sharedStrings, sheet, cellId) {
     return "";
   } 
   else {
+
+    /* special handling for dates, which are apperantly cell style 19.. */
+    if (cellStyle == 19){
+      var daysSince1900 = 25567;
+      var maginNumber = 2; // seems that the days figure I found seems to be 2 days from target.. hope this doesnt cause trouble *holds fingers
+      var zDate = new Date( (parseInt(cellValue) - daysSince1900 -maginNumber) * 24 * 60 * 60 * 1000 );
+      return zDate.toJSON();
+    }
+
     return cellValue[0];
   }
 
