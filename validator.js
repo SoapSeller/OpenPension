@@ -24,9 +24,8 @@ exports.validate = function(headers,data,managingBody,tabIndex,year,quarter) {
 
 	var tabData = parseTabSpecificData(tabIndex, headers, cleanData);
 
-
 	if ((tabData || []).length > 0){
-		
+
 		 var DB =  require('./db');
 		 // var db = new DB.csv(managingBody + "_tab_" + tabIndex + ".csv");
 		var db = DB.open();
@@ -115,6 +114,13 @@ var cleanCurrency = function(input){
 		return currencyMap[input];
 	else 
 		return input;
+}
+
+var parseDate = function(input){
+	var daysSince1900 = 25567;
+	var maginNumber = 2; // seems that the days figure I found seems to be 2 days from target.. hope this doesnt cause trouble *holds fingers
+	var zDate = new Date( (parseInt(input) - daysSince1900 -maginNumber) * 24 * 60 * 60 * 1000 );
+	return zDate.toJSON();
 }
 
 
@@ -473,7 +479,7 @@ var normalizeValues = function(enName, value){
 		case 'industry': 			return value;
 		case 'rating': 				return value;
 		case 'rating_agency': 		return value;
-		case 'date_of_purchase': 	return value;
+		case 'date_of_purchase': 	return parseDate(value);
 		case 'average_of_duration': return value;
 		case 'currency': 			return cleanCurrency(value);
   		case 'intrest_rate': 		return value;
@@ -484,7 +490,7 @@ var normalizeValues = function(enName, value){
 		case 'fair_value': 			return value;
 		case 'rate_of_ipo': 		return value;
 		case 'rate_of_fund': 		return value;
-		case 'date_of_revaluation': return value;
+		case 'date_of_revaluation': return parseDate(value);
 		case 'type_of_asset': 		return value;
 		default:
 			throw new Error("Unexpected column header value given: \"" + c + "\"")
