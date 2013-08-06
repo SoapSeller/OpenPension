@@ -5,8 +5,6 @@ var LevDistance = require('./LevDistance')
 var managingBody = null;
 var year = null;
 var quarter = null;
-var indexMetaTable = 0;
-var indexFileTab = 0;
 
 exports.parseXls = function(filename,givenManagingBody,givenYear, givenQuarter){
 	managingBody = givenManagingBody;
@@ -38,7 +36,14 @@ var columnLetterFromNumber = function(number){
 
 
 /* CONFIGURATION */
-var debug = false;
+global.debug = false;
+function debugM(name,message /*,...*/ ){
+	if (global.debug){
+		var args = Array.apply(null, arguments);
+		console.log.apply(null,["#DEBUG",args.shift(),">"].concat(args));
+	}
+}
+
 var strictMode = false;
 var levTolerance = 2;
 var aliasMap = {
@@ -90,7 +95,7 @@ var findFromAliasMap = function(input, headers, headersAliasMap){
 	}
 }
 
-findFromHeadersLev = function(input, headers){
+var findFromHeadersLev = function(input, headers){
 	var res = headers.filter(function(h){
 		var _h = cleanColumnHeaderStr(h);
 		if (LevDistance.calc(_h,input) <= levTolerance){
@@ -128,20 +133,8 @@ var findFromAliasMapLev = function(input, headers, headersAliasMap){
 
 
 
-var findInHeaders = function(headers, cellContent, aliasMap){
+var findInHeaders = function(headers, cellContent){
 	var _cleanCell = cleanColumnHeaderStr(cellContent);
-
-	
-	
-	
-	// var debugSheet = 5
-	// var debugFileIndex = null
-	// if (indexMetaTable == debugSheet -1){
-	// 	console.log(cellContent, _cleanCell);
-	// }
-	// if (indexMetaTable == debugSheet || ( debugFileIndex && indexFileTab == debugFileIndex) ){
-	// 	process.exit();
-	// }
 
 	if (headers.indexOf(_cleanCell) > -1) {
 		return _cleanCell;
@@ -162,157 +155,198 @@ var findInHeaders = function(headers, cellContent, aliasMap){
 };
 
 
+/*
+mutates the input foundHeadersMapping
+returns true if should extract content
+*/
+var headersExtractor = function(inputLine, headers, foundHeadersMapping){
+
+	if (foundHeadersMapping.length == headers.length)
+		return true;
+
+
+	var isLookingForHeaderLine = foundHeadersMapping.length == 0;
+
+	if (isLookingForHeaderLine){
+		var foundFromHeader = inputLine.reduce(function(res, cellContent, column){
+			if (cellContent){
+
+				var remainingHeaders = headers.filter( function(h){
+					return !foundHeadersMapping.some(function(fh){ return h.foundCell == h; })
+				});
+
+				var foundInHeader = findInHeaders(remainingHeaders, cellContent);
+
+				if (foundInHeader) {
+					res.push({ column: column, origCell: cellContent, foundCell: foundInHeader });
+				}
+			} 
+
+			return res;
+			
+		},[]);
+
+		foundFromHeader.forEach(function(fhm){
+			debugM("headersExtractor","matched header from header line:", fhm.foundCell, " original content:",fhm.origCell);
+			foundHeadersMapping.push(fhm)
+		});
+
+	} else {
+
+		var knownColumns = foundHeadersMapping.map(function(fhm){ return fhm.column; });
+		var knownHeaders = foundHeadersMapping.map(function(fhm){ return fhm.foundCell; });
+		var remainingHeaders = headers.filter(function(h){ return knownHeaders.indexOf(h) == -1 })
+
+		var foundFromData = inputLine.reduce(function(res,cellContent, column){
+			if (knownColumns.indexOf(column) == -1){
+
+				remainingHeaders.some(function(rh){
+					if (detectorsMap[rh] && detectorsMap[rh].some(function(dtc){ return dtc == cellContent; })){
+						res.push({ column: column, origCell: cellContent, foundCell: rh });
+						return true;
+					} else {
+						return false;
+					}
+				})
+			} 
+
+			return res;
+			
+		},[])
+
+		if (foundFromData.length > 0){
+			foundFromData.forEach(function(ffd){
+				debugM("headersExtractor","* matched header from content:", ffd.foundCell, " original content:",ffd.origCell);
+				foundHeadersMapping.push(ffd);
+			});
+
+			foundHeadersMapping.sort(function(h1,h2){ return h1.column > h1.column; });
+
+		}
+
+	}
+
+	if (foundHeadersMapping.length == 1){
+		debugM("headersExtractor","false positive on header row, emptying results");
+		foundHeadersMapping.splice(0,1);
+		return false;
+	} else if (foundHeadersMapping.length > 1 && isLookingForHeaderLine){
+		debugM("headersExtractor","positive match for header line!");
+		return false;
+	} else if (foundHeadersMapping.length == 0){
+		return false;
+	} else {
+		return true;
+	}
+
+}
+
+var contentExtractor = function(inputLine, headersMapping){
+
+	extractColumns = headersMapping.map(function(hm){return hm.column});
+
+	return inputLine.reduce(function(res,cellContent,column){
+		if (extractColumns.indexOf(column) >= 0){
+			res.push(cellContent);
+		} 
+		return res;
+		
+	},[]);
+
+}
+
+var sheetValidator = function(headers, foundHeadersMapping){
+	return (
+		(foundHeadersMapping.length == headers.length) ||
+		(foundHeadersMapping.length >= headers.length / 2)
+	);
+}
+
+
+var parseSingleSheet = function(metaTable, cellReader, dim, indexMetaTable){
+	var foundMatchingSheet = false;
+	debugM("parseSingleSheet",indexMetaTable);
+	var headers = metaTable.columnMappingForRow(indexMetaTable).map(function(x){return x});
+
+	debugM("parseSingleSheet","headers",headers);
+	var sheetData = [];
+	var foundHeadersMapping = [];
+
+	for(var row = dim.min.row || 1; row <= dim.max.row; row++){
+		
+		var rowContent = []
+		for (var column = dim.min.col || 0; column <= dim.max.col; column++){
+			var letter = columnLetterFromNumber(column);
+			var cellId = letter + row;
+			var cellContent = cellReader(cellId);
+			rowContent[column] = cellContent
+		}
+
+		debugM("parseSingleSheet","lines",rowContent.join("|"));
+
+		var shouldExtractContent = headersExtractor(rowContent,headers, foundHeadersMapping)
+
+		if (shouldExtractContent){
+			var extractedData = contentExtractor(rowContent,foundHeadersMapping);
+			debugM("parseSingleSheet","extracted data",extractedData.join(","))
+			sheetData.push(extractedData)
+		}
+		
+	}
+
+	var sheetMatchVerified = sheetValidator(headers,foundHeadersMapping);
+	
+	if (sheetMatchVerified){
+		debugM("parseSingleSheet","verified positive match for sheet!");
+		return {"data":sheetData,"headers":foundHeadersMapping.map(function(hm){ return hm.foundCell; })};
+	} else {
+		debugM("parseSingleSheet","negative match for sheet...");
+		return null;
+	}
+}
+
+
 var parseSheets = function(sheets){
 
 	var metaTable = MetaTable.getMetaTable();
-	
-	var parseSingleSheet = function(cellReader, dim){
+	var lastSheetNum = metaTable.getLastSheetNum();
+	var debugSheet;
 
-		var foundMatchingSheet = false;
-		var headers = metaTable.columnMappingForRow(indexMetaTable).map(function(x){return x});
-
-		if (debug) console.log("headers >> ",metaTable.columnMappingForRow(indexMetaTable));
-		var foundColumnMapping = [];
-		var sheetData = [[]];
-		var remainingHeaders = [];
-
-		// for(var row = 1 || 1; row < 15; row++){
-		for(var row = dim.min.row || 1; row <= dim.max.row; row++){
-			
-			if (!foundMatchingSheet){
-				if (headers.length == 0 || headers.length < metaTable.columnMappingForRow(indexMetaTable).length / 2){
-
-					var called = metaTable.instrumentTypes[indexMetaTable] + " " + metaTable.instrumentSubTypes[indexMetaTable];
-
-					console.log("** found matching meta table index ", indexMetaTable, " file tab index:",indexFileTab," called",called)
-					foundMatchingSheet = true;
-					indexMetaTable++;
-				}
+	var lookForNextSheet = function(res, _sheets){		
+		if (res.length < lastSheetNum){
+			var sheetTabNum = sheets.length - _sheets.length;
+			if ( debugSheet && debugSheet == sheetTabNum ) {
+				global.debug = true;
 			}
-			if (headers.length > 0 && headers.length < metaTable.columnMappingForRow(indexMetaTable).length) {
-				if (headers.length > 5 || headers.length <= metaTable.columnMappingForRow(indexMetaTable).length / 2){
-					if (strictMode) {
-						console.log("found only partial match of headers, exiting..");
-						console.log("found mapping",foundColumnMapping);
-						console.log("remaining headers", headers);
-						process.exit();
-					} else {	
-						console.log("found only partial match of headers, not in strict mode.. continue");
-						console.log("found mapping",foundColumnMapping);
-						console.log("remaining headers", headers);
-						remainingHeaders = headers;
-						headers = [];
-					}
-				} else {
-					headers = metaTable.columnMappingForRow(indexMetaTable);
-					foundColumnMapping = [];
-				}
-			} else if (headers.length == 0) {
-				// headers have been found, were parsing content, add new line to output data
-				sheetData.push([]);
-			}
+			console.log("%%%%%% parsing file tab #",sheetTabNum, " looking for meta table #",res.length, "called",metaTable.getNameForSheetNum(res.length));
+			var sheet = _sheets.shift();
 
-			for (var column = dim.min.col || 0; column <= dim.max.col; column++){
-				var letter = columnLetterFromNumber(column);
-				var cellId = letter + row;
-				var cellContent = cellReader(cellId);
+			sheet.read(function(err, sheetCB,dim){ 
+				var sheetOutput = parseSingleSheet(metaTable,sheetCB,dim,res.length);
+				if (sheetOutput && sheetOutput.data && sheetOutput.data.length > 0){
+					debugM("parseSheets","adding sheet lines count #",sheetOutput.data.length);
+					res.push(sheetOutput);
+				}
 				
-				if (headers.length != 0) { 
-					//###>> enter the following while we have not found the headers yet!
-					// TODO: check this works with value 0 in cell
-					if (cellContent) {	
-						
-						if (debug) console.log("cell content>> ",cellContent);
-
-						var foundInHeader = findInHeaders(headers, cellContent, aliasMap);
-						if (foundInHeader) {
-							console.log("* found matching header, removing it..", foundInHeader, " original content:",cellContent);
-							headers.splice( headers.indexOf(foundInHeader), 1 );
-							foundColumnMapping.push({ row: row, column: column, origCell: cellContent, foundCell: foundInHeader });
-						}
-					}
-
-
-				} else {
-					//###>> Enter here to collect actual data
-					if (foundColumnMapping.some(function(x){ return x.column == column })) {
-						sheetData[sheetData.length -1].push(cellContent)
-					} else if (remainingHeaders.length > 0){ // do detection of missing headers by content, due to random data BS
-						remainingHeaders.some(function(rh){
-							if (detectorsMap[rh] && detectorsMap[rh].some(function(dtc){
-								if (dtc == cellContent) {
-									if (debug) console.log("* detected new column by content! ", rh," ", cellContent)
-
-									var placeAfter = null;
-
-									if (!foundColumnMapping.some(function(fcm){ 
-										if (fcm.column > column){
-											placeAfter = foundColumnMapping.indexOf(fcm);
-											return true;
-										} else {
-											return false;
-										}
-									})) {
-										placeAfter = foundColumnMapping.length;
-									}
-									foundColumnMapping.splice(placeAfter,0, 
-										{ row: row, column: column, origCell: "", foundCell: rh })
-									remainingHeaders.splice( remainingHeaders.indexOf(rh), remainingHeaders.indexOf(rh) +1 );
-									sheetData[sheetData.length -1].push(cellContent)
-									return true;
-								} else {
-									return false;
-								}
-							})){
-								return true;
-							} else {
-								return false;
-							};
-						});
-					}
+				if ( debugSheet && debugSheet == sheetTabNum ) {
+					process.exit();
 				}
-			}
+				lookForNextSheet(res, _sheets);
+			}) 
+		} else if (res.length == lastSheetNum) {
+			console.log("++++++ parsed & found all sheets");
+
+			res.forEach(function(resSheet, metaIdx){
+				var engMap = resSheet.headers.map(function(cm){ return { "columnName" : metaTable.englishColumns[ metaTable.hebrewColumns.indexOf(cm) ] || cm }  });
+				require('./validator').validate(engMap,resSheet.data,managingBody,metaIdx,year,quarter);
+			})
 		}
 
-
-
-		console.log("finished parsing sheet, match count:",indexMetaTable -1, "sheet count:",indexFileTab, " remaining headers:", remainingHeaders);
-		var engMap = foundColumnMapping.map(function(cm){ return { "columnName" : metaTable.englishColumns[ metaTable.hebrewColumns.indexOf(cm.foundCell) ] }  });
-		console.log("output headers:",foundColumnMapping.map(function(x){return x.foundCell}).join(" | "));
-		console.log("output headers en:",engMap.map(function(x){return x.columnName}).join(" | "));
-		console.log("output data sample:",sheetData.slice(0,2).map(function(x){return x.join(" | ")}));
-		console.log("==");
-		if (indexMetaTable == 2) {
-			// console.log("###########");
-			// console.log(headers, engMap);
-			// console.log("###########");
-			// process.exit();
-		}
-		var validator = require('./validator').validate(engMap,sheetData,managingBody,indexMetaTable -1,year,quarter);
 	}
 
-
-	// sheets[3].read(function(err, sheetCB,dim){ parseSingleSheet(sheetCB,dim); })
-
-	sheets.some(function(so){
-		if (indexMetaTable < 35){
-			if (indexMetaTable < metaTable.getLastSheetNum()){
-				console.log("%%%%%% parsing file tab index:",indexFileTab, " looking for meta table tab:",indexMetaTable +1);
-				so.read(function(err, sheetCB,dim){ parseSingleSheet(sheetCB,dim); }) 
-			} else {
-				return true;
-			}
-			indexFileTab++; 
-			return false;
-		} else {
-			return true;
-		}
-		
-		
-	});
+	lookForNextSheet([], sheets.map(function(x){return x}));
 
 	
 }
 
 
-// exports.parseXls("res/migdal.xlsx")

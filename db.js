@@ -53,7 +53,7 @@ db.csv.prototype = {
       }
       indexes.push(idx);
     });
-
+    
     return function(managing_body, report_year, report_qurater, instrument_type, instrument_sub_type, objects) {
       objects.forEach(function(object) {
         object = [managing_body, report_year.toString(), report_qurater.toString(), instrument_type, instrument_sub_type].concat(object);

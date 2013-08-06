@@ -10,6 +10,7 @@ exports.validate = function(headers,data,managingBody,tabIndex,year,quarter) {
 // 				["instrument 2"] 
 // 			]
 
+
 	var metaTable = MetaTable.getMetaTable();
 
 	var instrument = metaTable.instrumentTypes[tabIndex];
@@ -21,24 +22,28 @@ exports.validate = function(headers,data,managingBody,tabIndex,year,quarter) {
 		)
 	});
 
-	// console.log("en headers",headers);
+	var tabData = parseTabSpecificData(tabIndex, headers, cleanData);
 
-	var tabData = parseTabSpecificData(tabIndex, headers, data);
+
 	if ((tabData || []).length > 0){
-
-		console.log(">!>!>!>!>!>!>!>","\n", tabData.map(function(l){ return l.join(" | ") }));
+		
 		 var DB =  require('./db');
-		 // var db = new DB.csv(managingBody + "_tab_" + tabIndex + ".csv");
-		var db = DB.open();
+		 var db = new DB.csv(managingBody + "_tab_" + tabIndex + ".csv");
+		// var db = DB.open();
 		 var tableWriter = db.openTable(headers);
-		 tableWriter(managingBody, year, quarter, instrument, instrumentSub, data);
+		 tableWriter(managingBody, year, quarter, instrument, instrumentSub, tabData);
 		
 	} else {
-		console.log(">!>!>!>!>!>!>!>", "no tab data found");
+		console.log(">!>!>!>", "no tab data found for tab", tabIndex, metaTable.getNameForSheetNum(tabIndex));
 	}
 	
 	// if (tabIndex == 24) process.exit();
 
+}
+
+
+var debugData = function(data){
+	console.log("data debug","\n", tabData.map(function(l){ return l.join(",") }));
 }
 
 var parseTabSpecificData = function(tabIndex, headers, data){
@@ -98,99 +103,6 @@ var isNotEmpty = function(value){
 	return value != null && value != undefined && value != ""
 }
 
-var removeRowsWithLittleData = function(data, headers){
-	var goodData = data.filter(function(row){
-		if (row.filter(function(x){return x != null && x != undefined && x != "" }).length < headers.length / 2)
-			return false
-		else return true
-	});
-	return goodData;
-}
-
-function removeBadLengthLines(content, numColumns)
-{
-	for (var i = content.length - 1 ; i > -1; i--){
-		if (content[i].length !== numColumns){
-			content.splice(i, 1);
-			// console.log ('line ' + i + ' has ' + content[i].length + ' columns. expected ' + numColumns + '.');
-		}
-	}
-}
-
-
-
-function removeLinesWithoutInstrumentSymbol(content, headers){
-	var instrumentSymbolIndex = getInstrumentSymbolIndex(headers);
-	if (instrumentSymbolIndex == -1){
-		console.log('missing instrument symbol in headers. ');
-	}
-	for (var rowIndex = content.length - 1 ; rowIndex > -1; rowIndex--){
-		if (content[rowIndex][instrumentSymbolIndex] == ''){
-			console.log('@@ removing: ' + content[rowIndex]);
-			content.splice(rowIndex, 1);
-		}
-	}
-}
-
-function getInstrumentSymbolIndex(headers){
-	var INSTRUMENT_SYMBOL = "instrument_symbol";
-	for (var i=0; i < headers.length; i++){
-		for (key in headers[i]){
-			if (headers[i][key] == INSTRUMENT_SYMBOL){
-				return i;
-			}
-		}
-	}
-	return -1;
-}
-
-function validateTypes(){
-	
-}
-
-var schumNehasimNames = [
-	"נכסים המוצגים לפי שווי הוגן",
-	"מזומנים ושווי מזומנים",
-	"ניירות ערך סחירים",
-	"תעודות התחייבות ממשלתיות",
-	"תעודות חוב מסחריות",
-	"אג\"ח קונצרני",
-	"מניות",
-	"תעודות סל",
-	"תעודות השתתפות בקרנות נאמנות",
-	"כתבי אופציה",
-	"אופציות",
-	"חוזים עתידיים",
-	"מוצרים מובנים",
-	"ניירות ערך לא סחירים",
-	"תעודות התחייבות ממשלתיות",
-	"תעודות חוב מסחריות",
-	"אג\"ח קונצרני",
-	"מניות",
-	"קרנות השקעה",
-	"כתבי אופציה",
-	"אופציות",
-	"חוזים עתידיים",
-	"מוצרים מובנים",
-	"הלוואות",
-	"פקדונות",
-	"זכויות מקרקעין",
-	"השקעות אחרות",
-	"נכסים המוצגים לפי עלות מתואמת",
-	"אג\"ח קונצרני סחיר",
-	"אג\"ח קונצרני לא סחיר",
-	"מסגרות אשראי מנוצלות ללווים"
-]
-
-
-var shumNehaseiHakeren = function(headers,lines){
-	var symbolIndex = headers.map(function(h){return h.columnName}).indexOf("instrument_symbol");
-	
-	lines.forEach(function(l){
-		// console.log(l[symbolIndex]);
-	})
-}
-
 
 
 var currencyMap = {
@@ -203,6 +115,24 @@ var cleanCurrency = function(input){
 		return currencyMap[input];
 	else 
 		return input;
+}
+
+
+/*
+	Per sheet functions
+*/
+
+
+var shumNehaseiHakeren = function(headers,dataLines){
+	var enHeaders = headers.map(function(h){return h.columnName});
+	return dataLines.filter(function(l){
+		return (
+			isNotEmpty(l[ enHeaders.indexOf("fair_value") ]),
+			isNotEmpty(l[ enHeaders.indexOf("instrument_symbol") ])
+		)
+	}).map(function(l){
+		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c) });
+	})
 }
 
 var mezumanim = function(headers, dataLines){
@@ -218,7 +148,6 @@ var mezumanim = function(headers, dataLines){
 
 }
 
-
 var teudatHihayvutMimshalti = function(headers, dataLines){
 	var enHeaders = headers.map(function(h){return h.columnName});
 	return dataLines.filter(function(l){
@@ -230,7 +159,7 @@ var teudatHihayvutMimshalti = function(headers, dataLines){
 		);
 	}).map(function(l){
 		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c) });
-	})
+	});
 }
 
 var taudatHovMisharit = function(headers, dataLines){
