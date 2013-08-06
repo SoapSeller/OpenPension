@@ -45,7 +45,7 @@ program
 program
 	.command("debug")
 	.action(function(){
-		require('./genericImporter').parseXls("res/menora.xlsx","menora",2012,4);
+		require('./genericImporter').parseXls("res/fenix.xlsx","fenix",2012,4);
 	});
 
 program
