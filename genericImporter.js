@@ -44,6 +44,11 @@ function debugM(name,message /*,...*/ ){
 	}
 }
 
+function notifyM(name, message /*,...*/){
+	var args = Array.apply(null, arguments);
+	console.log.apply(null, ["#NOTIFY", args.shift(),">"].concat(args));
+}
+
 var strictMode = false;
 var levTolerance = 2;
 var aliasMap = {
@@ -256,8 +261,10 @@ var contentExtractor = function(inputLine, headersMapping){
 }
 
 var sheetValidator = function(headers, foundHeadersMapping){
+	debugM("sheetValidator", "found headers #", foundHeadersMapping.length, "num headers", headers.length)
 	return (
 		(foundHeadersMapping.length == headers.length) ||
+		(foundHeadersMapping.length > 5 && foundHeadersMapping.length >= headers.length / 3  ) ||
 		(foundHeadersMapping.length >= headers.length / 2)
 	);
 }
@@ -284,6 +291,13 @@ var parseSingleSheet = function(metaTable, cellReader, dim, indexMetaTable){
 
 		debugM("parseSingleSheet","lines",rowContent.join("|"));
 
+		var identifiedSheetIndex = sheetSkipDetector(rowContent, indexMetaTable, metaTable);
+		if (identifiedSheetIndex != indexMetaTable){
+			notifyM("parseSingleSheet","identified different sheet while looking for:",
+				indexMetaTable,"(" + metaTable.getNameForSheetNum(indexMetaTable) + ")", " identified as:", identifiedSheetIndex, "("+metaTable.getNameForSheetNum(identifiedSheetIndex)+")" );
+			return parseSingleSheet(metaTable, cellReader, dim, identifiedSheetIndex);
+		}
+
 		var shouldExtractContent = headersExtractor(rowContent,headers, foundHeadersMapping)
 
 		if (shouldExtractContent){
@@ -298,11 +312,49 @@ var parseSingleSheet = function(metaTable, cellReader, dim, indexMetaTable){
 	
 	if (sheetMatchVerified){
 		debugM("parseSingleSheet","verified positive match for sheet!");
-		return {"data":sheetData,"headers":foundHeadersMapping.map(function(hm){ return hm.foundCell; })};
+		return {"data":sheetData,"finalIndex":indexMetaTable,"headers":foundHeadersMapping.map(function(hm){ return hm.foundCell; })};
 	} else {
 		debugM("parseSingleSheet","negative match for sheet...");
 		return null;
 	}
+}
+
+
+var knownSheetContentIdentifiers = {
+	2 : [ "תעודות התחייבות ממשלתיות" ],
+	4 : [ "אגח קונצרני" ]
+}
+
+var sheetMetaIdentifier = function(cellContent, metaSheetNum, metaTable){
+
+	var nameFromMetaTable = metaTable.instrumentSubTypes[metaSheetNum] || metaTable.instrumentTypes[metaSheetNum];
+	var cleanCellContent = cleanColumnHeaderStr(cellContent)
+	var options = [nameFromMetaTable].concat(knownSheetContentIdentifiers[metaSheetNum] || []);
+
+	return options.some(function(value){
+		if (cleanCellContent == cleanColumnHeaderStr(value)){
+			return true;
+		} else {
+			return false;
+		}
+	})
+
+}
+
+var sheetSkipDetector = function(inputLine, metaSheetNum, metaTable){
+
+	return inputLine.reduce(function(_metaSheetNum, cellContent){
+		if (_metaSheetNum == metaSheetNum) {
+			if (metaTable.instrumentTypes.length > metaSheetNum && sheetMetaIdentifier(cellContent, metaSheetNum +1, metaTable)){
+				debugM("sheetSkipDetector","skipping sheet! matched to meta sheet #" + (metaSheetNum + 1));
+				return metaSheetNum + 1;
+			}
+			else 
+				return metaSheetNum;
+		} else {
+			return _metaSheetNum
+		}
+	},metaSheetNum);
 }
 
 
@@ -321,8 +373,16 @@ var parseSheets = function(sheets){
 			console.log("%%%%%% parsing file tab #",sheetTabNum, " looking for meta table #",res.length, "called",metaTable.getNameForSheetNum(res.length));
 			var sheet = _sheets.shift();
 
-			sheet.read(function(err, sheetCB,dim){ 
+			sheet && sheet.read(function(err, sheetCB,dim){ 
 				var sheetOutput = parseSingleSheet(metaTable,sheetCB,dim,res.length);
+
+				if (sheetOutput && sheetOutput.finalIndex != res.length){
+					while(res.length < sheetOutput.finalIndex){
+						debugM("lookForNextSheet","padding output array with empty data to match expected progress of meta table idx")
+						res.push([]);
+					}
+				}
+
 				if (sheetOutput && sheetOutput.data && sheetOutput.data.length > 0){
 					debugM("parseSheets","adding sheet lines count #",sheetOutput.data.length);
 					res.push(sheetOutput);
@@ -337,8 +397,10 @@ var parseSheets = function(sheets){
 			console.log("++++++ parsed & found all sheets");
 
 			res.forEach(function(resSheet, metaIdx){
-				var engMap = resSheet.headers.map(function(cm){ return { "columnName" : metaTable.englishColumns[ metaTable.hebrewColumns.indexOf(cm) ] || cm }  });
-				require('./validator').validate(engMap,resSheet.data,managingBody,metaIdx,year,quarter);
+				if (resSheet.headers && resSheet.data){
+					var engMap = resSheet.headers.map(function(cm){ return { "columnName" : metaTable.englishColumns[ metaTable.hebrewColumns.indexOf(cm) ] || cm }  });
+					require('./validator').validate(engMap,resSheet.data,managingBody,metaIdx,year,quarter);
+				}
 			})
 		}
 
