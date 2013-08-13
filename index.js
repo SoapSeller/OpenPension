@@ -45,7 +45,7 @@ program
 program
 	.command("debug")
 	.action(function(){
-		require('./genericImporter').parseXls("res/menora.xlsx","menora");
+		require('./genericImporter').parseXls("res/fenix.xlsx","fenix",2012,4);
 	});
 
 program
@@ -57,10 +57,16 @@ program
 		];
 		var db = require('./db').open(true);
 		var tableWriter = db.openTable(map);
-		tableWriter([
+		tableWriter("migdal", 2013, 1, "in_id", "in_sub_id", [
 			["inst1", "1/10/2004"],
 			["inst2", "2/10/2004 x"]
 		]);
+	});
+
+program
+	.command("fetch")
+	.action(function(){
+		require('./fetcher').fetchAll();
 	});
 
 program

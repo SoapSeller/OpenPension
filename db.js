@@ -1,12 +1,28 @@
 
-var config = require('./config'),
-    fs = require('fs'),
+var fs = require('fs'),
     pg = require('pg'),
     _ = require('underscore'),
     moment = require('moment'),
-    metaTable = require('./MetaTable').getMetaTable(),
+    metaTable = require(__dirname + '/common/MetaTable').getMetaTable(),
     columnsNames = metaTable.englishColumns,
     columnsTypes = metaTable.dataTypes;
+
+var defaultColumnnNames = ['managing_body', 'report_year', 'report_qurater', 'instrument_type', 'instrument_sub_type'];
+var defaultColumnnTypes = ['string', 'number', 'number', 'string', 'string'];
+
+columnsNames = defaultColumnnNames.concat(columnsNames);
+columnsTypes = defaultColumnnTypes.concat(columnsTypes);
+
+var defaultColumnsNamesMapping = defaultColumnnNames.map(function(c) { return { columnName: c }; });
+
+var config;
+try {
+  config = require("./_config");
+} catch (ignore){
+  config = require('./config');
+}
+
+var tableName = config.table || 'data';
 
 var db = {};
 
@@ -24,6 +40,8 @@ db.csv.prototype = {
   openTable: function(mapping) {
     var that = this;
 
+    mapping = defaultColumnsNamesMapping.concat(mapping);
+
     var indexes = [];
     columnsNames.forEach(function(column) {
       var idx = -1;
@@ -35,14 +53,16 @@ db.csv.prototype = {
       }
       indexes.push(idx);
     });
-    console.log(_.zip(columnsNames, indexes))
-    return function(objects) {
+    
+    return function(managing_body, report_year, report_qurater, instrument_type, instrument_sub_type, objects) {
       objects.forEach(function(object) {
+        object = [managing_body, report_year.toString(), report_qurater.toString(), instrument_type, instrument_sub_type].concat(object);
+
         for (i = 0; i < indexes.length; ++i) {
           var idx = indexes[i];
           if (idx >= 0)
           {
-            that.stream.write(object[idx] ? object[idx] : "");
+            that.stream.write(object[idx] ?  object[idx] : "");
           }
           if (i != indexes.length-1) {
             that.stream.write(",");
@@ -74,17 +94,29 @@ var mapColumnType2Sql = function(type) {
 };
 
 db.pg = function() {
-  this.client = new pg.Client(config.connection_string);
-  this.client.connect();
+  var self = this;
 
-  this.tablesCounter = 0;
+  self.client = new pg.Client(config.connection_string);
+  self.client.connect();
 
-  var createTable = "CREATE TABLE data(id BIGSERIAL PRIMARY KEY, ";
+  self.tablesCounter = 0;
+
+  var createTable = "CREATE TABLE " + tableName + "(id BIGSERIAL PRIMARY KEY, ";
   var fields = _.zip(columnsNames, columnsTypes.map(mapColumnType2Sql));
   createTable += fields.filter(function(f) { return !!f[0] && !!f[1]; }).map(function(f) { return f[0] + " " + f[1]; }).join(',');
   createTable += ");";
 
-  this.client.query(createTable, function() {});
+  self.client.query(createTable, function(err) {
+    if(!err) {
+      self.client.query('GRANT SELECT ON ' + tableName + ' TO opublic;', function(err) {
+        if (err) {
+          console.log("error in grant", err);
+        }
+      });
+    } else {
+      console.log("error in create", err);
+    }
+  });
 };
 
 db.pg.prototype = {
@@ -92,6 +124,8 @@ db.pg.prototype = {
     var that = this;
 
     var name = "table_" + (++this.tablesCounter);
+
+    mapping = defaultColumnsNamesMapping.concat(mapping);
 
     var fieldsPreps = [];
     mapping.forEach(function(m) {
@@ -104,15 +138,21 @@ db.pg.prototype = {
       }
     });
 
-    var sql = "INSERT INTO data (" + mapping.map(function(m) { return m.columnName; }).join(',') + ")  " +
+    var sql = "INSERT INTO " + tableName + "(" + mapping.map(function(m) { return m.columnName; }).join(',') + ")  " +
                    "VALUES (" + _.range(mapping.length).map(function(n) { return "$" + (n+1);}) + ");";
 
     var statment = { name: name, text: sql, values: null };
 
-    return function(objects) {
+    return function(managing_body, report_year, report_qurater, instrument_type, instrument_sub_type, objects) {
       objects.forEach(function(object) {
-        statment.values = object.map(function(f, i) { return fieldsPreps[i](f); });
-        that.client.query(statment);
+        statment.values = [managing_body, report_year, report_qurater, instrument_type, instrument_sub_type].concat(object.map(function(f, i) { return fieldsPreps[i](f); }));
+        that.client.query(statment, function(err) {
+          if (err){
+            console.log("Error in DB of object:", err);
+            console.log(object);
+            console.log("***********************************");
+          }
+        });
       });
     };
   }

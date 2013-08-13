@@ -52,67 +52,32 @@ var cellIdToCellIdxLogical = function(cellId) {
   };
 }
 
-var cellIdToCellIdx = function(sheet, cellId) {
-  var row = 0, 
-      col = 0;
+var cellIdToCellIdx = function(sheet, cellIdxAlpha){
 
-  var logicalIndex = cellIdToCellIdxLogical(cellId);
+  var logicalIndex = cellIdToCellIdxLogical(cellIdxAlpha);
 
-  col = logicalIndex.col;
-  row = logicalIndex.row;
+  var col = logicalIndex.col;
+  var row = logicalIndex.row;
+  var oneBasedRow = row + 1;
 
-  if (row < 0) {//check for row number validity, TODO: check outer bounds
-    throw ("Index out of bounds: " + rowNumber);
-  }
-
-  var origRowNumber = row + 1;
-  //referenced row number is 1-based
-
-  //handle case where cellId is out of bounds, might occur when rows or columns have been reduced
-  while (sheet.worksheet.sheetData[0].row[row] === undefined)
-  --row;
-  while (sheet.worksheet.sheetData[0].row[row].c[col] === undefined)
-  --col;
-
-  var candidateCellAddress = sheet.worksheet.sheetData[0].row[row].c[col].$.r;
-
-
-  //cell address is not as expected, find cell iteratively
-  if (candidateCellAddress != cellId) { 
-
-    //row is not as expected, look for row iteratively
-    if (sheet.worksheet.sheetData[0].row[row] === undefined || sheet.worksheet.sheetData[0].row[row].$.r != origRowNumber) {
-      for (var i = row; i >= 0; i--) {
-        if (sheet.worksheet.sheetData[0].row[i].$.r == origRowNumber) {//found requested row id!
-          row = i;
-          break;
+  var found = sheet.worksheet.sheetData[0].row.reduce(function(found,r,rIdx){
+    if (found.row == -1 && parseInt(r.$.r) == oneBasedRow){
+      found.row = rIdx;
+      found.col = (r.c || []).reduce(function(resC,c,cIdx){
+        if (resC == -1 && c.$.r == cellIdxAlpha){
+          return cIdx;
+        } else {
+          return resC;
         }
-      }
-      if (i < 0) { //row not found, maybe missing in xml structure
-        row = NOT_FOUND;
-      }
+      },-1)
+      return found;
+    } else {
+      return found;
     }
+  },{ row: -1, col: -1 })
 
-    // console.log(JSON.stringify(sheet.worksheet.sheetData[0].row[row]));
-   
-    //row is found and column is not as expected, look for column iteratively
-    if (row != NOT_FOUND && (sheet.worksheet.sheetData[0].row[row].c[col] === undefined || sheet.worksheet.sheetData[0].row[row].c[col].$.r != cellId)) {
-      for (var j = col; j >= 0; j--) {
-        if (sheet.worksheet.sheetData[0].row[row].c[j] != undefined && sheet.worksheet.sheetData[0].row[row].c[j].$.r == cellId) {//found requested cell id!
-          col = j;
-          break;
-        }
-      }
-      if (j < 0) {//cell not found, maybe missing in xml structure
-        col = NOT_FOUND;
-      }
-    }
-  }
-  return {
-    row: row,
-    col: col
-  };
-};
+  return found;
+}
 
 var readSheetCell = function (uz, sharedStrings, sheet, cellId) {
 
@@ -127,6 +92,13 @@ var readSheetCell = function (uz, sharedStrings, sheet, cellId) {
   var cellStyle = sheet.worksheet.sheetData[0].row[idx.row].c[idx.col].$.s;
   var cellType = sheet.worksheet.sheetData[0].row[idx.row].c[idx.col].$.t;
 
+
+  // if (cellStyle == 19)
+  //   console.log(cellValue);
+
+  // console.log(sheet.worksheet.sheetData[0].row[idx.row].c[idx.col]);
+  // console.log(sheet.sharedStrings)
+  //25567 - 2
   // console.log("cellStyle:"+cellStyle);
   // console.log("cellType:"+cellType);
   // console.log("cellValue:"+cellValue);
@@ -151,6 +123,7 @@ var readSheetCell = function (uz, sharedStrings, sheet, cellId) {
     return "";
   } 
   else {
+
     return cellValue[0];
   }
 
