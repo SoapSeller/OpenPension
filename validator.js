@@ -103,23 +103,66 @@ var isNotEmpty = function(value){
 }
 
 
-
-var currencyMap = {
-	"₪" : "NIS",
-	"שקל" : "NIS"
+var cleanString = function(input){
+	return input.trim();
 }
 
-var cleanCurrency = function(input){
-	if (currencyMap[input])
-		return currencyMap[input];
-	else 
-		return input;
+var normalizeCurrency = function(input){
+	var _input = cleanString(input);
+	switch(_input){
+		case '₪': 					return 'NIS';
+		case 'שקל': 				return 'NIS';
+		case 'אירו 1': 				return 'EUR';
+		case 'דולר': 				return 'USD';
+		case 'דולר  דנאל': 			return 'USD';
+		case 'דולר ארה"ב': 			return 'USD';
+		case 'דולר הונג קונג': 		return 'HKD';
+		case 'דולר הונג קונג יציג':	return 'HKD';
+		case 'יורו': 				return 'EUR';
+		case 'יורו דנאל': 			return 'EUR';
+		case 'ין יפני דנאל': 		return 'JPY';
+		case 'לי"שט': 				return 'GBP';
+		case 'פרוינט הונגרי': 		return 'HUF';
+		case 'פרנק שוויצרי': 		return 'CHF';
+		case 'פרנק שוויצרי':		return 'CHF';
+		case 'פרנק שוויצרי דנאל': 	return 'CHF';
+		case 'פרנק שוצרי': 			return 'CHF';
+		case 'ריאל ברזיל דנאל': 	return 'BRL';
+		case 'שטרלינג': 			return 'GBP';
+		case 'שטרלינג  דנאל': 		return 'GBP';
+		case 'שקל חדש': 			return 'NIS';
+			default: return _input;
+	}
+}
+
+var normalizeIndustry = function(input){
+	var _input = cleanString(input);
+	switch(_input){
+		case 'Utilities (5510)': 				return 'Utilities';
+		case 'Insurance': 						return 'ביטוח';
+		case 'Insurance (4030)': 				return 'ביטוח';
+		case 'Banks': 							return 'בנקים';
+		case 'Alternative Investment': 			return 'השקעות אלטרנטיביות';
+		case 'Semiconductors & Semiconductor':	return 'מוליכים למחצה';
+		case 'Food': 							return 'מזון';
+		case 'Food Beverage & Tobacco': 		return 'מזון וטבק';
+		case 'Real Estate': 					return 'נדל"ן ובינוי';
+		case 'Real Estate (4040)': 				return 'נדל"ן ובינוי';
+		case 'Forest Products&Paper': 			return 'עץ ומוצריו';
+		case 'שירותים פיננסים': 				return 'שירותים פיננסיים';
+		case 'שרותים פיננסיים': 				return 'שירותים פיננסיים';
+		case 'Information Technology':			return 'שרותי מידע';
+		case 'Pharmaceuticals': 				return 'תעשיה-פארמה';
+		case 'Media': 							return 'תקשורת ומדיה';
+		default: return _input;
+	}
 }
 
 var parseDate = function(input){
+	var _input = cleanString(input);
 	var daysSince1900 = 25567;
 	var maginNumber = 2; // seems that the days figure I found seems to be 2 days from target.. hope this doesnt cause trouble *holds fingers
-	var zDate = new Date( (parseInt(input) - daysSince1900 -maginNumber) * 24 * 60 * 60 * 1000 );
+	var zDate = new Date( (parseInt(_input) - daysSince1900 -maginNumber) * 24 * 60 * 60 * 1000 );
 	return zDate.toJSON();
 }
 
@@ -472,26 +515,27 @@ var haskaotAherot = function(headers, dataLines){
 }
 
 var normalizeValues = function(enName, value){
+
 	switch(enName){
-		case 'instrument_symbol': 	return value;
-		case 'instrument_id': 		return value; //?????
-		case 'underlying_asset': 	return value;
-		case 'industry': 			return value;
-		case 'rating': 				return value;
-		case 'rating_agency': 		return value;
+		case 'instrument_symbol': 	return cleanString(value);
+		case 'instrument_id': 		return cleanString(value); //?????
+		case 'underlying_asset': 	return cleanString(value);
+		case 'industry': 			return normalizeIndustry(value);
+		case 'rating': 				return cleanString(value);
+		case 'rating_agency': 		return cleanString(value);
 		case 'date_of_purchase': 	return parseDate(value);
-		case 'average_of_duration': return value;
-		case 'currency': 			return cleanCurrency(value);
-  		case 'intrest_rate': 		return value;
-		case 'yield': 				return value;
-		case 'par_value': 			return value;
-		case 'rate': 				return value;
-		case 'market_cap': 			return value;
-		case 'fair_value': 			return value;
-		case 'rate_of_ipo': 		return value;
-		case 'rate_of_fund': 		return value;
+		case 'average_of_duration': return cleanString(value);
+		case 'currency': 			return normalizeCurrency(value);
+  		case 'intrest_rate': 		return cleanString(value);
+		case 'yield': 				return cleanString(value);
+		case 'par_value': 			return cleanString(value);
+		case 'rate': 				return cleanString(value);
+		case 'market_cap': 			return cleanString(value);
+		case 'fair_value': 			return cleanString(value);
+		case 'rate_of_ipo': 		return cleanString(value);
+		case 'rate_of_fund': 		return cleanString(value);
 		case 'date_of_revaluation': return parseDate(value);
-		case 'type_of_asset': 		return value;
+		case 'type_of_asset': 		return cleanString(value);
 		default:
 			throw new Error("Unexpected column header value given: \"" + c + "\"")
 	}
