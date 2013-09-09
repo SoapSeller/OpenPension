@@ -40,7 +40,7 @@ program
     console.log(dim);
     // console.log("Sheet names:",sheets.join(","));
   });
-}),
+});
 
 program
 	.command("debug")
@@ -116,50 +116,4 @@ program
 			);
 });
 
-
-/*
-program
-	.command("to-csv")
-	.description("Convert sheets in file to CSV")
-	.option("-f, --file <path>", "file name")
-	.option("-t, --type <type>", "file type")
-	.action(function(args) {
-	 		xlsx.getFileSheetsNames(args.file, function(err, sheets) {		
-				console.log("Sheet names:", sheets.join(","));
-				var type = args.type;
-				var importer = require('./migdalImporter.js');
-				for (var i = 0; i < sheets.length; i++) {
-					var sheetName = sheets[i];
-					console.log("sheetName:" + sheetName);
-			      // var sheetName = "16";
-				
-					xlsx.openSheet(args.file, sheetName, 
-						function(err, getCell, dim) {
-						    console.log("dim:"+JSON.stringify(dim));
-						
-						    var jsonRows = importer.convert(err, getCell, dim);
-						    if (jsonRows == undefined){
-						    	console.log("continue");
-						    	return;
-						    }
-						        // var jsonRows = [1,1,2];
-						    var sheetId = dim.sheetId;
-						    console.log("JSON sheets"+JSON.stringify(sheets));
-						    console.log("done converting! " + sheetId );
-						    console.log("got result size: " + jsonRows.length);
-						    var dbwriter = db.open("output.csv");
-						    for (var j = 0; j < jsonRows.length; j++) {
-						    	var err = dbwriter.writeRecord("stock", jsonRows[j]);
-						      if (err) {
-						      	console.log(err);
-						      	return;
-						      }
-								}
-						    dbwriter.close();
-						  }
-						 );
-			}
-	  })
-});
-*/
 program.parse(process.argv);
