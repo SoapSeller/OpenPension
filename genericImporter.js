@@ -52,15 +52,15 @@ function notifyM(name, message /*,...*/){
 var strictMode = false;
 var levTolerance = 2;
 var aliasMap = {
-	"סוג מטבע" : ["מטבע"],
+	"סוג מטבע" : [ "מטבע" ],
 	"שם נייר ערך" : [ "מזומנים ושווי מזומנים","שם ני''ע", "סוג נכס" ],
 	"שיעור מנכסי ההשקעה" : [ "שיעור מנכסי הקרן", "שיעור מהנכסים" ],
-	"מספר נייר ערך" : [ "מספר ני\"ע", "מס' נייר ערך"],
+	"מספר נייר ערך" : [ "מספר ני\"ע", "מס' נייר ערך" ],
 	"שיעור מהערך הנקוב המונפק" : [ "שיעור מהע.נ המונפק", "שיעור מהע.נ המונפק" ],
 	"שווי הוגן" : [ "שווי שוק", "שווי השקעה", "שווי הוגן באלפי ש\"ח" ],
 	"שווי שוק" : [ "שווי הוגן" ],
 	"תשואה לפדיון" : [ "ת. לפדיון" ],
-	"שיעור ריבית": ["תנאי ושיעור ריבית","שיעור ריבית ממוצע"],
+	"שיעור ריבית": [ "תנאי ושיעור ריבית","שיעור ריבית ממוצע" ],
 	"שיעור מהערך הנקוב המונפק" : [ "שעור מערך נקוב מונפק" ]
 }
 
@@ -183,6 +183,7 @@ var headersExtractor = function(inputLine, headers, foundHeadersMapping){
 				var foundInHeader = findInHeaders(remainingHeaders, cellContent);
 
 				if (foundInHeader) {
+					debugM({ column: column, origCell: cellContent, foundCell: foundInHeader })
 					res.push({ column: column, origCell: cellContent, foundCell: foundInHeader });
 				}
 			} 
@@ -225,7 +226,7 @@ var headersExtractor = function(inputLine, headers, foundHeadersMapping){
 				foundHeadersMapping.push(ffd);
 			});
 
-			foundHeadersMapping.sort(function(h1,h2){ return h1.column > h1.column; });
+			foundHeadersMapping.sort(function(h1,h2){ return h1.column - h2.column; });
 
 		}
 

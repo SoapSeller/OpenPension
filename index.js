@@ -43,15 +43,22 @@ program
 });
 
 program
+	.command("extract")
+	.option("-s, --supplier <name>","supplier name")
+	.action(function(args){
+		require('./genericImporter').parseXls("res/" + args.supplier + ".xlsx",args.supplier,2012,4);
+	})
+
+program
 	.command("debug")
 	.action(function(){
-		// require('./genericImporter').parseXls("res/menora.xlsx","menora",2012,4);
-		require('./genericImporter').parseXls("res/migdal.xlsx","migdal",2012,4);
-		// require('./genericImporter').parseXls("res/dash.xlsx","dash",2012,4);
-		// require('./genericImporter').parseXls("res/fenix.xlsx","fenix",2012,4);
-		// require('./genericImporter').parseXls("res/analyst.xlsx","analyst",2012,4);
-		// require('./genericImporter').parseXls("res/helman.xlsx","helman",2012,4);
-		// require('./genericImporter').parseXls("res/altshuler.xlsx","altshuler",2012,4);
+		require("child_process").exec("node index extract -s menora", function(){ console.log("done menora") });
+		require("child_process").exec("node index extract -s migdal", function(){ console.log("done migdal") });
+		require("child_process").exec("node index extract -s dash", function(){ console.log("done dash") });
+		require("child_process").exec("node index extract -s fenix", function(){ console.log("done fenix") });
+		require("child_process").exec("node index extract -s analyst", function(){ console.log("done analyst") });
+		require("child_process").exec("node index extract -s helman", function(){ console.log("done helman") });
+		require("child_process").exec("node index extract -s altshuler", function(){ console.log("done altshuler") });
 	});
 
 program

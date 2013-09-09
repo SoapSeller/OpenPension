@@ -27,8 +27,8 @@ exports.validate = function(headers,data,managingBody,tabIndex,year,quarter) {
 	if ((tabData || []).length > 0){
 
 		 var DB =  require('./db');
-		 var db = new DB.csv(managingBody + "_tab_" + tabIndex + ".csv");
-		// var db = DB.open();
+		 var db = new DB.csv("./tmp/" + managingBody + "_tab_" + tabIndex + ".csv");
+		 // var db = DB.open();
 		 var tableWriter = db.openTable(headers);
 		 tableWriter(managingBody, year, quarter, instrument, instrumentSub, tabData);
 		
@@ -104,12 +104,22 @@ var isNotEmpty = function(value){
 
 
 var cleanString = function(input){
-	return input.trim();
+	return input.trim().replace(/,/g,"-");
 }
 
 var normalizeCurrency = function(input){
 	var _input = cleanString(input);
+
+
+
 	switch(_input){
+		case 'אירו': 				return 'EUR';
+		case 'דולר אוסטרלי': 		return 'USD';
+		case 'דולר קנדי': 			return 'CAD';
+		case 'יואן סיני': 			return 'CNY';
+		case 'יין': 				return 'JPY';
+		case 'כתר דני': 			return 'DKK';
+		case 'כתר שוודי': 			return 'SEK';
 		case '₪': 					return 'NIS';
 		case 'שקל': 				return 'NIS';
 		case 'אירו 1': 				return 'EUR';
