@@ -33,7 +33,7 @@ db.csv = function(filename) {
 
   this.stream = fs.createWriteStream(filename, { flags: 'w+', encoding: "utf8", mode: 0666 });
 
-  this.stream.write(columnsNames.join(', ') + "\n");
+  this.stream.write(columnsNames.join(',') + "\n");
 };
 
 db.csv.prototype = {
