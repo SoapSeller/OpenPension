@@ -46,9 +46,12 @@ program
 	.command("debug")
 	.action(function(){
 		// require('./genericImporter').parseXls("res/menora.xlsx","menora",2012,4);
-		// require('./genericImporter').parseXls("res/migdal.xlsx","migdal",2012,4);
-		require('./genericImporter').parseXls("res/fenix.xlsx","fenix",2012,4);
+		require('./genericImporter').parseXls("res/migdal.xlsx","migdal",2012,4);
 		// require('./genericImporter').parseXls("res/dash.xlsx","dash",2012,4);
+		// require('./genericImporter').parseXls("res/fenix.xlsx","fenix",2012,4);
+		// require('./genericImporter').parseXls("res/analyst.xlsx","analyst",2012,4);
+		// require('./genericImporter').parseXls("res/helman.xlsx","helman",2012,4);
+		// require('./genericImporter').parseXls("res/altshuler.xlsx","altshuler",2012,4);
 	});
 
 program
