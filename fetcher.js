@@ -8,6 +8,39 @@ var cUrl = 3,
 	cNum = 2,
 	cBody = 0;
 
+var bodys = {
+	"אחר": "other",
+	"מגדל": "migdal",
+	"מנורה": "menora",
+	"פניקס": "fenix",
+	"כלל": "clal",
+	"דש איפקס": "dash",
+	"הראל": "harel",
+	"אנליסט": "analyst",
+	"אלטשולר": "altshuler",
+	"איילון": "ayalon",
+	"אי.בי.אי": "IBI",
+	"אקסלנס": "xnes",
+	"אינפיניטי": "infinity",
+	"הלמן": "helman",
+	"ארגון המורים העל יסודיים": "highschools_teachers",
+	"הסתדרות המורים בישראל": "teachers",
+	"דיסקונט": "discount",
+	"אקדמאים במדעי החברה": "havera_acdemics",
+	"ביוכימאים": "biochemists" ,
+	"הסוכנות היהודית": "hasochnut"
+};
+
+var parseBody = function(body) {
+	for (var k in bodys) {
+		if (body.indexOf(k) != -1) {
+			return bodys[k];
+		}
+	}
+
+	return null;
+};
+
 var readFundsFile = function() {
 
 	var parsedLines = require('fs').readFileSync('funds.csv').toString().split("\n");
@@ -27,21 +60,17 @@ var readFundsFile = function() {
 		if (url !== '') {
 			var body = splt[cBody];
 
-			if (body.indexOf("מגדל") != -1) {
-				body = "migdal";
-			} else if (body.indexOf("מנורה") != -1) {
-				body = "menora";
-			} else if (body.indexOf("פניקס") != -1) {
-				body = "fenix";
-			} else {
-				continue;
-			}
+			var englishBody = parseBody(body);
 
-			funds.push({
-				body: body,
-				number: splt[cNum],
-				url: url
-			});
+			if (englishBody === null) {
+				console.log(body);
+			} else {
+				funds.push({
+					body: englishBody,
+					number: splt[cNum],
+					url: url
+				});
+			}
 		}
 	}
 
@@ -49,10 +78,12 @@ var readFundsFile = function() {
 };
 
 var fetchFund = function(fund, onDone) {
+
 	if (fund.url.indexOf('http') !== 0) {
 		fund.url = 'http://' + fund.url;
 	}
 
+	//console.log(fund.url);
 	url = URL.parse(fund.url);
 
 	var isHttps = url.protocol == "https:";
@@ -60,7 +91,8 @@ var fetchFund = function(fund, onDone) {
 		hostname: url.hostname,
 		port: url.port ? url.port : (isHttps ? 443 : 80),
 		path: url.path,
-		method: 'GET'
+		method: 'GET',
+		rejectUnauthorized: false
 	};
 
 	var baseName = "res/" + fund.body + "_" + fund.number;
@@ -77,13 +109,16 @@ var fetchFund = function(fund, onDone) {
 			stream.write(chunk);
 		});
 		res.on('end', function() {
-			//stream.end();
+			stream.end();
 
+			
 			cp.exec("file " + filename, function (err, stdout, stderr) {
 				if (!err &&
 					(stdout.toString().indexOf("CDF V2") !== -1 ||
-					 stdout.toString().indexOf("Composite Document File V2 Document") !== -1)) {
+					stdout.toString().indexOf("Composite Document File V2 Document") !== -1)) {
 					var cmd = "ssconvert --export-type=Gnumeric_Excel:xlsx " + filename + " " + filenameX;
+					//console.log(filename);
+
 					cp.exec(cmd, function(err, stdout, stderr) {
 						//console.log(cmd);
 						//console.log(stdout);
@@ -118,7 +153,7 @@ var doFetch = function(step, funds, seed) {
 exports.fetchAll = function() {
 	var funds = readFundsFile();
 
-	var step = 20;
+	var step = 5;
 	for(var i = 0; i < Math.min(funds.length, step); ++i) {
 		doFetch(step, funds, i);
 	}
