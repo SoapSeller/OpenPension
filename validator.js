@@ -104,7 +104,7 @@ var isNotEmpty = function(value){
 
 
 var cleanString = function(input){
-	return input.trim().replace(/,/g,"-");
+	return input.trim().replace(/,/g,"-").replace(/\([0-9]+\)/g,'');
 }
 
 var normalizeCurrency = function(input){
@@ -113,6 +113,9 @@ var normalizeCurrency = function(input){
 
 
 	switch(_input){
+		case 'ין'					return 'JPY';
+		case 'כתר נורבגי'			return 'NOK';
+		case 'פזו מקסיקני'			return 'MXP';
 		case 'אירו': 				return 'EUR';
 		case 'דולר אוסטרלי': 		return 'USD';
 		case 'דולר קנדי': 			return 'CAD';
