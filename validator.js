@@ -102,6 +102,9 @@ var isNotEmpty = function(value){
 	return value != null && value != undefined && value != ""
 }
 
+var isNumber = function(value){
+	return value != null & parseInt(value) != NaN
+}
 
 var cleanString = function(input){
 	return input.trim().replace(/,/g,"-").replace(/\([0-9]+\)/g,'');
@@ -113,9 +116,9 @@ var normalizeCurrency = function(input){
 
 
 	switch(_input){
-		case 'ין'					return 'JPY';
-		case 'כתר נורבגי'			return 'NOK';
-		case 'פזו מקסיקני'			return 'MXP';
+		case 'ין':					return 'JPY';
+		case 'כתר נורבגי':			return 'NOK';
+		case 'פזו מקסיקני':			return 'MXP';
 		case 'אירו': 				return 'EUR';
 		case 'דולר אוסטרלי': 		return 'USD';
 		case 'דולר קנדי': 			return 'CAD';
@@ -214,10 +217,12 @@ var teudatHihayvutMimshalti = function(headers, dataLines){
 	var enHeaders = headers.map(function(h){return h.columnName});
 	return dataLines.filter(function(l){
 		return (
+			console.log isNumber(l[ enHeaders.indexOf("rate") ])
 			isNotEmpty(l[ enHeaders.indexOf("par_value") ])
 			&& l[ enHeaders.indexOf("par_value") ] != 0
 			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
 			&& l[ enHeaders.indexOf("rate") ] != 0
+			&& isNumber(l[ enHeaders.indexOf("rate") ])
 		);
 	}).map(function(l){
 		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c) });
@@ -358,6 +363,7 @@ var teudatHihayvutMimshaltiLoSahir = function(headers, dataLines){
 			&& l[ enHeaders.indexOf("par_value") ] != 0
 			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
 			&& l[ enHeaders.indexOf("rate") ] != 0
+			&& isNumber(l[ enHeaders.indexOf("rate") ])
 		);
 	}).map(function(l){
 		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c) });
