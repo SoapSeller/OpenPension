@@ -27,7 +27,9 @@ exports.validate = function(headers,data,managingBody,tabIndex,year,quarter) {
 	if ((tabData || []).length > 0){
 
 		 var DB =  require('./db');
-		 var db = new DB.csv("./tmp/" + managingBody + "_tab_" + tabIndex + ".csv");
+		 var filename = "./tmp/" + managingBody + "_" + year + "_" + quarter + "_tab_" + tabIndex + ".csv";
+		 var db = new DB.csv(filename);
+		 console.log("writing to file:" + filename);
 		 // var db = DB.open();
 		 var tableWriter = db.openTable(headers);
 		 tableWriter(managingBody, year, quarter, instrument, instrumentSub, tabData);
@@ -217,8 +219,8 @@ var teudatHihayvutMimshalti = function(headers, dataLines){
 	var enHeaders = headers.map(function(h){return h.columnName});
 	return dataLines.filter(function(l){
 		return (
-			console.log isNumber(l[ enHeaders.indexOf("rate") ])
-			isNotEmpty(l[ enHeaders.indexOf("par_value") ])
+			isNumber(l[ enHeaders.indexOf("rate") ])
+			&& isNotEmpty(l[ enHeaders.indexOf("par_value") ])
 			&& l[ enHeaders.indexOf("par_value") ] != 0
 			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
 			&& l[ enHeaders.indexOf("rate") ] != 0

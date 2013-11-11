@@ -323,7 +323,9 @@ var parseSingleSheet = function(metaTable, cellReader, dim, indexMetaTable){
 
 var knownSheetContentIdentifiers = {
 	2 : [ "תעודות התחייבות ממשלתיות" ],
-	4 : [ "אגח קונצרני" ]
+	4 : [ "אגח קונצרני","אג\"ח קונצרני" ],
+	14 : [ "אגח קונצרני" ]
+
 }
 
 var sheetMetaIdentifier = function(cellContent, metaSheetNum, metaTable){
@@ -343,15 +345,19 @@ var sheetMetaIdentifier = function(cellContent, metaSheetNum, metaTable){
 }
 
 var sheetSkipDetector = function(inputLine, metaSheetNum, metaTable){
-
+	// for the first two tabs, skip detection
+	if (metaSheetNum == 0 || metaSheetNum == 1)
+		return metaSheetNum;
 	return inputLine.reduce(function(_metaSheetNum, cellContent){
 		if (_metaSheetNum == metaSheetNum) {
-			if (metaTable.instrumentTypes.length > metaSheetNum && sheetMetaIdentifier(cellContent, metaSheetNum +1, metaTable)){
-				debugM("sheetSkipDetector","skipping sheet! matched to meta sheet #" + (metaSheetNum + 1));
-				return metaSheetNum + 1;
+			var i = _metaSheetNum + 1;
+			for (i = _metaSheetNum; i < metaTable.instrumentTypes.length ; i++){
+				if (sheetMetaIdentifier(cellContent, i, metaTable)){
+					debugM("sheetSkipDetector","skipping sheet! matched to meta sheet #" + i);
+					return i;
+				}
 			}
-			else 
-				return metaSheetNum;
+			return metaSheetNum;
 		} else {
 			return _metaSheetNum
 		}
@@ -365,8 +371,8 @@ var parseSheets = function(sheets){
 	var lastSheetNum = metaTable.getLastSheetNum();
 	var debugSheet;
 
-	var lookForNextSheet = function(res, _sheets){		
-		if (res.length < lastSheetNum){
+	var lookForNextSheet = function(res, _sheets){
+		if (res.length < lastSheetNum && _sheets.length > 0){
 			var sheetTabNum = sheets.length - _sheets.length;
 			if ( debugSheet && debugSheet == sheetTabNum ) {
 				global.debug = true;
@@ -394,7 +400,7 @@ var parseSheets = function(sheets){
 				}
 				lookForNextSheet(res, _sheets);
 			}) 
-		} else if (res.length == lastSheetNum) {
+		} else if (res.length == lastSheetNum || _sheets.length == 0) {
 			console.log("++++++ parsed & found all sheets");
 
 			res.forEach(function(resSheet, metaIdx){

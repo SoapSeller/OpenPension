@@ -47,7 +47,19 @@ program
 	.option("-s, --supplier <name>","supplier name")
 	.action(function(args){
 		require('./genericImporter').parseXls("res/" + args.supplier + ".xlsx",args.supplier,2012,4);
-	})
+	});
+
+program
+	.command("extract-file")
+	.option("-f, --file <name>","file name")
+	.action(function(args){
+		var name = require('path').basename(args.file).split(".");
+		var year = parseInt("20" + name[3].substr(2,2));
+		var q = Math.floor((parseInt(name[3].substr(0,2)) -1) / 3);
+		console.log("working on:" + name[0] + " " + year + " " + q);
+		require('./genericImporter').parseXls(args.file,name[0],year,q+1)
+	});
+
 
 program
 	.command("debug")
@@ -60,6 +72,27 @@ program
 		require("child_process").exec("node index extract -s helman", function(){ console.log("done helman") });
 		require("child_process").exec("node index extract -s altshuler", function(){ console.log("done altshuler") });
 	});
+
+program
+	.command("ronit")
+	.action(function(){
+		require("child_process").exec("node index extract-file -f 'res/ronit/MigdalMakefet.mashlima.659.1212.xlsx'", function(){ console.log("done") });
+		require("child_process").exec("node index extract-file -f res/ronit/MigdalMakefet.mashlima.659.1211.xlsx", function(){ console.log("done") });
+		require("child_process").exec("node index extract-file -f res/ronit/MigdalMakefet.mashlima.659.0912.xlsx", function(){ console.log("done") });
+		require("child_process").exec("node index extract-file -f res/ronit/MigdalMakefet.mashlima.659.0613.xlsx", function(){ console.log("done") });
+		require("child_process").exec("node index extract-file -f res/ronit/MigdalMakefet.mashlima.659.0612.xlsx", function(){ console.log("done") });
+		require("child_process").exec("node index extract-file -f res/ronit/MigdalMakefet.mashlima.659.0313.xlsx", function(){ console.log("done") });
+		require("child_process").exec("node index extract-file -f res/ronit/MigdalMakefet.mashlima.659.0312.xlsx", function(){ console.log("done") });
+		require("child_process").exec("node index extract-file -f res/ronit/MigdalMakefet.Ishit.162.1212.xlsx", function(){ console.log("done") });
+		require("child_process").exec("node index extract-file -f res/ronit/MigdalMakefet.Ishit.162.1211.xlsx", function(){ console.log("done") });
+		require("child_process").exec("node index extract-file -f res/ronit/MigdalMakefet.Ishit.162.0912.xlsx", function(){ console.log("done") });
+		require("child_process").exec("node index extract-file -f res/ronit/MigdalMakefet.Ishit.162.0613.xlsx", function(){ console.log("done") });
+		require("child_process").exec("node index extract-file -f res/ronit/MigdalMakefet.Ishit.162.0612.xlsx", function(){ console.log("done") });
+		require("child_process").exec("node index extract-file -f res/ronit/MigdalMakefet.Ishit.162.0313.xlsx", function(){ console.log("done") });
+		require("child_process").exec("node index extract-file -f res/ronit/MigdalMakefet.Ishit.162.0312.xlsx", function(){ console.log("done") });
+	});
+
+
 
 program
 	.command("db")
