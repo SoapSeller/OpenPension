@@ -41,6 +41,7 @@ var parseBody = function(body) {
 	return null;
 };
 
+/* Read & parse funds.csv file */
 var readFundsFile = function() {
 
 	var parsedLines = require('fs').readFileSync('funds.csv').toString().split("\n");
@@ -77,6 +78,13 @@ var readFundsFile = function() {
 	return funds;
 };
 
+/* fetch a fund to file
+ * fund: Object of type:
+ *					{ body: englishBody, // See 'bodys' aboce
+ *					  number: number,
+ *					  url: fileurl }
+ *  onDone: Callback with format void(downloadedFilePath, error)
+ */
 var fetchFund = function(fund, onDone) {
 
 	if (fund.url.indexOf('http') !== 0) {
@@ -123,13 +131,13 @@ var fetchFund = function(fund, onDone) {
 						//console.log(cmd);
 						//console.log(stdout);
 						fs.unlink(filename);
-						onDone();
+						onDone(filenameX);
 					});
 				}
 				else {
 					console.log("Error with fund: ", fund, stdout);
 					fs.unlink(filename);
-					onDone();
+					onDone(null, "Can't convert fund: " + stdout);
 				}
 			});
 		});
@@ -137,7 +145,7 @@ var fetchFund = function(fund, onDone) {
 
 	req.on('error', function(e) {
 		console.log('problem with request(' + fund.url +  '): ' + e.message, options);
-		onDone();
+		onDone(null, "Can't fetch fund: "  + e.message);
 	});
 
 	req.end();
@@ -150,6 +158,7 @@ var doFetch = function(step, funds, seed) {
 	}
 };
 
+/* Fetch all funds */
 exports.fetchAll = function() {
 	var funds = readFundsFile();
 
