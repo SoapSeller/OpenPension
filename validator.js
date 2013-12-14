@@ -1,6 +1,6 @@
 var MetaTable = require('./common/MetaTable');
 
-exports.validate = function(headers,data,managingBody,tabIndex,year,quarter) {
+exports.validate = function(headers,data,managingBody,fund, tabIndex,year,quarter) {
 // managingBody; (string) 'Migdal' לדגמ
 // tabIndex; (integer) the tab number in the managingBody xls sheet
 // headers; (array of objects) [{columnName: 'instrument_id'}] 
@@ -32,7 +32,7 @@ exports.validate = function(headers,data,managingBody,tabIndex,year,quarter) {
 		 console.log("writing to file:" + filename);
 		 // var db = DB.open();
 		 var tableWriter = db.openTable(headers);
-		 tableWriter(managingBody, year, quarter, instrument, instrumentSub, tabData);
+		 tableWriter(managingBody, fund, year, quarter, instrument, instrumentSub, tabData);
 		
 	} else {
 		console.log(">!>!>!>", "no tab data found for tab", tabIndex, metaTable.getNameForSheetNum(tabIndex));

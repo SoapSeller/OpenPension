@@ -7,8 +7,8 @@ var fs = require('fs'),
     columnsNames = metaTable.englishColumns,
     columnsTypes = metaTable.dataTypes;
 
-var defaultColumnnNames = ['managing_body', 'report_year', 'report_qurater', 'instrument_type', 'instrument_sub_type'];
-var defaultColumnnTypes = ['string', 'number', 'number', 'string', 'string'];
+var defaultColumnnNames = ['managing_body', 'fund' ,'report_year', 'report_qurater', 'instrument_type', 'instrument_sub_type'];
+var defaultColumnnTypes = ['string', 'number' ,'number', 'number', 'string', 'string'];
 
 columnsNames = defaultColumnnNames.concat(columnsNames);
 columnsTypes = defaultColumnnTypes.concat(columnsTypes);
@@ -54,9 +54,9 @@ db.csv.prototype = {
       indexes.push(idx);
     });
     
-    return function(managing_body, report_year, report_qurater, instrument_type, instrument_sub_type, objects) {
+    return function(managing_body, fund, report_year, report_qurater, instrument_type, instrument_sub_type, objects) {
       objects.forEach(function(object) {
-        object = [managing_body, report_year.toString(), report_qurater.toString(), instrument_type, instrument_sub_type].concat(object);
+        object = [managing_body, fund.toString(), report_year.toString(), report_qurater.toString(), instrument_type, instrument_sub_type].concat(object);
 
         for (i = 0; i < indexes.length; ++i) {
           var idx = indexes[i];
@@ -143,9 +143,9 @@ db.pg.prototype = {
 
     var statment = { name: name, text: sql, values: null };
 
-    return function(managing_body, report_year, report_qurater, instrument_type, instrument_sub_type, objects) {
+    return function(managing_body, fund, report_year, report_qurater, instrument_type, instrument_sub_type, objects) {
       objects.forEach(function(object) {
-        statment.values = [managing_body, report_year, report_qurater, instrument_type, instrument_sub_type].concat(object.map(function(f, i) { return fieldsPreps[i](f); }));
+        statment.values = [managing_body, fund, report_year, report_qurater, instrument_type, instrument_sub_type].concat(object.map(function(f, i) { return fieldsPreps[i](f); }));
         that.client.query(statment, function(err) {
           if (err){
             console.log("Error in DB of object:", err);

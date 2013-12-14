@@ -3,11 +3,13 @@ var xlsx = require("./xlsxparser");
 var LevDistance = require('./LevDistance')
 
 var managingBody = null;
+var fund = null
 var year = null;
 var quarter = null;
 
-exports.parseXls = function(filename,givenManagingBody,givenYear, givenQuarter){
+exports.parseXls = function(filename,givenManagingBody, givenYear, givenQuarter, givenFund){
 	managingBody = givenManagingBody;
+	fund = givenFund;
 	year = givenYear;
 	quarter = givenQuarter;
 	xlsx.getSheets(filename, parseSheets);
@@ -406,7 +408,7 @@ var parseSheets = function(sheets){
 			res.forEach(function(resSheet, metaIdx){
 				if (resSheet.headers && resSheet.data){
 					var engMap = resSheet.headers.map(function(cm){ return { "columnName" : metaTable.englishColumns[ metaTable.hebrewColumns.indexOf(cm) ] || cm }  });
-					require('./validator').validate(engMap,resSheet.data,managingBody,metaIdx,year,quarter);
+					require('./validator').validate(engMap,resSheet.data,managingBody,fund,metaIdx,year,quarter);
 				}
 			})
 		}
