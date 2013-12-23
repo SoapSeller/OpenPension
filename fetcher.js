@@ -2,7 +2,9 @@ var URL = require("url"),
 	http = require("http"),
 	https = require("https"),
 	fs = require("fs"),
-	cp = require("child_process");
+	cp = require("child_process"),
+	fc = require("./fetcher.common.js"),
+	harel = require("./fetcher.harel.js");
 
 var cUrl = 3,
 	cNum = 2,
@@ -78,89 +80,26 @@ var readFundsFile = function() {
 	return funds;
 };
 
-/* fetch a fund to file
- * fund: Object of type:
- *					{ body: englishBody, // See 'bodys' aboce
- *					  number: number,
- *					  url: fileurl }
- *  onDone: Callback with format void(downloadedFilePath, error)
- */
-var fetchFund = function(fund, onDone) {
-
-	if (fund.url.indexOf('http') !== 0) {
-		fund.url = 'http://' + fund.url;
-	}
-
-	//console.log(fund.url);
-	url = URL.parse(fund.url);
-
-	var isHttps = url.protocol == "https:";
-	var options = {
-		hostname: url.hostname,
-		port: url.port ? url.port : (isHttps ? 443 : 80),
-		path: url.path,
-		method: 'GET',
-		rejectUnauthorized: false
-	};
-
-	var baseName = "res/" + fund.body + "_" + fund.number;
-	var filename = baseName + ".xls";
-	var filenameX = baseName + ".xlsx";
-
-	var stream = fs.createWriteStream(filename, { flags: 'w+', encoding: "binary", mode: 0666 });
-
-	var client = isHttps ? https : http;
-
-	var req = client.request(options, function(res) {
-		//res.setEncoding('binary');
-		res.on('data', function (chunk) {
-			stream.write(chunk);
-		});
-		res.on('end', function() {
-			stream.end();
-
-			
-			cp.exec("file " + filename, function (err, stdout, stderr) {
-				if (!err &&
-					(stdout.toString().indexOf("CDF V2") !== -1 ||
-					stdout.toString().indexOf("Composite Document File V2 Document") !== -1)) {
-					var cmd = "ssconvert --export-type=Gnumeric_Excel:xlsx " + filename + " " + filenameX;
-					//console.log(filename);
-
-					cp.exec(cmd, function(err, stdout, stderr) {
-						//console.log(cmd);
-						//console.log(stdout);
-						fs.unlink(filename);
-						onDone(filenameX);
-					});
-				}
-				else {
-					console.log("Error with fund: ", fund, stdout);
-					fs.unlink(filename);
-					onDone(null, "Can't convert fund: " + stdout);
-				}
-			});
-		});
-	});
-
-	req.on('error', function(e) {
-		console.log('problem with request(' + fund.url +  '): ' + e.message, options);
-		onDone(null, "Can't fetch fund: "  + e.message);
-	});
-
-	req.end();
-};
-
 
 var doFetch = function(step, funds, seed) {
 	if (seed < funds.length) {
-		fetchFund(funds[seed], doFetch.bind(this, step, funds, seed+step));
+		var fund = funds[seed];
+		var next = doFetch.bind(this, step, funds, seed+step);
+		switch (fund.body) {
+			case "harel":
+				harel.fetchOne(fund, next);
+			break;
+			default:
+				fc.fetchFund(fund, next);
+		}
 	}
 };
 
 /* Fetch all funds */
-exports.fetchAll = function() {
-	var funds = readFundsFile();
+exports.fetchAll = function(funds) {
+	if (funds === undefined) {
+		funds = readFundsFile();
+	}
 
 	var step = 5;
 	for(var i = 0; i < Math.min(funds.length, step); ++i) {
@@ -168,3 +107,36 @@ exports.fetchAll = function() {
 	}
 };
 
+exports.fetchHarel = function() {
+	var allFunds = readFundsFile();
+
+	var funds = [];
+
+	for(var i = 0; i < allFunds.length; ++i) {
+		var fund = allFunds[i];
+		if (fund.body == "harel") {
+			funds.push(fund);
+		}
+	}
+
+	exports.fetchAll(funds);
+	// var outFile = fs.createWriteStream("test.csv");
+
+	// var count = funds.length;
+	// var handleDone = function(fund, fundFiles) {
+	// 	console.log("Writing fund", fund.number, "files");
+	// 	for (var i = 0; i < fundFiles.length; ++i) {
+	// 		var file = fundFiles[i];
+	// 		outFile.write([fund.number, file.year, file. q, file.url].join(',') + "\n");
+	// 	}
+
+	// 	if (--count === 0) {
+	// 		console.log("All funds fetched.");
+	// 		outFile.end();
+	// 	}
+	// };
+
+	// for (i = 0; i < funds.length; ++i) {
+	// 	harel.fetchOne(funds[i], handleDone);
+	// }
+};

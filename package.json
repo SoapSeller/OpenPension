@@ -19,6 +19,7 @@
 	"pg": "latest",
 	"express": "3.x",
 	"request": "latest"
+    "zombie": "latest"
     },
     "devDependencies" : {},
     "scripts" : {},

@@ -111,6 +111,12 @@ program
 	});
 
 program
+	.command("fetch-harel")
+	.action(function(){
+		require('./fetcher').fetchHarel();
+	});
+
+program
 	.command("to-csv")
 	.description("Convert sheets in file to CSV")
 	.option("-f, --file <path>", "file name")
