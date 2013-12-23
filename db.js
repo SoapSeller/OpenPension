@@ -93,30 +93,30 @@ var mapColumnType2Sql = function(type) {
   return dbtype;
 };
 
+var a  = 0;
 db.pg = function() {
   var self = this;
+  pg.connect(config.connection_string, function(err, client, done){
+    self.tablesCounter = 0;
+    var createTable = "CREATE TABLE " + tableName + "(id BIGSERIAL PRIMARY KEY, ";
+    var fields = _.zip(columnsNames, columnsTypes.map(mapColumnType2Sql));
+    createTable += fields.filter(function(f) { return !!f[0] && !!f[1]; }).map(function(f) { return f[0] + " " + f[1]; }).join(',');
+    createTable += ");";
 
-  self.client = new pg.Client(config.connection_string);
-  self.client.connect();
-
-  self.tablesCounter = 0;
-
-  var createTable = "CREATE TABLE " + tableName + "(id BIGSERIAL PRIMARY KEY, ";
-  var fields = _.zip(columnsNames, columnsTypes.map(mapColumnType2Sql));
-  createTable += fields.filter(function(f) { return !!f[0] && !!f[1]; }).map(function(f) { return f[0] + " " + f[1]; }).join(',');
-  createTable += ");";
-
-  self.client.query(createTable, function(err) {
-    if(!err) {
-      self.client.query('GRANT SELECT ON ' + tableName + ' TO opublic;', function(err) {
-        if (err) {
-          console.log("error in grant", err);
-        }
-      });
-    } else {
-      console.log("error in create", err);
-    }
-  });
+    
+    client.query(createTable, function(err) {
+      if(!err) {
+        client.query('GRANT SELECT ON ' + tableName + ' TO opro;', function(err) {
+          if (err) {
+            console.log("error in grant", err);
+          }
+          console.log(">>1a");
+        });
+      } else {
+        console.log("error in create", err);
+      }
+    });
+  })
 };
 
 db.pg.prototype = {
@@ -144,19 +144,36 @@ db.pg.prototype = {
     var statment = { name: name, text: sql, values: null };
 
     return function(managing_body, fund, report_year, report_qurater, instrument_type, instrument_sub_type, objects) {
-      objects.forEach(function(object) {
-        statment.values = [managing_body, fund, report_year, report_qurater, instrument_type, instrument_sub_type].concat(object.map(function(f, i) { return fieldsPreps[i](f); }));
-        that.client.query(statment, function(err) {
-          if (err){
-            console.log("Error in DB of object:", err);
-            console.log(object);
-            console.log("***********************************");
-          }
+      pg.connect(config.connection_string, function(err, client, done){
+        objects.forEach(function(object) {
+          var values = [managing_body, fund, report_year, report_qurater, instrument_type, instrument_sub_type].concat(object.map(function(f, i) { return fieldsPreps[i](f) || null; }));
+          statment.values = values;
+          client.query(statment, function(err) {
+            if (err){
+              console.log("Error in DB of object:", err);
+              console.log(values);
+              console.log(object);
+              console.log("***********************************");
+            }
+            done();
+          });
         });
-      });
+      })
     };
   }
 };
+
+exports.closePool = function(){
+  console.log("closing pool...");
+  pg.connect(config.connection_string, function(err, client, done){
+    var q = client.query("select count(*) from " + tableName, function(err, res){
+      console.log("now db has " + res.rows[0].count + " rows");
+    })
+    q.on("end", function(){
+      process.exit();
+    })
+  })
+}
 
 exports.pg = db.pg;
 exports.csv = db.csv;
@@ -166,5 +183,3 @@ exports.open = function() {
   else
     return new db.pg();
 };
-
-

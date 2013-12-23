@@ -6,7 +6,7 @@ cp = require("child_process")
 
 file = require('fs').readFileSync("./files_data.csv").toString()
 
-migdalFiles = file.split("\n").map((l)-> l.split(",")).filter((l)-> l[2] == '"מגדל אחזקות ביטוח ופיננסים בע""מ"' )
+migdalFiles = file.split("\n").map((l)-> l.split(",")).filter((l)-> l[3] == '"מגדל אחזקות ביטוח ופיננסים בע""מ"' )
 outDir = "fetching/"
 concur = 0
 
@@ -16,15 +16,16 @@ fetchRec = (recMigFiles)->
 	if concur < 2
 		concur++
 		hasCalled = true
-		fetchRec(recMigFiles[1..])
+		# fetchRec(recMigFiles[1..])
 	console.log "parsing next line, left:", recMigFiles.length
 
 	line = recMigFiles[0]
-	q312 = line[7]
-	q113 = line[8]
-	q213 = line[9]
-	q313 = line[10]
-	monkey = line[3]
+	q312 = line[8]
+	q113 = line[9]
+	q213 = line[10]
+	q313 = line[11]
+	monkey = line[4]
+	body = line[2]
 
 	qDone = 4
 
@@ -32,10 +33,10 @@ fetchRec = (recMigFiles)->
 		qDone -= 1
 		if not hasCalled and qDone == 0 then fetchRec(recMigFiles[1..])
 
-	convertFile(line, q312,2012,3, "Migdal", monkey,updateDone)
-	convertFile(line, q113,2013,1, "Migdal", monkey,updateDone)
-	convertFile(line, q213,2013,2, "Migdal", monkey,updateDone)
-	convertFile(line, q313,2013,3, "Migdal", monkey,updateDone)
+	convertFile(line, q312,2012,4, body, monkey,updateDone)
+	convertFile(line, q113,2013,1, body, monkey,updateDone)
+	convertFile(line, q213,2013,2, body, monkey,updateDone)
+	convertFile(line, q313,2013,3, body, monkey,updateDone)
 
 
 convertFile = (line, fileUrl, year, q, body, monkey, convertDone)->
@@ -66,7 +67,9 @@ convertFile = (line, fileUrl, year, q, body, monkey, convertDone)->
 			stream.end()
 			console.log "finished fetching file #{filename}"
 			convertXlsXlsx filename, ()->
-				require("child_process").exec "node index import -f #{filename}x -y #{year} -q #{q} -b #{body} -m #{monkey} ", ()->
+				require("child_process").exec "node index import -f #{filename}x -y #{year} -q #{q} -b #{body} -m #{monkey} ", (e)->
+					console.log ">>><<<<",e
+					console.log "done importing file #{filename}x"
 					convertDone()
 
 

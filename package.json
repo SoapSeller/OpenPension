@@ -16,7 +16,9 @@
 	"node-zip" : "latest",
 	"xml2js" : "latest",
 	"commander": "latest",
-	"pg": "latest"
+	"pg": "latest",
+	"express": "3.x",
+	"request": "latest"
     },
     "devDependencies" : {},
     "scripts" : {},

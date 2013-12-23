@@ -410,7 +410,9 @@ var parseSheets = function(sheets){
 					var engMap = resSheet.headers.map(function(cm){ return { "columnName" : metaTable.englishColumns[ metaTable.hebrewColumns.indexOf(cm) ] || cm }  });
 					require('./validator').validate(engMap,resSheet.data,managingBody,fund,metaIdx,year,quarter);
 				}
-			})
+			});
+			
+			// require('./db').closePool();
 		}
 
 	}
