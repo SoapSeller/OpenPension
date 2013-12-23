@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 .DS_Store
 *.swp*
 *.xls
@@ -13,3 +14,18 @@ res/test
 
 dump.csv
 _config.json*
+=======
+lib-cov
+*.seed
+*.log
+*.dat
+*.out
+*.pid
+*.gz
+
+pids
+logs
+results
+
+npm-debug.log
+>>>>>>> 8e1afe68f4cda996b36dcf6bcdd355326becaac2
