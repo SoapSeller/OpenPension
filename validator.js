@@ -27,34 +27,34 @@ exports.validate = function(headers,data,managingBody,fund, tabIndex,year,quarte
 
 	if ((tabData || []).length > 0){
 
-		 // var DB =  require('./db');
-		 // var filename = "./tmp/" + managingBody + "_" + year + "_" + quarter + "_tab_" + tabIndex + ".csv";
-		 // var db = new DB.csv(filename);
+		 var DB =  require('./db');
+		 var filename = "./tmp/" + [managingBody, fund, year, quarter, tabIndex].join("_") + ".csv";
+		 var db = new DB.csv(filename);
 		 // console.log("writing to file:" + filename);
 		 // var db = DB.open();
-		 // var tableWriter = db.openTable(headers);
-		 // tableWriter(managingBody, fund, year, quarter, instrument, instrumentSub, tabData);
-		 var params = [].join('/');
-		 request.post({
-		 	url : 'http://localhost:3001/save' + params,
-		 	body: JSON.stringify({
-		 		headers:headers, 
-		 		tabData:tabData,
-		 		managingBody:managingBody, 
-		 		fund:fund, 
-		 		year:year, 
-		 		quarter:quarter, 
-		 		instrument:instrument, 
-		 		instrumentSub:instrumentSub
-		 	}),
-		 	headers: {'Content-Type': 'application/json'}
-		 },function(err, res, body){
-		 	if (err) {
-		 		console.log("error sending to server: ",err);
-		 	} else {
-		 		console.log("done sending to server");
-		 	}
-		 });
+		 var tableWriter = db.openTable(headers);
+		 tableWriter(managingBody, fund, year, quarter, instrument, instrumentSub, tabData);
+		 // var params = [].join('/');
+		 // request.post({
+		 // 	url : 'http://localhost:3001/save' + params,
+		 // 	body: JSON.stringify({
+		 // 		headers:headers, 
+		 // 		tabData:tabData,
+		 // 		managingBody:managingBody, 
+		 // 		fund:fund, 
+		 // 		year:year, 
+		 // 		quarter:quarter, 
+		 // 		instrument:instrument, 
+		 // 		instrumentSub:instrumentSub
+		 // 	}),
+		 // 	headers: {'Content-Type': 'application/json'}
+		 // },function(err, res, body){
+		 // 	if (err) {
+		 // 		console.log("error sending to server: ",err);
+		 // 	} else {
+		 // 		console.log("done sending to server");
+		 // 	}
+		 // });
 	} else {
 		console.log(">!>!>!>", "no tab data found for tab", tabIndex, metaTable.getNameForSheetNum(tabIndex));
 	}

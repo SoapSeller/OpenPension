@@ -16,7 +16,7 @@ fetchRec = (recMigFiles)->
 	if concur < 2
 		concur++
 		hasCalled = true
-		# fetchRec(recMigFiles[1..])
+		fetchRec(recMigFiles[1..])
 	console.log "parsing next line, left:", recMigFiles.length
 
 	line = recMigFiles[0]
