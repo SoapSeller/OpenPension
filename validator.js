@@ -26,8 +26,8 @@ exports.validate = function(headers,data,managingBody,fund, tabIndex,year,quarte
 	var tabData = parseTabSpecificData(tabIndex, headers, cleanData);
 
 	if ((tabData || []).length > 0){
-		sendToServer(managingBody, fund, year, quarter, tabIndex, instrument, instrumentSub, tabData,headers);
-		// writeToCsv(managingBody, fund, year, quarter, tabIndex, instrument, instrumentSub, tabData,headers);
+		// sendToServer(managingBody, fund, year, quarter, tabIndex, instrument, instrumentSub, tabData,headers);
+		writeToCsv(managingBody, fund, year, quarter, tabIndex, instrument, instrumentSub, tabData,headers);
 
 	} else {
 		console.log(">!>!>!>", "no tab data found for tab", tabIndex, metaTable.getNameForSheetNum(tabIndex));
@@ -64,9 +64,7 @@ var sendToServer = function(managingBody, fund, year, quarter, tabIndex, instrum
 var writeToCsv = function(managingBody, fund, year, quarter, tabIndex, instrument, instrumentSub, tabData,headers){
 	var DB =  require('./db');
 	var filename = "./tmp/" + [ managingBody, fund, year, quarter].join("_") + ".csv";
-	var db = new DB.csv(filename);
-	var tableWriter = db.openTable(headers);
-	tableWriter(managingBody, fund, year, quarter, instrument, instrumentSub, tabData);
+	DB.csv.write(filename, headers,managingBody, fund, year, quarter, instrument, instrumentSub, tabData);
 }
 
 var debugData = function(data){

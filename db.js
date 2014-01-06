@@ -33,14 +33,53 @@ db.csv = function(filename) {
 
   var exists = fs.existsSync(filename);
 
-  this.stream = fs.createWriteStream(filename, { flags: 'w+', encoding: "utf8", mode: 0666 });
-
+  this.stream = fs.createWriteStream(filename, { flags: 'a+', encoding: "utf8", mode: 0666 });
   
   if (!exists){
-    this.stream.writeSync(columnsNames.join(',') + "\n");
-    console.log("<<<<<<<<<<<<<<<<");
+    this.stream.write(columnsNames.join(',') + "\n");
   }
 };
+
+db.csv.write = function(filename, mapping,managing_body, fund, report_year, report_qurater, instrument_type, instrument_sub_type, objects){
+
+  var exists = fs.existsSync(filename);
+  var stream = fs.createWriteStream(filename, { flags: 'a+', encoding: "utf8", mode: 0666 });
+  if (!exists){
+    stream.write(columnsNames.join(',') + "\n");
+  }
+
+  var mapping = defaultColumnsNamesMapping.concat(mapping);
+  var indexes = [];
+  columnsNames.forEach(function(column) {
+    var idx = -1;
+    for (i = 0; i < mapping.length; ++i) {
+      if (mapping[i].columnName == column) {
+        idx = i;
+        break;
+      }
+    }
+    indexes.push(idx);
+  });
+
+  objects.forEach(function(object) {
+    object = [managing_body, fund.toString(), report_year.toString(), report_qurater.toString(), instrument_type, instrument_sub_type].concat(object);
+
+    var str = "";
+    for (i = 0; i < indexes.length; ++i) {
+      var idx = indexes[i];
+      if (idx >= 0){
+        str = str + (object[idx] ?  object[idx] : "");
+      }
+      if (i != indexes.length-1) {
+        str = str + ",";
+      } else {
+        str = str + "\n";
+      }
+    }
+    stream.write(str);
+  });
+
+}
 
 db.csv.prototype = {
   openTable: function(mapping) {
@@ -66,8 +105,7 @@ db.csv.prototype = {
 
         for (i = 0; i < indexes.length; ++i) {
           var idx = indexes[i];
-          if (idx >= 0)
-          {
+          if (idx >= 0){
             that.stream.write(object[idx] ?  object[idx] : "");
           }
           if (i != indexes.length-1) {
