@@ -16,8 +16,9 @@ app.all "*", (req,res,next)->
 	next()
 
 app.post '/save', (req, res)->
+	console.log "received request"
 	res.send()
 	tableWriter = db.openTable(req.body.headers)
 	tableWriter req.body.managingBody, req.body.fund, req.body.year, req.body.quarter, req.body.instrument, req.body.instrumentSub, req.body.tabData
 
-app.listen("3001")
+app.listen("3001");

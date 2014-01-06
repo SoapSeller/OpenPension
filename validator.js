@@ -26,35 +26,9 @@ exports.validate = function(headers,data,managingBody,fund, tabIndex,year,quarte
 	var tabData = parseTabSpecificData(tabIndex, headers, cleanData);
 
 	if ((tabData || []).length > 0){
+		sendToServer(managingBody, fund, year, quarter, tabIndex, instrument, instrumentSub, tabData,headers);
+		// writeToCsv(managingBody, fund, year, quarter, tabIndex, instrument, instrumentSub, tabData,headers);
 
-		 var DB =  require('./db');
-		 var filename = "./tmp/" + [managingBody, fund, year, quarter, tabIndex].join("_") + ".csv";
-		 var db = new DB.csv(filename);
-		 // console.log("writing to file:" + filename);
-		 // var db = DB.open();
-		 var tableWriter = db.openTable(headers);
-		 tableWriter(managingBody, fund, year, quarter, instrument, instrumentSub, tabData);
-		 // var params = [].join('/');
-		 // request.post({
-		 // 	url : 'http://localhost:3001/save' + params,
-		 // 	body: JSON.stringify({
-		 // 		headers:headers, 
-		 // 		tabData:tabData,
-		 // 		managingBody:managingBody, 
-		 // 		fund:fund, 
-		 // 		year:year, 
-		 // 		quarter:quarter, 
-		 // 		instrument:instrument, 
-		 // 		instrumentSub:instrumentSub
-		 // 	}),
-		 // 	headers: {'Content-Type': 'application/json'}
-		 // },function(err, res, body){
-		 // 	if (err) {
-		 // 		console.log("error sending to server: ",err);
-		 // 	} else {
-		 // 		console.log("done sending to server");
-		 // 	}
-		 // });
 	} else {
 		console.log(">!>!>!>", "no tab data found for tab", tabIndex, metaTable.getNameForSheetNum(tabIndex));
 	}
@@ -63,6 +37,37 @@ exports.validate = function(headers,data,managingBody,fund, tabIndex,year,quarte
 
 }
 
+var sendToServer = function(managingBody, fund, year, quarter, tabIndex, instrument, instrumentSub, tabData,headers){
+	request.post({
+		url : 'http://localhost:3001/save',
+		body: JSON.stringify({
+			headers:headers, 
+			tabData:tabData,
+			managingBody:managingBody, 
+			fund:fund, 
+			year:year, 
+			quarter:quarter, 
+			instrument:instrument, 
+			instrumentSub:instrumentSub
+		}),
+		headers: {'Content-Type': 'application/json'}
+	},function(err, res, body){
+		if (err) {
+			console.log("error sending to server: ",err);
+		} else {
+			console.log("done sending to server");
+		}
+	});
+}
+
+
+var writeToCsv = function(managingBody, fund, year, quarter, tabIndex, instrument, instrumentSub, tabData,headers){
+	var DB =  require('./db');
+	var filename = "./tmp/" + [ managingBody, fund, year, quarter].join("_") + ".csv";
+	var db = new DB.csv(filename);
+	var tableWriter = db.openTable(headers);
+	tableWriter(managingBody, fund, year, quarter, instrument, instrumentSub, tabData);
+}
 
 var debugData = function(data){
 	console.log("data debug","\n", tabData.map(function(l){ return l.join(",") }));
