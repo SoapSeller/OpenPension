@@ -31,9 +31,15 @@ db.csv = function(filename) {
     filename = "dump.csv";
   }
 
+  var exists = fs.existsSync(filename);
+
   this.stream = fs.createWriteStream(filename, { flags: 'w+', encoding: "utf8", mode: 0666 });
 
-  this.stream.write(columnsNames.join(',') + "\n");
+  
+  if (!exists){
+    this.stream.writeSync(columnsNames.join(',') + "\n");
+    console.log("<<<<<<<<<<<<<<<<");
+  }
 };
 
 db.csv.prototype = {
