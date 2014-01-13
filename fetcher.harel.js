@@ -51,16 +51,18 @@ exports.fetchOne = function(fund, onDone) {
 		browser.fill("input[name='SearchParam']", fund.number);
 		return browser.pressButton("#image1");
 	}).then(function() {
-		// Click the first link in the results list.
-		// TBD: Handle garbage results.
+		// Click find the right found link in the results list & click it.
 		DEBUG("AFTER SEARCH");
-		var link = browser.document.querySelector("a.SearchResult");
-		if (link.childNodes.length > 0 && link.childNodes[0].nodeName == "#text" && link.childNodes[0].nodeValue.indexOf(fund.number) !== -1) {
-			fundName = link.childNodes[0].nodeValue.replace(fund.number.toString(), "");
-			return browser.clickLink(link);
-		} else {
-			DEBUG("INVALID FUND RESULTS: " + fund.number);
+		var links = browser.document.querySelectorAll("a.SearchResult");
+		for (var i = 0; i < links.length; ++i) {
+			var link = links[i];
+			if (link.childNodes.length > 0 && link.childNodes[0].nodeName == "#text" && link.childNodes[0].nodeValue.indexOf(fund.number) !== -1) {
+				fundName = link.childNodes[0].nodeValue.replace(fund.number.toString(), "");
+				return browser.clickLink(link);
+			}
 		}
+
+		DEBUG("****INVALID FUND RESULTS: " + fund.number);
 	}).then(function() {
 		// Go to assets list
 		DEBUG("FUND FOUND, GOING TO ASSETS LIST");
@@ -86,7 +88,7 @@ exports.fetchOne = function(fund, onDone) {
 			}
 
 			if (bestLink === null) {
-				console.log("Couldn't find files list for fund ", fund.number);
+				console.log("****Couldn't find files list for fund ", fund.number, "*****");
 			} else {
 				return browser.clickLink(bestLink);
 			}
