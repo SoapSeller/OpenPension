@@ -57,6 +57,10 @@ convertFile = (line, fileUrl, year, q, body, monkey, convertDone)->
 
 	baseName = outDir +  [ body,year,q,monkey ].join("_")
 	filename = baseName + ".xls"
+	
+	if fs.existsSync(filename + "x")
+		console.log "skipping existing file #{filename}x"
+		return convertDone()
 
 	stream = fs.createWriteStream(filename, { flags: 'w+', encoding: "binary", mode: 0o666 })
 

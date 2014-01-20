@@ -133,7 +133,7 @@ var isNumber = function(value){
 }
 
 var cleanString = function(input){
-	return input.trim().replace(/,/g,"-").replace(/\([0-9]+\)/g,'');
+	return input.trim().replace(/,/g,"-").replace(/\([0-9]+\)/g,'').replace(/[$%\s]/g,'');
 }
 
 var normalizeCurrency = function(input){
