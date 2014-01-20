@@ -187,11 +187,12 @@ db.pg.prototype = {
 
     var statment = { name: name, text: sql, values: null };
 
-    return function(managing_body, fund, report_year, report_qurater, instrument_type, instrument_sub_type, objects) {
+    return function(managing_body, fund, report_year, report_qurater, instrument_type, instrument_sub_type, objects,cb) {
       pg.connect(config.connection_string, function(err, client, done){
         objects.forEach(function(object) {
           var values = [managing_body, fund, report_year, report_qurater, instrument_type, instrument_sub_type].concat(object.map(function(f, i) { return fieldsPreps[i](f) || null; }));
           statment.values = values;
+          
           client.query(statment, function(err) {
             if (err){
               console.log("Error in DB of object:", err);
@@ -199,6 +200,9 @@ db.pg.prototype = {
               console.log(object);
               console.log("***********************************");
             }
+            
+            if (cb) cb(err);
+
             done();
           });
         });
