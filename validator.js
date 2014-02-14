@@ -1,7 +1,7 @@
 var MetaTable = require('./common/MetaTable');
 var request = require('request');
 
-exports.validate = function(headers,data,managingBody,fund, tabIndex,year,quarter) {
+exports.validate = function(headers,data,tabIndex) {
 // managingBody; (string) 'Migdal' לדגמ
 // tabIndex; (integer) the tab number in the managingBody xls sheet
 // headers; (array of objects) [{columnName: 'instrument_id'}] 
@@ -16,24 +16,26 @@ exports.validate = function(headers,data,managingBody,fund, tabIndex,year,quarte
 
 	var instrument = metaTable.instrumentTypes[tabIndex];
 	var instrumentSub = metaTable.instrumentSubTypes[tabIndex];
-	
-	var cleanData = data.filter(function(l){
+
+	var tabData = parseTabSpecificData(tabIndex, headers, data);
+
+	return tabData.filter(function(l){
 		return (
 			!isLineEmpty(l)
 		)
 	});
 
-	var tabData = parseTabSpecificData(tabIndex, headers, cleanData);
+	// if ((tabData || []).length > 0){
+	// 	// sendToServer(managingBody, fund, year, quarter, tabIndex, instrument, instrumentSub, tabData,headers);
+	// 	writeToCsv(managingBody, fund, year, quarter, tabIndex, instrument, instrumentSub, tabData,headers);
 
-	if ((tabData || []).length > 0){
-		// sendToServer(managingBody, fund, year, quarter, tabIndex, instrument, instrumentSub, tabData,headers);
-		writeToCsv(managingBody, fund, year, quarter, tabIndex, instrument, instrumentSub, tabData,headers);
-
-	} else {
-		console.log(">!>!>!>", "no tab data found for tab", tabIndex, metaTable.getNameForSheetNum(tabIndex));
-	}
+	// } else {
+	// 	console.log(">!>!>!>", "no tab data found for tab", tabIndex, metaTable.getNameForSheetNum(tabIndex));
+	// }
 	
 	// if (tabIndex == 24) process.exit();
+
+	// return tabData;
 
 }
 
@@ -228,6 +230,7 @@ var shumNehaseiHakeren = function(headers,dataLines){
 
 var mezumanim = function(headers, dataLines){
 	var enHeaders = headers.map(function(h){return h.columnName});
+
 	return dataLines.filter(function(l){
 		return (
 			(isNotEmpty(l[ enHeaders.indexOf("rating") ]) 

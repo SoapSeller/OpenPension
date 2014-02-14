@@ -2,9 +2,9 @@ var MetaTable = require('./common/MetaTable')
 var xlsx = require("./xlsxparser");
 var LevDistance = require('./LevDistance')
 
-exports.parseXls = function(filename,givenManagingBody, givenYear, givenQuarter, givenFund, callback){
+exports.parseXls = function(filename,callback){
 	xlsx.getSheets(filename, function(sheets){
-		var result = parseSheets(sheets,givenManagingBody, givenYear, givenQuarter, givenFund);
+		var result = parseSheets(sheets);
 		if (callback)
 			callback(result)
 	});
@@ -362,7 +362,7 @@ var sheetSkipDetector = function(inputLine, metaSheetNum, metaTable){
 }
 
 
-var parseSheets = function(sheets, managingBody, year, quarter, fund){
+var parseSheets = function(sheets){
 
 	var metaTable = MetaTable.getMetaTable();
 	var lastSheetNum = metaTable.getLastSheetNum();
@@ -405,16 +405,13 @@ var parseSheets = function(sheets, managingBody, year, quarter, fund){
 				if (resSheet.headers && resSheet.data){
 					var engMap = resSheet.headers.map(function(cm){ return { "columnName" : metaTable.englishColumns[ metaTable.hebrewColumns.indexOf(cm) ] || cm }  });
 					parsedSheetsData.push({engMap : engMap, data: resSheet.data, idx: metaIdx})
-					// require('./validator').validate(engMap,resSheet.data,managingBody,fund,metaIdx,year,quarter);
 				}
 			});
 			
-			// require('./db').closePool();
 		}
 
 	}
 
-	console.log("<<<<<<<<<")
 
 	lookForNextSheet([], sheets.map(function(x){return x}));
 
