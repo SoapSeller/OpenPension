@@ -1,5 +1,5 @@
-mt = require('../common/MetaTable').getMetaTable()
 XLSXLoader = require './assets/XLSXLoader'
+Helpers = require './Helpers'
 
 describe "ParseXML Spec",->
 
@@ -115,21 +115,13 @@ describe "ParseXML Spec",->
 		])
 
 
-
-
-resolveIdx = (instrumentType,instrumentSubType)->
-	for it, x in mt.instrumentTypes
-		if it == instrumentType and mt.instrumentSubTypes[x] == instrumentSubType
-			return x
-	throw "could not find idx for #{instrumentType} #{instrumentSubType}"
-
 findTab = (instrumentType,instrumentSubType, files)->
 	if (files.length == 0)
 		asyncSpecDone()
 	else 
 		f = files.shift()
 		XLSXLoader.load f, (pXlsx)->
-			expect(pXlsx.some((r)-> resolveIdx(instrumentType,instrumentSubType) == r.idx )).toEqual(true)
+			expect(pXlsx.some((r)-> Helpers.resolveIdx(instrumentType,instrumentSubType) == r.idx )).toEqual(true)
 			findTab(instrumentType,instrumentSubType, files)
 
 
