@@ -2,17 +2,12 @@ var MetaTable = require('./common/MetaTable')
 var xlsx = require("./xlsxparser");
 var LevDistance = require('./LevDistance')
 
-var managingBody = null;
-var fund = null
-var year = null;
-var quarter = null;
-
-exports.parseXls = function(filename,givenManagingBody, givenYear, givenQuarter, givenFund){
-	managingBody = givenManagingBody;
-	fund = givenFund;
-	year = givenYear;
-	quarter = givenQuarter;
-	xlsx.getSheets(filename, parseSheets);
+exports.parseXls = function(filename,givenManagingBody, givenYear, givenQuarter, givenFund, callback){
+	xlsx.getSheets(filename, function(sheets){
+		var result = parseSheets(sheets,givenManagingBody, givenYear, givenQuarter, givenFund);
+		if (callback)
+			callback(result)
+	});
 }
 
 
@@ -367,11 +362,12 @@ var sheetSkipDetector = function(inputLine, metaSheetNum, metaTable){
 }
 
 
-var parseSheets = function(sheets){
+var parseSheets = function(sheets, managingBody, year, quarter, fund){
 
 	var metaTable = MetaTable.getMetaTable();
 	var lastSheetNum = metaTable.getLastSheetNum();
 	var debugSheet;
+	var parsedSheetsData = []
 
 	var lookForNextSheet = function(res, _sheets){
 		if (res.length < lastSheetNum && _sheets.length > 0){
@@ -408,7 +404,8 @@ var parseSheets = function(sheets){
 			res.forEach(function(resSheet, metaIdx){
 				if (resSheet.headers && resSheet.data){
 					var engMap = resSheet.headers.map(function(cm){ return { "columnName" : metaTable.englishColumns[ metaTable.hebrewColumns.indexOf(cm) ] || cm }  });
-					require('./validator').validate(engMap,resSheet.data,managingBody,fund,metaIdx,year,quarter);
+					parsedSheetsData.push({engMap : engMap, data: resSheet.data, idx: metaIdx})
+					// require('./validator').validate(engMap,resSheet.data,managingBody,fund,metaIdx,year,quarter);
 				}
 			});
 			
@@ -417,9 +414,11 @@ var parseSheets = function(sheets){
 
 	}
 
+	console.log("<<<<<<<<<")
+
 	lookForNextSheet([], sheets.map(function(x){return x}));
 
-	
+	return parsedSheetsData;
 }
 
 
