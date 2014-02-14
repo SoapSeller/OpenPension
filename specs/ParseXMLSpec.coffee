@@ -1,64 +1,63 @@
-genericImporter = require '../genericImporter'
 mt = require('../common/MetaTable').getMetaTable()
-
+XLSXLoader = require './assets/XLSXLoader'
 
 describe "ParseXML Spec",->
 
 	# make jasmine wait 50 seconds before timing out..
-	jasmine.asyncSpecWait.timeout = 50000
+	jasmine.asyncSpecWait.timeout = 20000
 
 	it "needs to have mezumanim", ->
 		asyncSpecWait()
 		findTab("מזומנים","",[
-			Migdal_2013_3_414
+			"Migdal_2013_3_414"
 		])
 
 	it "needs to have noyarot ereh shirim teudot hithayvot mimshaltiyot",->
 		asyncSpecWait()		
 		findTab("ניירות ערך סחירים","תעודות התחייבות ממשלתיות",[
-			Migdal_2013_3_414
+			"Migdal_2013_3_414"
 		])
 			
 	it "needs to have noyarot ereh shirim agah konzerni",->
 		asyncSpecWait()
 		findTab("ניירות ערך סחירים",'"אג""ח קונצרני"',[
-			Migdal_2013_3_414
+			"Migdal_2013_3_414"
 		])
 
 	it "needs to have noyarot ereh shirim menayot",->
 		asyncSpecWait()
 		findTab("ניירות ערך סחירים",'מניות',[
-			Migdal_2013_3_414
+			"Migdal_2013_3_414"
 		])
 
 	it "needs to have noyarot ereh shirim teudot sal",->
 		asyncSpecWait()
 		findTab("ניירות ערך סחירים",'תעודות סל',[
-			Migdal_2013_3_414
+			"Migdal_2013_3_414"
 		])
 
 	it "needs to have noyarot ereh shirim kranot neemanut",->
 		asyncSpecWait()
 		findTab("ניירות ערך סחירים",'קרנות נאמנות',[
-			Migdal_2013_3_414
+			"Migdal_2013_3_414"
 		])
 
 	it "needs to have noyarot ereh shirim kitvei optziya",->
 		asyncSpecWait()
 		findTab("ניירות ערך סחירים",'כתבי אופציה',[
-			Migdal_2013_3_414
+			"Migdal_2013_3_414"
 		])
 
 	it "needs to have noyarot ereh LO shirim teudot hithayvut mimshaltiyot",->
 		asyncSpecWait()
 		findTab("ניירות ערך לא סחירים",'תעודות התחייבות ממשלתיות',[
-			Migdal_2013_3_414
+			"Migdal_2013_3_414"
 		])
 
 	it "needs to have noyarot ereh LO shirim agah konzerni",->
 		asyncSpecWait()
 		findTab("ניירות ערך לא סחירים",'"אג""ח קונצרני"',[
-			Migdal_2013_3_414
+			"Migdal_2013_3_414"
 		])
 
 	it "needs to have noyarot ereh LO shirim menayot",->
@@ -70,13 +69,13 @@ describe "ParseXML Spec",->
 	it "needs to have noyarot ereh LO shirim kranot hashkaa",->
 		asyncSpecWait()
 		findTab("ניירות ערך לא סחירים",'קרנות השקעה',[
-			Migdal_2013_3_414
+			"Migdal_2013_3_414"
 		])
 
 	it "needs to have noyarot ereh LO shirim kitvei optziya",->
 		asyncSpecWait()
 		findTab("ניירות ערך לא סחירים",'כתבי אופציה',[
-			Migdal_2013_3_414
+			"Migdal_2013_3_414"
 		])
 
 	it "needs to have noyarot ereh LO shirim optiyot",->
@@ -88,13 +87,13 @@ describe "ParseXML Spec",->
 	it "needs to have noyarot ereh LO shirim hozim atidiim",->
 		asyncSpecWait()
 		findTab("ניירות ערך לא סחירים",'חוזים עתידיים',[
-			Migdal_2013_3_414
+			"Migdal_2013_3_414"
 		])
 
 	it "needs to have halvaot",->
 		asyncSpecWait()
 		findTab("הלוואות",'',[
-			Migdal_2013_3_414
+			"Migdal_2013_3_414"
 		])
 
 	it "needs to have pikdonot",->
@@ -106,7 +105,7 @@ describe "ParseXML Spec",->
 	it "needs to have zhuyot mekarkeyin",->
 		asyncSpecWait()
 		findTab("זכויות מקרקעין",'',[
-			Migdal_2013_3_414
+			"Migdal_2013_3_414"
 		])
 
 	it "needs to have hashkaot aherot",->
@@ -116,7 +115,7 @@ describe "ParseXML Spec",->
 		])
 
 
-Migdal_2013_3_414 = __dirname + "/assets/Migdal_2013_3_414.xlsx"
+
 
 resolveIdx = (instrumentType,instrumentSubType)->
 	for it, x in mt.instrumentTypes
@@ -129,15 +128,8 @@ findTab = (instrumentType,instrumentSubType, files)->
 		asyncSpecDone()
 	else 
 		f = files.shift()
-		loadParsedXML f, (pxml)->
-			expect(pxml.some((r)-> resolveIdx(instrumentType,instrumentSubType) == r.idx )).toEqual(true)
+		XLSXLoader.load f, (pXlsx)->
+			expect(pXlsx.some((r)-> resolveIdx(instrumentType,instrumentSubType) == r.idx )).toEqual(true)
 			findTab(instrumentType,instrumentSubType, files)
 
 
-parsedXMLCache = {}
-loadParsedXML = (filename, callback)->
-	if parsedXMLCache[filename] then callback(parsedXMLCache[filename])
-	else
-		genericImporter.parseXls filename,"Migdal","2013","3","414", (result)->
-			parsedXMLCache[filename] = result
-			loadParsedXML(filename, callback)	
