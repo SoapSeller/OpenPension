@@ -16,6 +16,12 @@ describe "ParseXML Spec",->
 		findTab("ניירות ערך סחירים","תעודות התחייבות ממשלתיות",[
 			"Migdal_2013_3_414"
 		])
+
+	it "needs to have noyarot ereh shirim teudot hov mishariyot",->
+		asyncSpecWait()		
+		findTab("ניירות ערך סחירים","תעודות חוב מסחריות",[
+			
+		])
 			
 	it "needs to have noyarot ereh shirim agah konzerni",->
 		asyncSpecWait()
