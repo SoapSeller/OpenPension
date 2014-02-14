@@ -230,8 +230,10 @@ var mezumanim = function(headers, dataLines){
 	var enHeaders = headers.map(function(h){return h.columnName});
 	return dataLines.filter(function(l){
 		return (
-			isNotEmpty(l[ enHeaders.indexOf("currency") ])
-			&& l[ enHeaders.indexOf("currency") ] != 0
+			(isNotEmpty(l[ enHeaders.indexOf("rating") ]) 
+			&& l[ enHeaders.indexOf("rating") ] != 0)
+			|| (isNotEmpty(l[ enHeaders.indexOf("rating_agency") ]) 
+			&& l[ enHeaders.indexOf("rating_agency") ] != 0)
 		)
 	}).map(function(l){
 		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c) });

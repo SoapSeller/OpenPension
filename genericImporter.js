@@ -78,7 +78,7 @@ var cleanDataStr = function(inputStr){
 
 var cleanColumnHeaderStr = function(inputStr){
 	if (inputStr)
-		return inputStr.replace(/\(.*\)/g,"").replace(/["'\n\r]/g,"").replace(/[ ]+/g," ").trim()
+		return inputStr.replace(/\(.*\)/g,"").replace(/["'\n\r]/g,"").replace(/[ ]+/g," ").replace(/^.\. /,"").trim()
 	else 
 		return ""
 }
@@ -137,7 +137,6 @@ var findFromAliasMapLev = function(input, headers, headersAliasMap){
 		return null;
 	}
 };
-
 
 
 var findInHeaders = function(headers, cellContent){
@@ -292,6 +291,7 @@ var parseSingleSheet = function(metaTable, cellReader, dim, indexMetaTable){
 			rowContent[column] = cellContent
 		}
 
+
 		debugM("parseSingleSheet","lines",rowContent.join("|"));
 
 		var identifiedSheetIndex = sheetSkipDetector(rowContent, indexMetaTable, metaTable);
@@ -333,9 +333,9 @@ var knownSheetContentIdentifiers = {
 var sheetMetaIdentifier = function(cellContent, metaSheetNum, metaTable){
 
 	var nameFromMetaTable = metaTable.instrumentSubTypes[metaSheetNum] || metaTable.instrumentTypes[metaSheetNum];
-	var cleanCellContent = cleanColumnHeaderStr(cellContent)
+	
+	var cleanCellContent = cleanColumnHeaderStr(cellContent);
 	var options = [nameFromMetaTable].concat(knownSheetContentIdentifiers[metaSheetNum] || []);
-
 	return options.some(function(value){
 		if (cleanCellContent == cleanColumnHeaderStr(value)){
 			return true;
