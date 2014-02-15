@@ -17,6 +17,7 @@ exports.validate = function(headers,data,tabIndex) {
 	var instrument = metaTable.instrumentTypes[tabIndex];
 	var instrumentSub = metaTable.instrumentSubTypes[tabIndex];
 
+
 	var tabData = parseTabSpecificData(tabIndex, headers, data);
 
 	return tabData.filter(function(l){
@@ -135,7 +136,7 @@ var isNumber = function(value){
 }
 
 var cleanString = function(input){
-	return input.trim().replace(/,/g,"-").replace(/\([0-9]+\)/g,'').replace(/[$%\s]/g,'');
+	return input.trim().replace(/,/g,"-").replace(/\([0-9]+\)/g,'').replace(/[$%\r\n]/g,'');
 }
 
 var normalizeCurrency = function(input){
@@ -464,7 +465,6 @@ var kitveiOptziaLoSahir = function(headers, dataLines){
 			isNotEmpty(l[ enHeaders.indexOf("par_value") ])
 			&& l[ enHeaders.indexOf("par_value") ] != 0
 			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
-			&& l[ enHeaders.indexOf("rate") ] != 0
 		);
 	}).map(function(l){
 		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c) });
@@ -545,8 +545,10 @@ var zhuyotMekarkein = function(headers, dataLines){
 	var enHeaders = headers.map(function(h){return h.columnName});
 	return dataLines.filter(function(l){
 		return (
-			isNotEmpty(l[ enHeaders.indexOf("par_value") ])
-			&& l[ enHeaders.indexOf("par_value") ] != 0
+			isNotEmpty(l[ enHeaders.indexOf("fair_value") ])
+			&& l[ enHeaders.indexOf("fair_value") ] != 0
+			&& isNotEmpty(l[ enHeaders.indexOf("date_of_revaluation") ])
+			&& l[ enHeaders.indexOf("date_of_revaluation") ] != 0
 		);
 	}).map(function(l){
 		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c) });
@@ -586,7 +588,8 @@ var normalizeValues = function(enName, value){
 		case 'rate_of_fund': 		return cleanString(value);
 		case 'date_of_revaluation': return parseDate(value);
 		case 'type_of_asset': 		return cleanString(value);
+		case 'tmp_name': 			return cleanString(value);
 		default:
-			throw new Error("Unexpected column header value given: \"" + c + "\"")
+			throw new Error("Unexpected column header value given: \"" + enName + "\"")
 	}
 }

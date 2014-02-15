@@ -57,13 +57,13 @@ describe "Validator Spec",->
 			{asset : "Migdal_2013_3_414", rows : 126}
 		])
 
-	it "noyarot ereh LO shirim agah konzerni",->
+	it "validates noyarot ereh LO shirim agah konzerni",->
 		asyncSpecWait()
 		validateRows("ניירות ערך לא סחירים",'"אג""ח קונצרני"',[
 			{asset : "Migdal_2013_3_414", rows : 23}
 		])
 
-	it "noyarot ereh LO shirim menayot",->
+	it "validates noyarot ereh LO shirim menayot",->
 		asyncSpecWait()
 		validateRows("ניירות ערך לא סחירים",'מניות',[
 			
@@ -93,11 +93,11 @@ describe "Validator Spec",->
 			{asset : "Migdal_2013_3_414", rows : 19}
 		])
 
-	it "validates halvaot",->
-		asyncSpecWait()
-		validateRows("הלוואות",'',[
-			{asset : "Migdal_2013_3_414", rows : 44}
-		])
+	# it "validates halvaot",->
+	# 	asyncSpecWait()
+	# 	validateRows("הלוואות",'',[
+	# 		{asset : "Migdal_2013_3_414", rows : 44}
+	# 	])
 
 	it "validates pikdonot",->
 		asyncSpecWait()
@@ -128,7 +128,8 @@ validateRows = (instrumentType,instrumentSubType, assetToRows)->
 			idx = Helpers.resolveIdx(instrumentType,instrumentSubType)
 			pXlsxData = pXlsx.filter((r)-> idx == r.idx).pop()
 			validated = validator.validate(pXlsxData.engMap, pXlsxData.data, idx)
-			# console.log(JSON.stringify(validated))
+			# console.log(JSON.stringify(validated));
+			# process.exit();
 			expect(validated.length).toEqual(atr.rows)
 			validateRows(instrumentType,instrumentSubType,assetToRows)
 
