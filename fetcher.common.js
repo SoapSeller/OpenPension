@@ -51,7 +51,7 @@ exports.fetchFund = function(fund, onDone) {
 		res.on('end', function() {
 			stream.end();
 
-			
+
 			cp.exec("file " + filename, function (err, stdout, stderr) {
 				if (!err &&
 					(stdout.toString().indexOf("CDF V2") !== -1 ||
@@ -65,8 +65,14 @@ exports.fetchFund = function(fund, onDone) {
 						fs.unlink(filename);
 						onDone(filenameX);
 					});
-				}
-				else {
+				} else if (stdout.toString().indexOf("Zip archive data, at least v2.0 to extract") !== -1) {
+					// File is already xlsx, just move it to the right name
+					cp.exec("mv -f " + filename + " " + filenameX, function(err, stdout, stderr) {
+						//console.log(cmd);
+						//console.log(stdout);
+						onDone(filenameX);
+					});
+				} else {
 					console.log("Error with fund: ", fund, stdout);
 					fs.unlink(filename);
 					onDone(null, "Can't convert fund: " + stdout);
