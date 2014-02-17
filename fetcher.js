@@ -6,9 +6,9 @@ var URL = require("url"),
 	fc = require("./fetcher.common.js"),
 	harel = require("./fetcher.harel.js");
 
-var cUrl = 3,
-	cNum = 2,
-	cBody = 0;
+var cUrl = 6,
+	cNum = 4,
+	cBody = 3;
 
 var bodys = {
 	"אחר": "other",
@@ -43,10 +43,10 @@ var parseBody = function(body) {
 	return null;
 };
 
-/* Read & parse funds.csv file */
+/* Read & parse files_data.csv file */
 var readFundsFile = function() {
 
-	var parsedLines = require('fs').readFileSync('funds.csv').toString().split("\n");
+	var parsedLines = require('fs').readFileSync('files_data.csv').toString().split("\n");
 
 	var funds = [];
 
@@ -66,7 +66,7 @@ var readFundsFile = function() {
 			var englishBody = parseBody(body);
 
 			if (englishBody === null) {
-				console.log(body);
+				console.log("Unknwon body: ", body);
 			} else {
 				funds.push({
 					body: englishBody,
