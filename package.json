@@ -19,7 +19,8 @@
 	"request": "latest",
 	"jasmine-node": ">= 1.0.26",
 	"zombie": "latest",
-	"coffee-script": "latest"
+	"coffee-script": "latest",
+    "express": "latest"
     },
     "devDependencies" : {},
     "scripts" : {
