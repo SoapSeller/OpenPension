@@ -11,6 +11,7 @@ output.csv
 dump.csv
 res/test
 
+files_data.csv
 dump.csv
 _config.json*
 lib-cov
