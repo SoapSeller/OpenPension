@@ -29,13 +29,14 @@ exports.fetchFund = function(fund, onDone) {
 		rejectUnauthorized: false
 	};
 
-	var baseName = "res/" + fund.body + "_" + fund.number;
+	var baseName = "res/" + fund.body;
 	if (fund['year']) {
 		baseName += "_" + fund.year;
 	}
 	if (fund['quarter']) {
-		baseName += "_q" + fund.quarter;
+		baseName += "_" + fund.quarter;
 	}
+    baseName += "_" + fund.number;
 	var filename = baseName + ".xls";
 	var filenameX = baseName + ".xlsx";
 
