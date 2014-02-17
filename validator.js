@@ -517,10 +517,10 @@ var halvaot = function(headers, dataLines){
 	var enHeaders = headers.map(function(h){return h.columnName});
 	return dataLines.filter(function(l){
 		return (
-			isNotEmpty(l[ enHeaders.indexOf("par_value") ])
-			&& l[ enHeaders.indexOf("par_value") ] != 0
-			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
-			&& l[ enHeaders.indexOf("rate") ] != 0
+			isNotEmpty(l[ enHeaders.indexOf("instrument_id") ])
+			&& l[ enHeaders.indexOf("instrument_id") ] != 0
+			&& isNotEmpty(l[ enHeaders.indexOf("fair_value") ])
+			&& l[ enHeaders.indexOf("fair_value") ] != 0
 		);
 	}).map(function(l){
 		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c) });

@@ -60,6 +60,9 @@ convertFile = (line, fileUrl, year, q, body, monkey, convertDone)->
 	
 	if fs.existsSync(filename + "x")
 		console.log "skipping existing file #{filename}x"
+		require("child_process").exec "node index import -f #{filename}x -y #{year} -q #{q} -b #{body} -m #{monkey} ", (e)->
+			console.log ">>><<<<",e
+			console.log "done importing file #{filename}x"
 		return convertDone()
 
 	stream = fs.createWriteStream(filename, { flags: 'w+', encoding: "binary", mode: 0o666 })
@@ -71,6 +74,7 @@ convertFile = (line, fileUrl, year, q, body, monkey, convertDone)->
 			stream.end()
 			console.log "finished fetching file #{filename}"
 			convertXlsXlsx filename, ()->
+				console.log("node index import -f #{filename}x -y #{year} -q #{q} -b #{body} -m #{monkey}")
 				require("child_process").exec "node index import -f #{filename}x -y #{year} -q #{q} -b #{body} -m #{monkey} ", (e)->
 					console.log ">>><<<<",e
 					console.log "done importing file #{filename}x"

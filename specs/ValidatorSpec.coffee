@@ -93,11 +93,11 @@ describe "Validator Spec",->
 			{asset : "Migdal_2013_3_414", rows : 19}
 		])
 
-	# it "validates halvaot",->
-	# 	asyncSpecWait()
-	# 	validateRows("הלוואות",'',[
-	# 		{asset : "Migdal_2013_3_414", rows : 44}
-	# 	])
+	it "validates halvaot",->
+		asyncSpecWait()
+		validateRows("הלוואות",'',[
+			{asset : "Migdal_2013_3_414", rows : 44}
+		])
 
 	it "validates pikdonot",->
 		asyncSpecWait()
