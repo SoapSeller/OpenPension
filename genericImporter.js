@@ -286,17 +286,19 @@ var parseSingleSheet = function(metaTable, cellReader, dim, indexMetaTable){
 			rowContent[column] = cellContent
 		}
 
-
 		debugM("parseSingleSheet","lines",rowContent.join("|"));
 
-		var identifiedSheetIndex = sheetSkipDetector(rowContent, indexMetaTable, metaTable);
-		if (identifiedSheetIndex != indexMetaTable){
-			notifyM("parseSingleSheet","identified different sheet while looking for:",
-				indexMetaTable,"(" + metaTable.getNameForSheetNum(indexMetaTable) + ")", " identified as:", identifiedSheetIndex, "("+metaTable.getNameForSheetNum(identifiedSheetIndex)+")" );
-			return parseSingleSheet(metaTable, cellReader, dim, identifiedSheetIndex);
-		}
-
 		var shouldExtractContent = headersExtractor(rowContent,headers, foundHeadersMapping)
+
+		// Allow looking few lines after the headers line to detect the correct sheet
+		if (!shouldExtractContent ||  sheetData.length < 4) {
+			var identifiedSheetIndex = sheetSkipDetector(rowContent, indexMetaTable, metaTable);
+			if (identifiedSheetIndex != indexMetaTable){
+				notifyM("parseSingleSheet","identified different sheet while looking for:",
+					indexMetaTable,"(" + metaTable.getNameForSheetNum(indexMetaTable) + ")", " identified as:", identifiedSheetIndex, "("+metaTable.getNameForSheetNum(identifiedSheetIndex)+")" );
+				return parseSingleSheet(metaTable, cellReader, dim, identifiedSheetIndex);
+			}
+		}
 
 		if (shouldExtractContent){
 			var extractedData = contentExtractor(rowContent,foundHeadersMapping);
