@@ -13,7 +13,7 @@
     "dependencies" : {
 	"underscore": "latest",
 	"moment": "latest",
-	"node-zip" : "latest",
+	"node-zip" : "1.0.1",
 	"xml2js" : "latest",
 	"commander": "latest",
 	"request": "latest",
