@@ -101,7 +101,7 @@ exports.fetchAll = function(funds) {
 		funds = readFundsFile();
 	}
 
-	var step = 5;
+	var step = 8;
 	for(var i = 0; i < Math.min(funds.length, step); ++i) {
 		doFetch(step, funds, i);
 	}
