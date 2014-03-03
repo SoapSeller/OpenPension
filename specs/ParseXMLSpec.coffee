@@ -11,6 +11,7 @@ describe "ParseXML Spec",->
 			"Migdal_2013_3_414"
 			"Migdal_2013_3_579"
 			"Migdal_2013_3_99118"
+			"harel_2013_3_153"
 		])
 
 	it "needs to have noyarot ereh shirim teudot hithayvot mimshaltiyot",->
@@ -19,6 +20,7 @@ describe "ParseXML Spec",->
 			"Migdal_2013_3_414"
 			"Migdal_2013_3_579"
 			"Migdal_2013_3_99118"
+			"harel_2013_3_153"
 		])
 
 	it "needs to have noyarot ereh shirim teudot hov mishariyot",->
@@ -26,6 +28,7 @@ describe "ParseXML Spec",->
 		findTab("ניירות ערך סחירים","תעודות חוב מסחריות",[
 			"Migdal_2013_3_579"
 			"Migdal_2013_3_99118"
+			"harel_2013_3_153"
 		])
 			
 	it "needs to have noyarot ereh shirim agah konzerni",->

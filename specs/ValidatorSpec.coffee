@@ -12,6 +12,7 @@ describe "Validator Spec",->
 			{asset : "Migdal_2013_3_414", rows : 27}
 			{asset : "Migdal_2013_3_579", rows : 25}
 			{asset : "Migdal_2013_3_99118", rows : 54}
+			{asset : "harel_2013_3_153", rows : 22}
 		])
 
 	it "validates noyarot ereh shirim teudot hithayvot mimshaltiyot",->
@@ -20,6 +21,7 @@ describe "Validator Spec",->
 			{asset : "Migdal_2013_3_414", rows : 26}
 			{asset : "Migdal_2013_3_579", rows : 31}
 			{asset : "Migdal_2013_3_99118", rows : 36}
+			{asset : "harel_2013_3_153", rows : 41}
 		])
 
 	it "validates noyarot ereh shirim teudot hov mishariyot",->
@@ -27,6 +29,7 @@ describe "Validator Spec",->
 		validateRows("ניירות ערך סחירים","תעודות חוב מסחריות",[
 			{asset : "Migdal_2013_3_579", rows : 0}
 			{asset : "Migdal_2013_3_99118", rows : 0}
+			{asset : "harel_2013_3_153", rows : 0}
 		])
 			
 	it "validates noyarot ereh shirim agah konzerni",->
@@ -35,6 +38,7 @@ describe "Validator Spec",->
 			{asset : "Migdal_2013_3_414", rows : 192}
 			{asset : "Migdal_2013_3_579", rows : 208}
 			{asset : "Migdal_2013_3_99118", rows : 224}
+			{asset : "harel_2013_3_153", rows : 388}
 		])
 
 	it "validates noyarot ereh shirim menayot",->
@@ -43,6 +47,7 @@ describe "Validator Spec",->
 			{asset : "Migdal_2013_3_414", rows : 149}
 			{asset : "Migdal_2013_3_579", rows : 150}
 			{asset : "Migdal_2013_3_99118", rows : 171}
+			{asset : "harel_2013_3_153", rows : 213}
 		])
 
 	it "validates noyarot ereh shirim teudot sal",->
@@ -51,6 +56,7 @@ describe "Validator Spec",->
 			{asset : "Migdal_2013_3_414", rows : 72}
 			{asset : "Migdal_2013_3_579", rows : 75}
 			{asset : "Migdal_2013_3_99118", rows : 62}
+			{asset : "harel_2013_3_153", rows : 27}
 		])
 
 	it "validates noyarot ereh shirim kranot neemanut",->
@@ -59,6 +65,7 @@ describe "Validator Spec",->
 			{asset : "Migdal_2013_3_414", rows : 13}
 			{asset : "Migdal_2013_3_579", rows : 34}
 			{asset : "Migdal_2013_3_99118", rows : 38}
+			{asset : "harel_2013_3_153", rows : 26}
 		])
 
 	it "validates noyarot ereh shirim kitvei optziya",->
@@ -67,6 +74,7 @@ describe "Validator Spec",->
 			{asset : "Migdal_2013_3_414", rows : 9}
 			{asset : "Migdal_2013_3_579", rows : 10}
 			{asset : "Migdal_2013_3_99118", rows : 13}
+			{asset : "harel_2013_3_153", rows : 13}
 		])
 
 	it "validates noyarot ereh LO shirim teudot hithayvut mimshaltiyot",->
@@ -74,6 +82,7 @@ describe "Validator Spec",->
 		validateRows("ניירות ערך לא סחירים",'תעודות התחייבות ממשלתיות',[
 			{asset : "Migdal_2013_3_414", rows : 126}
 			{asset : "Migdal_2013_3_579", rows : 0}
+			{asset : "harel_2013_3_153", rows : 0}
 		])
 
 	it "validates noyarot ereh LO shirim agah konzerni",->
@@ -82,6 +91,7 @@ describe "Validator Spec",->
 			{asset : "Migdal_2013_3_414", rows : 23}
 			{asset : "Migdal_2013_3_579", rows : 36}
 			{asset : "Migdal_2013_3_99118", rows : 51}
+			{asset : "harel_2013_3_153", rows : 57}
 		])
 
 	it "validates noyarot ereh LO shirim menayot",->
@@ -89,6 +99,7 @@ describe "Validator Spec",->
 		validateRows("ניירות ערך לא סחירים",'מניות',[
 			{asset : "Migdal_2013_3_579", rows : 2}
 			{asset : "Migdal_2013_3_99118", rows : 33}
+			{asset : "harel_2013_3_153", rows : 22}
 		])
 
 	it "validates noyarot ereh LO shirim kranot hashkaa",->
@@ -97,6 +108,7 @@ describe "Validator Spec",->
 			{asset : "Migdal_2013_3_414", rows : 1}
 			{asset : "Migdal_2013_3_579", rows : 18}
 			{asset : "Migdal_2013_3_99118", rows : 82}
+			{asset : "harel_2013_3_153", rows : 64}
 		])
 
 	it "validates noyarot ereh LO shirim kitvei optziya",->
@@ -105,6 +117,7 @@ describe "Validator Spec",->
 			{asset : "Migdal_2013_3_414", rows : 3}
 			{asset : "Migdal_2013_3_579", rows : 1}
 			{asset : "Migdal_2013_3_99118", rows : 5}
+			{asset : "harel_2013_3_153", rows : 4}
 
 		])
 
@@ -113,6 +126,7 @@ describe "Validator Spec",->
 		validateRows("ניירות ערך לא סחירים",'אופציות',[
 			{asset : "Migdal_2013_3_579", rows : 0}
 			{asset : "Migdal_2013_3_99118", rows : 0}
+			{asset : "harel_2013_3_153", rows : 0}
 		])
 
 	it "validates noyarot ereh LO shirim hozim atidiim",->
@@ -121,6 +135,7 @@ describe "Validator Spec",->
 			{asset : "Migdal_2013_3_414", rows : 19}
 			{asset : "Migdal_2013_3_579", rows : 16}
 			{asset : "Migdal_2013_3_99118", rows : 114}
+			{asset : "harel_2013_3_153", rows : 179}
 		])
 
 	it "validates halvaot",->
@@ -129,6 +144,7 @@ describe "Validator Spec",->
 			{asset : "Migdal_2013_3_414", rows : 44}
 			{asset : "Migdal_2013_3_579", rows : 48}
 			{asset : "Migdal_2013_3_99118", rows : 92}
+			{asset : "harel_2013_3_153", rows : 189}
 		])
 
 	it "validates pikdonot",->
@@ -136,6 +152,7 @@ describe "Validator Spec",->
 		validateRows("פקדונות",'',[
 			{asset : "Migdal_2013_3_579", rows : 12}
 			{asset : "Migdal_2013_3_99118", rows : 43}
+			{asset : "harel_2013_3_153", rows : 0}
 		])
 
 	it "validates zhuyot mekarkeyin",->
@@ -144,6 +161,7 @@ describe "Validator Spec",->
 			{asset : "Migdal_2013_3_414", rows : 1}
 			{asset : "Migdal_2013_3_579", rows : 0}
 			{asset : "Migdal_2013_3_99118", rows : 29}
+			{asset : "harel_2013_3_153", rows : 4}
 		])
 
 	it "validates hashkaot aherot",->
