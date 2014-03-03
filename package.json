@@ -20,7 +20,8 @@
 	"jasmine-node": ">= 1.0.26",
 	"zombie": "latest",
 	"coffee-script": "latest",
-    "express": "latest"
+    "express": "latest",
+    "pg": "latest"
     },
     "devDependencies" : {},
     "scripts" : {
