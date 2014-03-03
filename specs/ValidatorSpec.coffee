@@ -4,7 +4,7 @@ validator = require '../validator'
 describe "Validator Spec",->
 
 	# make jasmine wait 50 seconds before timing out..
-	jasmine.asyncSpecWait.timeout = 20000
+	jasmine.asyncSpecWait.timeout = 50000
 
 	it "validates mezumanim",->
 		asyncSpecWait()

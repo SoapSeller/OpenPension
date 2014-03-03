@@ -3,7 +3,7 @@ Helpers = require './Helpers'
 describe "ParseXML Spec",->
 
 	# make jasmine wait 50 seconds before timing out..
-	jasmine.asyncSpecWait.timeout = 40000
+	jasmine.asyncSpecWait.timeout = 50000
 
 	it "needs to have mezumanim", ->
 		asyncSpecWait()
