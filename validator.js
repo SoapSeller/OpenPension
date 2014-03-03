@@ -546,9 +546,9 @@ var zhuyotMekarkein = function(headers, dataLines){
 	return dataLines.filter(function(l){
 		return (
 			isNotEmpty(l[ enHeaders.indexOf("fair_value") ])
-			&& l[ enHeaders.indexOf("fair_value") ] != 0
-			&& isNotEmpty(l[ enHeaders.indexOf("date_of_revaluation") ])
-			&& l[ enHeaders.indexOf("date_of_revaluation") ] != 0
+			&& l[ enHeaders.indexOf("fair_value") ] != 0	
+			&& l[ enHeaders.indexOf("fair_value") ] > 0.1
+			&& isNotEmpty(l[ enHeaders.indexOf("type_of_asset") ])
 		);
 	}).map(function(l){
 		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c) });

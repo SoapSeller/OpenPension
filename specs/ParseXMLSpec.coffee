@@ -142,5 +142,6 @@ findTab = (instrumentType,instrumentSubType, files)->
 		Helpers.parseXLSX f,(pXlsx)->
 			expect(pXlsx.some((r)-> Helpers.resolveIdx(instrumentType,instrumentSubType) == r.idx )).toEqual(true)
 			findTab(instrumentType,instrumentSubType, files)
+			
 
 

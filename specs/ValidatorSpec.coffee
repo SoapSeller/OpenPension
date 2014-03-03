@@ -149,5 +149,6 @@ validateRows = (instrumentType,instrumentSubType, assetToRows)->
 			# process.exit();
 			expect(validated.length).toEqual(atr.rows)
 			validateRows(instrumentType,instrumentSubType,assetToRows)
+			asyncSpecDone()
 
 
