@@ -63,6 +63,7 @@ exports.fetchOne = function(fund, onDone) {
 		}
 
 		console.log("****INVALID FUND RESULTS: " + fund.number);
+        onDone();
 	}).then(function() {
 		// Go to assets list
 		DEBUG("FUND FOUND, GOING TO ASSETS LIST");
@@ -88,6 +89,7 @@ exports.fetchOne = function(fund, onDone) {
 			}
 
 			if (bestLink === null) {
+                onDone();
 				console.log("****Couldn't find files list for fund ", fund.number, "*****");
 			} else {
 				return browser.clickLink(bestLink);
