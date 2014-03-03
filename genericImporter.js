@@ -262,7 +262,7 @@ var sheetValidator = function(headers, foundHeadersMapping){
 	return (
 		(foundHeadersMapping.length == headers.length) ||
 		(foundHeadersMapping.length > 5 && foundHeadersMapping.length >= headers.length / 3  ) ||
-		(foundHeadersMapping.length >= headers.length / 2)
+		(headers.length - foundHeadersMapping.length < Math.ceil(headers.length * 0.3))
 	);
 }
 
