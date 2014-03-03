@@ -62,7 +62,7 @@ exports.fetchOne = function(fund, onDone) {
 			}
 		}
 
-		DEBUG("****INVALID FUND RESULTS: " + fund.number);
+		console.log("****INVALID FUND RESULTS: " + fund.number);
 	}).then(function() {
 		// Go to assets list
 		DEBUG("FUND FOUND, GOING TO ASSETS LIST");
