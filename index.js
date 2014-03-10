@@ -44,6 +44,14 @@ program
 	});
 
 program
+  .command("createtable")
+  .action(function(){
+    var pg = require('./db').pg;
+    var db = new pg();
+    // done
+  });
+
+program
 	.command("fetch")
 	.action(function(){
 		require('./fetcher').fetchAll();
