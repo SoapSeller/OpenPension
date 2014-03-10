@@ -22,6 +22,8 @@ try {
   config = require('./config');
 }
 
+exports.config = config;
+
 var tableName = config.table || 'data';
 
 var db = {};
