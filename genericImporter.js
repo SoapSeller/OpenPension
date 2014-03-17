@@ -267,10 +267,17 @@ var sheetValidator = function(headers, foundHeadersMapping){
 }
 
 
-var parseSingleSheet = function(metaTable, cellReader, dim, indexMetaTable){
+var parseSingleSheet = function(metaTable, cellReader,sheetName,dim, indexMetaTable){
 	var foundMatchingSheet = false;
 	debugM("parseSingleSheet",indexMetaTable);
 	var headers = metaTable.columnMappingForRow(indexMetaTable).map(function(x){return x});
+
+	var identifiedSheetIndexFromTabName = sheetSkipDetector([sheetName], indexMetaTable, metaTable);
+	if (identifiedSheetIndexFromTabName != indexMetaTable){
+		notifyM("parseSingleSheet","identified different sheet by looking into tab name",
+			indexMetaTable,"(" + metaTable.getNameForSheetNum(indexMetaTable) + ")", " identified as:", identifiedSheetIndexFromTabName, "("+metaTable.getNameForSheetNum(identifiedSheetIndexFromTabName)+")" );
+		return parseSingleSheet(metaTable, cellReader, sheetName, dim, identifiedSheetIndexFromTabName);
+	}
 
 	debugM("parseSingleSheet","headers",headers);
 	var sheetData = [];
@@ -291,12 +298,12 @@ var parseSingleSheet = function(metaTable, cellReader, dim, indexMetaTable){
 		var shouldExtractContent = headersExtractor(rowContent,headers, foundHeadersMapping)
 
 		// Allow looking few lines after the headers line to detect the correct sheet
-		if (!shouldExtractContent ||  sheetData.length < 4) {
+		if ((indexMetaTable != 0 && indexMetaTable != 1) && (!shouldExtractContent ||  sheetData.length < 4)) {
 			var identifiedSheetIndex = sheetSkipDetector(rowContent, indexMetaTable, metaTable);
 			if (identifiedSheetIndex != indexMetaTable){
 				notifyM("parseSingleSheet","identified different sheet while looking for:",
 					indexMetaTable,"(" + metaTable.getNameForSheetNum(indexMetaTable) + ")", " identified as:", identifiedSheetIndex, "("+metaTable.getNameForSheetNum(identifiedSheetIndex)+")" );
-				return parseSingleSheet(metaTable, cellReader, dim, identifiedSheetIndex);
+				return parseSingleSheet(metaTable, cellReader, sheetName, dim, identifiedSheetIndex);
 			}
 		}
 
@@ -345,8 +352,6 @@ var sheetMetaIdentifier = function(cellContent, metaSheetNum, metaTable){
 
 var sheetSkipDetector = function(inputLine, metaSheetNum, metaTable){
 	// for the first two tabs, skip detection
-	if (metaSheetNum == 0 || metaSheetNum == 1)
-		return metaSheetNum;
 	return inputLine.reduce(function(_metaSheetNum, cellContent){
 		if (_metaSheetNum == metaSheetNum) {
 			var i = _metaSheetNum + 1;
@@ -379,9 +384,9 @@ var parseSheets = function(sheets){
 			}
 			console.log("%%%%%% parsing file tab #",sheetTabNum, " looking for meta table #",res.length, "called",metaTable.getNameForSheetNum(res.length));
 			var sheet = _sheets.shift();
-
+			var sheetName = sheet.name;
 			sheet && sheet.read(function(err, sheetCB,dim){ 
-				var sheetOutput = parseSingleSheet(metaTable,sheetCB,dim,res.length);
+				var sheetOutput = parseSingleSheet(metaTable,sheetCB,sheetName,dim,res.length);
 
 				if (sheetOutput && sheetOutput.finalIndex != res.length){
 					while(res.length < sheetOutput.finalIndex){

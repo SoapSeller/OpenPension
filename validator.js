@@ -127,16 +127,21 @@ var isLineEmpty = function(line){
 		return true;
 }
 
+
 var isNotEmpty = function(value){
 	return value != null && value != undefined && value != ""
 }
 
 var isNumber = function(value){
-	return value != null & parseInt(value) != NaN
+	return value != null && isNaN(parseInt(value)) == false
 }
 
 var cleanString = function(input){
 	return input.trim().replace(/,/g,"-").replace(/\([0-9]+\)/g,'').replace(/[$%\r\n]/g,'');
+}
+
+var isContaining = function(input,word){
+	return input.indexOf(word) >= 0;
 }
 
 var normalizeCurrency = function(input){
@@ -176,6 +181,22 @@ var normalizeCurrency = function(input){
 		case 'שטרלינג': 			return 'GBP';
 		case 'שטרלינג  דנאל': 		return 'GBP';
 		case 'שקל חדש': 			return 'NIS';
+		case 'אוסטרלי': 			return 'AUD';
+		case 'קנדי': 				return 'CAD';
+		case 'דולר ניו זילנד': 		return 'NZD';
+		case 'דולר סינגפור': 		return 'SGD';
+		case 'יין יפני': 			return 'JPY';
+		case 'ין יפני': 			return 'JPY';
+		case 'כת.נורב': 			return 'NOK';
+		case 'כתר שבדי': 			return 'NOK';
+		case 'לי"ש': 				return 'GBP';
+		case 'לירה טורקית': 		return 'TRY';
+		case 'ליש"ט': 				return 'GBP';
+		case 'פר"ש': 				return 'CHF';
+		case 'פרנק שויצרי': 		return 'CHF';
+		case 'ריאל ברזילאי': 		return 'BRL';
+		case 'רנד': 				return 'ZAR';
+		case 'ILS': 				return 'NIS';
 			default: return _input;
 	}
 }
@@ -234,10 +255,14 @@ var mezumanim = function(headers, dataLines){
 
 	return dataLines.filter(function(l){
 		return (
-			(isNotEmpty(l[ enHeaders.indexOf("rating") ]) 
-			&& l[ enHeaders.indexOf("rating") ] != 0)
-			|| (isNotEmpty(l[ enHeaders.indexOf("rating_agency") ]) 
-			&& l[ enHeaders.indexOf("rating_agency") ] != 0)
+			(isContaining( l[ enHeaders.indexOf("instrument_symbol") ], "יתרות" ) == false &&
+				isContaining( l[ enHeaders.indexOf("instrument_symbol") ], "פח\"ק/פר\"י" ) == false)
+			&& ((isNotEmpty(l[ enHeaders.indexOf("rating") ])
+				&& l[ enHeaders.indexOf("rating") ] != 0)
+				|| (isNotEmpty(l[ enHeaders.indexOf("rating_agency") ]) 
+				&& l[ enHeaders.indexOf("rating_agency") ] != 0)
+				|| (isNotEmpty(l[ enHeaders.indexOf("currency") ]) 
+				&& l[ enHeaders.indexOf("currency") ] != 0))
 		)
 	}).map(function(l){
 		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c) });
@@ -265,7 +290,8 @@ var taudatHovMisharit = function(headers, dataLines){
 	var enHeaders = headers.map(function(h){return h.columnName});
 	return dataLines.filter(function(l){
 		return (
-			isNotEmpty(l[ enHeaders.indexOf("par_value") ])
+			isNumber(l[ enHeaders.indexOf("par_value") ])
+			&& isNotEmpty(l[ enHeaders.indexOf("par_value") ])
 			&& l[ enHeaders.indexOf("par_value") ] != 0
 			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
 			&& l[ enHeaders.indexOf("rate") ] != 0
@@ -279,7 +305,8 @@ var agahKontzerni = function(headers, dataLines){
 	var enHeaders = headers.map(function(h){return h.columnName});
 	return dataLines.filter(function(l){
 		return (
-			isNotEmpty(l[ enHeaders.indexOf("par_value") ])
+			isNumber(l[ enHeaders.indexOf("par_value") ])
+			&& isNotEmpty(l[ enHeaders.indexOf("par_value") ])
 			&& l[ enHeaders.indexOf("par_value") ] != 0
 			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
 			&& l[ enHeaders.indexOf("rate") ] != 0
@@ -293,7 +320,8 @@ var menayot = function(headers, dataLines){
 	var enHeaders = headers.map(function(h){return h.columnName});
 	return dataLines.filter(function(l){
 		return (
-			isNotEmpty(l[ enHeaders.indexOf("par_value") ])
+			isNumber(l[ enHeaders.indexOf("par_value") ])
+			&& isNotEmpty(l[ enHeaders.indexOf("par_value") ])
 			&& l[ enHeaders.indexOf("par_value") ] != 0
 			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
 			&& l[ enHeaders.indexOf("rate") ] != 0
@@ -307,7 +335,8 @@ var teudotSal = function(headers, dataLines){
 	var enHeaders = headers.map(function(h){return h.columnName});
 	return dataLines.filter(function(l){
 		return (
-			isNotEmpty(l[ enHeaders.indexOf("par_value") ])
+			isNumber(l[ enHeaders.indexOf("par_value") ])
+			&& isNotEmpty(l[ enHeaders.indexOf("par_value") ])
 			&& l[ enHeaders.indexOf("par_value") ] != 0
 			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
 			&& l[ enHeaders.indexOf("rate") ] != 0
@@ -321,7 +350,8 @@ var kranotNemanut = function(headers, dataLines){
 	var enHeaders = headers.map(function(h){return h.columnName});
 	return dataLines.filter(function(l){
 		return (
-			isNotEmpty(l[ enHeaders.indexOf("par_value") ])
+			isNumber(l[ enHeaders.indexOf("par_value") ])
+			&& isNotEmpty(l[ enHeaders.indexOf("par_value") ])
 			&& l[ enHeaders.indexOf("par_value") ] != 0
 			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
 			&& l[ enHeaders.indexOf("rate") ] != 0
@@ -335,7 +365,8 @@ var kitveiOptzia = function(headers, dataLines){
 	var enHeaders = headers.map(function(h){return h.columnName});
 	return dataLines.filter(function(l){
 		return (
-			isNotEmpty(l[ enHeaders.indexOf("par_value") ])
+			isNumber(l[ enHeaders.indexOf("par_value") ])
+			&& isNotEmpty(l[ enHeaders.indexOf("par_value") ])
 			&& l[ enHeaders.indexOf("par_value") ] != 0
 			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
 			&& l[ enHeaders.indexOf("rate") ] != 0
@@ -349,7 +380,8 @@ var opttziyot = function(headers, dataLines){
 	var enHeaders = headers.map(function(h){return h.columnName});
 	return dataLines.filter(function(l){
 		return (
-			isNotEmpty(l[ enHeaders.indexOf("par_value") ])
+			isNumber(l[ enHeaders.indexOf("par_value") ])
+			&& isNotEmpty(l[ enHeaders.indexOf("par_value") ])
 			&& l[ enHeaders.indexOf("par_value") ] != 0
 			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
 			&& l[ enHeaders.indexOf("rate") ] != 0
@@ -363,7 +395,8 @@ var hozimAtidiim = function(headers, dataLines){
 	var enHeaders = headers.map(function(h){return h.columnName});
 	return dataLines.filter(function(l){
 		return (
-			isNotEmpty(l[ enHeaders.indexOf("par_value") ])
+			isNumber(l[ enHeaders.indexOf("par_value") ])
+			&& isNotEmpty(l[ enHeaders.indexOf("par_value") ])
 			&& l[ enHeaders.indexOf("par_value") ] != 0
 			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
 			&& l[ enHeaders.indexOf("rate") ] != 0
@@ -377,7 +410,8 @@ var motzarimMuvnim = function(headers, dataLines){
 	var enHeaders = headers.map(function(h){return h.columnName});
 	return dataLines.filter(function(l){
 		return (
-			isNotEmpty(l[ enHeaders.indexOf("par_value") ])
+			isNumber(l[ enHeaders.indexOf("par_value") ])
+			&& isNotEmpty(l[ enHeaders.indexOf("par_value") ])
 			&& l[ enHeaders.indexOf("par_value") ] != 0
 			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
 			&& l[ enHeaders.indexOf("rate") ] != 0
@@ -391,7 +425,8 @@ var teudatHihayvutMimshaltiLoSahir = function(headers, dataLines){
 	var enHeaders = headers.map(function(h){return h.columnName});
 	return dataLines.filter(function(l){
 		return (
-			isNotEmpty(l[ enHeaders.indexOf("par_value") ])
+			isNumber(l[ enHeaders.indexOf("par_value") ])
+			&& isNotEmpty(l[ enHeaders.indexOf("par_value") ])
 			&& l[ enHeaders.indexOf("par_value") ] != 0
 			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
 			&& l[ enHeaders.indexOf("rate") ] != 0
@@ -406,7 +441,8 @@ var taudatHovMisharitLoSahir = function(headers, dataLines){
 	var enHeaders = headers.map(function(h){return h.columnName});
 	return dataLines.filter(function(l){
 		return (
-			isNotEmpty(l[ enHeaders.indexOf("par_value") ])
+			isNumber(l[ enHeaders.indexOf("par_value") ])
+			&& isNotEmpty(l[ enHeaders.indexOf("par_value") ])
 			&& l[ enHeaders.indexOf("par_value") ] != 0
 			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
 			&& l[ enHeaders.indexOf("rate") ] != 0
@@ -420,7 +456,8 @@ var agahKontzerniLoSahir = function(headers, dataLines){
 	var enHeaders = headers.map(function(h){return h.columnName});
 	return dataLines.filter(function(l){
 		return (
-			isNotEmpty(l[ enHeaders.indexOf("par_value") ])
+			isNumber(l[ enHeaders.indexOf("par_value") ])
+			&& isNotEmpty(l[ enHeaders.indexOf("par_value") ])
 			&& l[ enHeaders.indexOf("par_value") ] != 0
 			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
 			&& l[ enHeaders.indexOf("rate") ] != 0
@@ -434,7 +471,8 @@ var menayotLoSahir = function(headers, dataLines){
 	var enHeaders = headers.map(function(h){return h.columnName});
 	return dataLines.filter(function(l){
 		return (
-			isNotEmpty(l[ enHeaders.indexOf("par_value") ])
+			isNumber(l[ enHeaders.indexOf("par_value") ])
+			&& isNotEmpty(l[ enHeaders.indexOf("par_value") ])
 			&& l[ enHeaders.indexOf("par_value") ] != 0
 			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
 			&& l[ enHeaders.indexOf("rate") ] != 0
@@ -448,7 +486,8 @@ var kranotHashkaaLoSahir = function(headers, dataLines){
 	var enHeaders = headers.map(function(h){return h.columnName});
 	return dataLines.filter(function(l){
 		return (
-			isNotEmpty(l[ enHeaders.indexOf("par_value") ])
+			isNumber(l[ enHeaders.indexOf("par_value") ])
+			&& isNotEmpty(l[ enHeaders.indexOf("par_value") ])
 			&& l[ enHeaders.indexOf("par_value") ] != 0
 			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
 			&& l[ enHeaders.indexOf("rate") ] != 0
@@ -462,7 +501,8 @@ var kitveiOptziaLoSahir = function(headers, dataLines){
 	var enHeaders = headers.map(function(h){return h.columnName});
 	return dataLines.filter(function(l){
 		return (
-			isNotEmpty(l[ enHeaders.indexOf("par_value") ])
+			isNumber(l[ enHeaders.indexOf("par_value") ])
+			&& isNotEmpty(l[ enHeaders.indexOf("par_value") ])
 			&& l[ enHeaders.indexOf("par_value") ] != 0
 			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
 		);
@@ -475,7 +515,8 @@ var opttziyotLoSahir = function(headers, dataLines){
 	var enHeaders = headers.map(function(h){return h.columnName});
 	return dataLines.filter(function(l){
 		return (
-			isNotEmpty(l[ enHeaders.indexOf("par_value") ])
+			isNumber(l[ enHeaders.indexOf("par_value") ])
+			&& isNotEmpty(l[ enHeaders.indexOf("par_value") ])
 			&& l[ enHeaders.indexOf("par_value") ] != 0
 			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
 			&& l[ enHeaders.indexOf("rate") ] != 0
@@ -489,7 +530,8 @@ var hozimAtidiimLoSahir = function(headers, dataLines){
 	var enHeaders = headers.map(function(h){return h.columnName});
 	return dataLines.filter(function(l){
 		return (
-			isNotEmpty(l[ enHeaders.indexOf("par_value") ])
+			isNumber(l[ enHeaders.indexOf("par_value") ])
+			&& isNotEmpty(l[ enHeaders.indexOf("par_value") ])
 			&& l[ enHeaders.indexOf("par_value") ] != 0
 			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
 			&& l[ enHeaders.indexOf("rate") ] != 0
@@ -503,7 +545,8 @@ var motzarimMuvnimLoSahir = function(headers, dataLines){
 	var enHeaders = headers.map(function(h){return h.columnName});
 	return dataLines.filter(function(l){
 		return (
-			isNotEmpty(l[ enHeaders.indexOf("par_value") ])
+			isNumber(l[ enHeaders.indexOf("par_value") ])
+			&& isNotEmpty(l[ enHeaders.indexOf("par_value") ])
 			&& l[ enHeaders.indexOf("par_value") ] != 0
 			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
 			&& l[ enHeaders.indexOf("rate") ] != 0
@@ -519,6 +562,7 @@ var halvaot = function(headers, dataLines){
 		return (
 			isNotEmpty(l[ enHeaders.indexOf("instrument_id") ])
 			&& l[ enHeaders.indexOf("instrument_id") ] != 0
+			&& isNumber(l[ enHeaders.indexOf("fair_value") ])
 			&& isNotEmpty(l[ enHeaders.indexOf("fair_value") ])
 			&& l[ enHeaders.indexOf("fair_value") ] != 0
 		);
@@ -531,7 +575,8 @@ var pikdonot = function(headers, dataLines){
 	var enHeaders = headers.map(function(h){return h.columnName});
 	return dataLines.filter(function(l){
 		return (
-			isNotEmpty(l[ enHeaders.indexOf("par_value") ])
+			isNumber(l[ enHeaders.indexOf("par_value") ])
+			&& isNotEmpty(l[ enHeaders.indexOf("par_value") ])
 			&& l[ enHeaders.indexOf("par_value") ] != 0
 			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
 			&& l[ enHeaders.indexOf("rate") ] != 0
