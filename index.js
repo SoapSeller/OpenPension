@@ -3,7 +3,7 @@ var xlsx = require('./xlsxparser.js');
 var db = require('./db.js');
 var CSVWriter = require('./CSVWriter')
 var MetaTable = require('./common/MetaTable');
- 
+
 program
 	.command('import')
 	.option("-f, --file <name>","file name")
@@ -20,7 +20,7 @@ program
 				var instrumentSub = metaTable.instrumentSubTypes[r.idx];
 				CSVWriter.write(args.body, args.monkey, args.year, args.quarter, r.idx, instrument, instrumentSub, validated,r.engMap)
 			})
-			
+
 
 			// args.body, args.year, args.quarter, parseInt(args.monkey)
 		});
@@ -42,6 +42,14 @@ program
 			["inst2", "2/10/2004 x"]
 		]);
 	});
+
+program
+  .command("createtable")
+  .action(function(){
+    var pg = require('./db').pg;
+    var db = new pg();
+    // done
+  });
 
 program
 	.command("fetch")

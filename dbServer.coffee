@@ -16,14 +16,14 @@ persist = ->
 		if (pBuffer.length > 0)
 			item = pBuffer.shift()
 			tableWriter = db.openTable(item.headers)
-			tableWriter( 
-				item.managingBody, 
-				item.fund, 
-				item.year, 
-				item.quarter, 
-				item.instrument, 
-				item.instrumentSub, 
-				item.tabData, 
+			tableWriter(
+				item.managingBody,
+				item.fund,
+				item.year,
+				item.quarter,
+				item.instrument,
+				item.instrumentSub,
+				item.tabData,
 				( -> persisting = false; persist() )
 			)
 

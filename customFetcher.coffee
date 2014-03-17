@@ -57,7 +57,7 @@ convertFile = (line, fileUrl, year, q, body, monkey, convertDone)->
 
 	baseName = outDir +  [ body,year,q,monkey ].join("_")
 	filename = baseName + ".xls"
-	
+
 	if fs.existsSync(filename + "x")
 		console.log "skipping existing file #{filename}x"
 		require("child_process").exec "node index import -f #{filename}x -y #{year} -q #{q} -b #{body} -m #{monkey} ", (e)->
