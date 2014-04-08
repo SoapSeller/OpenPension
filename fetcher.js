@@ -30,7 +30,8 @@ var bodys = {
 	"דיסקונט": "discount",
 	"אקדמאים במדעי החברה": "havera_acdemics",
 	"ביוכימאים": "biochemists" ,
-	"הסוכנות היהודית": "hasochnut"
+	"הסוכנות היהודית": "hasochnut",
+	"עמיתים" : "amitim"
 };
 
 var parseBody = function(body) {
@@ -105,6 +106,35 @@ exports.fetchAll = function(funds) {
 	for(var i = 0; i < Math.min(funds.length, step); ++i) {
 		doFetch(step, funds, i);
 	}
+};
+
+exports.fetchMenora = function(){
+	var allFunds = readFundsFile();
+	var funds = [];
+
+	for(var i = 0; i < allFunds.length; ++i) {
+		var fund = allFunds[i];
+		if (fund.body == "menora") {
+			funds.push(fund);
+		}
+	}
+
+	exports.fetchAll(funds);
+};
+
+
+exports.fetchAmitim = function(){
+	var allFunds = readFundsFile();
+	var funds = [];
+
+	for(var i = 0; i < allFunds.length; ++i) {
+		var fund = allFunds[i];
+		if (fund.body == "amitim") {
+			funds.push(fund);
+		}
+	}
+
+	exports.fetchAll(funds);
 };
 
 exports.fetchHarel = function() {

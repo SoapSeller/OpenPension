@@ -60,6 +60,10 @@ var cellIdToCellIdx = function(sheet, cellIdxAlpha){
   var row = logicalIndex.row;
   var oneBasedRow = row + 1;
 
+  if (!sheet.worksheet.sheetData[0].row){
+	return { row: -1, col: -1 }
+  }
+
   var found = sheet.worksheet.sheetData[0].row.reduce(function(found,r,rIdx){
     if (found.row == -1 && parseInt(r.$.r) == oneBasedRow){
       found.row = rIdx;

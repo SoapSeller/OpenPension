@@ -63,4 +63,16 @@ program
 		require('./fetcher').fetchHarel();
 	});
 
+program
+	.command("fetch-menora")
+	.action(function(){
+		require('./fetcher').fetchMenora();
+	});
+
+program
+	.command("fetch-amitim")
+	.action(function(){
+		require('./fetcher').fetchAmitim();
+	});
+
 program.parse(process.argv);
