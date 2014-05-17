@@ -340,13 +340,7 @@ var sheetMetaIdentifier = function(cellContent, metaSheetNum, metaTable){
 	
 	var cleanCellContent = cleanColumnHeaderStr(cellContent);
 	var options = [nameFromMetaTable].concat(knownSheetContentIdentifiers[metaSheetNum] || []);
-	return options.some(function(value){
-		if (cleanCellContent == cleanColumnHeaderStr(value)){
-			return true;
-		} else {
-			return false;
-		}
-	})
+	return options.some(function(value){ return cleanCellContent == cleanColumnHeaderStr(value) })
 
 }
 
