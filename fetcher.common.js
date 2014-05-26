@@ -40,11 +40,11 @@ exports.fetchFund = function(fund, onDone) {
     baseName += "_" + fund.number;
 	var filename = baseName + ".xls";
 	var filenameX = baseName + ".xlsx";
-	
+
 
 	if (fs.existsSync(filenameX)){
 		console.log("skipping existing file " + filenameX);
-		require("child_process").exec("node index import -f " + filenameX 
+		require("child_process").exec("node index import -f " + filenameX
 			+ " -y " + fund.year + " -q " + fund.quarter + " -b " + fund.body + " -m " + fund.number, function(e){
 			onDone(filenameX);
 		});
@@ -74,26 +74,28 @@ exports.fetchFund = function(fund, onDone) {
 					cp.exec(cmd, function(err, stdout, stderr) {
 						//console.log(cmd);
 						//console.log(stdout);
-						fs.unlink(filename);
-						require("child_process").exec("node index import -f " + filenameX 
-							+ " -y " + fund.year + " -q " + fund.quarter + " -b " + fund.body + " -m " + fund.number, function(e){
-							onDone(filenameX);
-						});
+						fs.unlink(filename, function() {
+    						require("child_process").exec("node index import -f " + filenameX
+    							+ " -y " + fund.year + " -q " + fund.quarter + " -b " + fund.body + " -m " + fund.number, function(e){
+    							onDone(filenameX);
+    						});
+                        });
 					});
 				} else if (stdout.toString().indexOf("Zip archive data, at least v2.0 to extract") !== -1) {
 					// File is already xlsx, just move it to the right name
 					cp.exec("mv -f " + filename + " " + filenameX, function(err, stdout, stderr) {
 						//console.log(cmd);
 						//console.log(stdout);
-						require("child_process").exec("node index import -f " + filenameX 
+						require("child_process").exec("node index import -f " + filenameX
 							+ " -y " + fund.year + " -q " + fund.quarter + " -b " + fund.body + " -m " + fund.number, function(e){
 							onDone(filenameX);
 						});
 					});
 				} else {
 					console.log("Error with fund: ", fund, stdout);
-					fs.unlink(filename);
-					onDone(null, "Can't convert fund: " + stdout);
+					fs.unlink(filename, function() {
+                        onDone(null, "Can't convert fund: " + stdout);
+                    });
 				}
 			});
 		});

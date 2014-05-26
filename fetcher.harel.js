@@ -12,6 +12,7 @@ var DEBUG = function(str) {
 };
 
 var processsAssetsList = function(fund, browser, onDone) {
+    DEBUG("PROCESSING ASSETS LIST " + fund.number);
 	var files = browser.document.querySelectorAll("a.AttFileGallery");
 
 	var processedFiles = [];
@@ -46,13 +47,13 @@ exports.fetchOne = function(fund, onDone) {
 
 	var fundName = "";
 	browser.visit(baseUrl).then(function() {
-		DEBUG("FIRST VISIT");
+		DEBUG("FIRST VISIT " + fund.number);
 		// Search by fund number.
 		browser.fill("input[name='SearchParam']", fund.number);
 		return browser.pressButton("#image1");
 	}).then(function() {
 		// Click find the right found link in the results list & click it.
-		DEBUG("AFTER SEARCH");
+		DEBUG("AFTER SEARCH " + fund.number);
 		var links = browser.document.querySelectorAll("a.SearchResult");
 		for (var i = 0; i < links.length; ++i) {
 			var link = links[i];
@@ -62,18 +63,21 @@ exports.fetchOne = function(fund, onDone) {
 			}
 		}
 
-		console.log("****INVALID FUND RESULTS: " + fund.number);
-        onDone();
+		console.log("Fund " + fund.number + " was not found via search, going to try url(" + fund.url + ") instead.");
+        return browser.visit(fund.url).then(function() {
+            // We could try to check if the page is "OK" here, but we don't have really anything to do if it isn't, so just try to parse it.
+            processsAssetsList(fund, browser, onDone);
+        });
 	}).then(function() {
 		// Go to assets list
-		DEBUG("FUND FOUND, GOING TO ASSETS LIST");
+		DEBUG("FUND FOUND, GOING TO ASSETS LIST " + fund.number);
 		return browser.clickLink("רשימות נכסים");
 	}).then(function() {
-		DEBUG("ASSETS LIST");
+		DEBUG("ASSETS LIST " + fund.number);
 		if (browser.location.href.indexOf("ArticleID") == -1) {
-			DEBUG("NOT FILE LIST, FIND THE RIGHT FOUND");
+			DEBUG("NOT FILE LIST, FIND THE RIGHT FUND");
 			var lists = browser.document.querySelectorAll("a.ArticlesListTitle");
-			
+
 			var minDist = Number.MAX_VALUE;
 			var bestLink = null;
 			for (var id in lists) {
