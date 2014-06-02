@@ -2,6 +2,7 @@
 var zombie = require('zombie'),
 	fc = require("./fetcher.common.js"),
 	fs = require("fs"),
+    urlParse = require("url").parse,
 	levDist = require("./LevDistance.js").calc;
 
 
@@ -11,17 +12,26 @@ var DEBUG = function(str) {
 	//console.log("DEBUG", str);
 };
 
-var processsAssetsList = function(fund, browser, onDone) {
+var processsAssetsList = function(fund, browser, onDone, urlStr) {
     DEBUG("PROCESSING ASSETS LIST " + fund.number);
 	var files = browser.document.querySelectorAll("a.AttFileGallery");
+
+    var urlPrefix = baseUrl;
+    if (urlStr !== undefined) {
+        var parsed = urlParse(urlStr);
+        urlPrefix = parsed.protocol + "//" + parsed.host + "/";
+    }
 
 	var processedFiles = [];
 	for (var id in files) {
 		//console.log(files[id].textContent, files[id].attributes.href.value);
 		var file = files[id];
 		if (file["attributes"] !== undefined && -1 != file.attributes.href.value.indexOf(".xls")) {
-			var url = baseUrl + "/" + file.attributes.href.value;
+			var url = urlPrefix + "/" + file.attributes.href.value;
 			var m = file.textContent.match(/\d+\/(\d+)\/(\d+)/);
+            if (m === null) {
+                var m = file.textContent.match(/\d+\.(\d+)\.(\d+)/);
+            }
 			if (m !== undefined) {
 				var q = Math.floor((parseInt(m[1].substr(0,2), 10) -1) / 3) + 1;
 				var year = m[2];
@@ -30,9 +40,13 @@ var processsAssetsList = function(fund, browser, onDone) {
 			} else { console.log("3333", m); }
 		}
 	}
-	//onDone(fund, processedFiles);
+    if (files.length === 0) {
+        console.log("Unable to fetch fund: " + fund.number);
+    }
+    //onDone(fund, processedFiles);
 	DEBUG("DONE " + fund.number);
 	fc.fetchFunds(processedFiles, onDone);
+    //onDone();
 };
 
 exports.fetchOne = function(fund, onDone) {
@@ -44,6 +58,8 @@ exports.fetchOne = function(fund, onDone) {
 	browser.on("error", function(error) {
 		console.error("Error with fund " + fund.number + ": ", error);
 	});
+
+    var cont = true;
 
 	var fundName = "";
 	browser.visit(baseUrl).then(function() {
@@ -66,13 +82,20 @@ exports.fetchOne = function(fund, onDone) {
 		console.log("Fund " + fund.number + " was not found via search, going to try url(" + fund.url + ") instead.");
         return browser.visit(fund.url).then(function() {
             // We could try to check if the page is "OK" here, but we don't have really anything to do if it isn't, so just try to parse it.
-            processsAssetsList(fund, browser, onDone);
+            processsAssetsList(fund, browser, onDone, fund.url);
+            cont = false;
         });
 	}).then(function() {
+        if (!cont) {
+            return;
+        }
 		// Go to assets list
 		DEBUG("FUND FOUND, GOING TO ASSETS LIST " + fund.number);
 		return browser.clickLink("רשימות נכסים");
 	}).then(function() {
+        if (!cont) {
+            return;
+        }
 		DEBUG("ASSETS LIST " + fund.number);
 		if (browser.location.href.indexOf("ArticleID") == -1) {
 			DEBUG("NOT FILE LIST, FIND THE RIGHT FUND");
@@ -100,6 +123,9 @@ exports.fetchOne = function(fund, onDone) {
 			}
 		}
 	}).then(function() {
+        if (!cont) {
+            return;
+        }
 		DEBUG("YEAH! " + fund.number);
 		processsAssetsList(fund, browser, onDone);
 	});
