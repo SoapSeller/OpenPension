@@ -141,7 +141,7 @@ var cleanString = function(input){
 }
 
 var isContaining = function(input,word){
-	return input.indexOf(word) >= 0;
+	return input && input.indexOf(word) >= 0;
 }
 
 var normalizeCurrency = function(input){
