@@ -66,8 +66,11 @@ exports.fetchFund = function(fund, onDone) {
 
 			cp.exec("file " + filename, function (err, stdout, stderr) {
 				if (!err &&
-					(stdout.toString().indexOf("CDF V2") !== -1 ||
-					stdout.toString().indexOf("Composite Document File V2 Document") !== -1)) {
+					(
+						stdout.toString().indexOf("CDF V2") !== -1 ||
+						stdout.toString().indexOf("Composite Document File V2 Document") !== -1 ||
+						stdout.toString().indexOf("Microsoft Excel 2007+") !== -1
+					)) {
 					var cmd = "ssconvert --export-type=Gnumeric_Excel:xlsx " + filename + " " + filenameX;
 					//console.log(filename);
 
