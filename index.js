@@ -64,6 +64,12 @@ program
 	});
 
 program
+	.command("fetch-known")
+	.action(function(){
+		require('./fetcher').fetchKnown();
+	});
+
+program
 	.command("fetch-menora")
 	.action(function(){
 		require('./fetcher').fetchMenora();
