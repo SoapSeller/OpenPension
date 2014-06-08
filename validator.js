@@ -26,18 +26,6 @@ exports.validate = function(headers,data,tabIndex) {
 		)
 	});
 
-	// if ((tabData || []).length > 0){
-	// 	// sendToServer(managingBody, fund, year, quarter, tabIndex, instrument, instrumentSub, tabData,headers);
-	// 	writeToCsv(managingBody, fund, year, quarter, tabIndex, instrument, instrumentSub, tabData,headers);
-
-	// } else {
-	// 	console.log(">!>!>!>", "no tab data found for tab", tabIndex, metaTable.getNameForSheetNum(tabIndex));
-	// }
-	
-	// if (tabIndex == 24) process.exit();
-
-	// return tabData;
-
 }
 
 var sendToServer = function(managingBody, fund, year, quarter, tabIndex, instrument, instrumentSub, tabData,headers){
@@ -563,7 +551,10 @@ var halvaot = function(headers, dataLines){
 		return (
 			isNotEmpty(l[ enHeaders.indexOf("instrument_id") ])
 			&& l[ enHeaders.indexOf("instrument_id") ] != 0
-			&& isNumber(l[ enHeaders.indexOf("yield") ])
+			&& ( (isNotEmpty(l[ enHeaders.indexOf("yield") ])
+					&& isNumber(l[ enHeaders.indexOf("yield") ]))
+				|| (!isNotEmpty(l[ enHeaders.indexOf("yield") ]))
+			)
 			&& isNumber(l[ enHeaders.indexOf("fair_value") ])
 			&& isNotEmpty(l[ enHeaders.indexOf("fair_value") ])
 			&& l[ enHeaders.indexOf("fair_value") ] != 0
