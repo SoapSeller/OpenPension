@@ -242,8 +242,9 @@ var shumNehaseiHakeren = function(headers,dataLines){
 	var enHeaders = headers.map(function(h){return h.columnName});
 	return dataLines.filter(function(l){
 		return (
-			isNotEmpty(l[ enHeaders.indexOf("fair_value") ]),
-			isNotEmpty(l[ enHeaders.indexOf("instrument_symbol") ])
+			isNotEmpty(l[ enHeaders.indexOf("fair_value") ])
+			&& isNumber(l[ enHeaders.indexOf("fair_value") ])
+			&& isNotEmpty(l[ enHeaders.indexOf("instrument_symbol") ])
 		)
 	}).map(function(l){
 		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c) });
@@ -591,6 +592,7 @@ var zhuyotMekarkein = function(headers, dataLines){
 	return dataLines.filter(function(l){
 		return (
 			isNotEmpty(l[ enHeaders.indexOf("fair_value") ])
+			&& isNumber(l[ enHeaders.indexOf("fair_value") ])
 			&& l[ enHeaders.indexOf("fair_value") ] != 0	
 			&& l[ enHeaders.indexOf("fair_value") ] > 0.1
 			&& isNotEmpty(l[ enHeaders.indexOf("type_of_asset") ])

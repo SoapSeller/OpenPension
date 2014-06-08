@@ -65,6 +65,16 @@ var detectorsMap = {
 	"שם נייר ערך" : [ "ב. ניירות ערך סחירים","בישראל","סעיף 1. נכסים המוצגים לפי שווי הוגן:" ]
 }
 
+
+
+var knownSheetContentIdentifiers = {
+	1 : ["מזומנים ושווי מזומנים"],
+	2 : [ "תעודות התחייבות ממשלתיות" ],
+	4 : [ "אגח קונצרני","אג\"ח קונצרני" ],
+	14 : [ "אגח קונצרני" ]
+
+}
+
 /* DATA MANIPULATION */
 
 var cleanDataStr = function(inputStr){
@@ -271,7 +281,7 @@ var parseSingleSheet = function(metaTable, cellReader,sheetName,dim, indexMetaTa
 	var foundMatchingSheet = false;
 	debugM("parseSingleSheet",indexMetaTable);
 	var headers = metaTable.columnMappingForRow(indexMetaTable).map(function(x){return x});
-
+	debugM("parseSingleSheet", "trying to metch tab by sheet name",sheetName);
 	var identifiedSheetIndexFromTabName = sheetSkipDetector([sheetName], indexMetaTable, metaTable);
 	if (identifiedSheetIndexFromTabName != indexMetaTable){
 		notifyM("parseSingleSheet","identified different sheet by looking into tab name",
@@ -327,13 +337,6 @@ var parseSingleSheet = function(metaTable, cellReader,sheetName,dim, indexMetaTa
 }
 
 
-var knownSheetContentIdentifiers = {
-	2 : [ "תעודות התחייבות ממשלתיות" ],
-	4 : [ "אגח קונצרני","אג\"ח קונצרני" ],
-	14 : [ "אגח קונצרני" ]
-
-}
-
 var sheetMetaIdentifier = function(cellContent, metaSheetNum, metaTable){
 
 	var nameFromMetaTable = metaTable.instrumentSubTypes[metaSheetNum] || metaTable.instrumentTypes[metaSheetNum];
@@ -373,7 +376,7 @@ var parseSheets = function(sheets){
 	var lookForNextSheet = function(res, _sheets){
 		if (res.length < lastSheetNum && _sheets.length > 0){
 			var sheetTabNum = sheets.length - _sheets.length;
-			if ( debugSheet && debugSheet == sheetTabNum ) {
+			if (debugSheet != null && debugSheet == sheetTabNum ) {
 				global.debug = true;
 			}
 			console.log("%%%%%% parsing file tab #",sheetTabNum, " looking for meta table #",res.length, "called",metaTable.getNameForSheetNum(res.length));
@@ -394,7 +397,7 @@ var parseSheets = function(sheets){
 					res.push(sheetOutput);
 				}
 				
-				if ( debugSheet && debugSheet == sheetTabNum ) {
+				if ( debugSheet != null && debugSheet == sheetTabNum ) {
 					process.exit();
 				}
 				lookForNextSheet(res, _sheets);
