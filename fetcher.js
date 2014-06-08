@@ -44,6 +44,23 @@ var parseBody = function(body) {
 	return null;
 };
 
+
+var readFundsFileFetching = function(){
+	var parsedLines = require('fs').readFileSync('files_data.csv').toString().split("\n");
+	var reducer = function(out, line){
+		var splt = line.split(',');
+		var _out = [];
+		if (splt[2] && splt[4] && splt[8])   _out.push({ body : splt[2], number : splt[4], url : splt[8], year : 2012, quarter : 4 })
+		if (splt[2] && splt[4] && splt[9])   _out.push({ body : splt[2], number : splt[4], url : splt[9], year : 2013, quarter : 1 })
+		if (splt[2] && splt[4] && splt[10])  _out.push({ body : splt[2], number : splt[4], url : splt[10], year : 2013, quarter : 2 })
+		if (splt[2] && splt[4] && splt[11])  _out.push({ body : splt[2], number : splt[4], url : splt[11], year : 2013, quarter : 3 })
+		if (splt[2] && splt[4] && splt[12])  _out.push({ body : splt[2], number : splt[4], url : splt[12], year : 2013, quarter : 4 })
+		return out.concat(_out)
+	}
+	return parsedLines.reduce(reducer, [])
+}
+
+
 /* Read & parse files_data.csv file */
 var readFundsFile = function() {
 
@@ -53,7 +70,7 @@ var readFundsFile = function() {
 
 	var columnsCount = parsedLines[0].split(',').length;
 
-	for (var i = 1; i < parsedLines.length; ++i) {
+	for (var i = 2; i < parsedLines.length; ++i) {
 		var splt = parsedLines[i].split(',');
 
 		if (splt.length != columnsCount) {
@@ -98,9 +115,6 @@ var doFetch = function(step, funds, seed) {
 
 /* Fetch all funds */
 exports.fetchAll = function(funds) {
-	if (funds === undefined) {
-		funds = readFundsFile();
-	}
 
 	var step = 8;
 	for(var i = 0; i < Math.min(funds.length, step); ++i) {
@@ -108,13 +122,38 @@ exports.fetchAll = function(funds) {
 	}
 };
 
-exports.fetchMenora = function(){
-	var allFunds = readFundsFile();
+exports.fetchKnown = function(){
+	var allFunds = readFundsFileFetching();
 	var funds = [];
 
 	for(var i = 0; i < allFunds.length; ++i) {
 		var fund = allFunds[i];
-		if (fund.body == "menora") {
+		if (
+			fund.body == "Menora" ||
+			fund.body == "psagot" ||
+			fund.body == "Migdal" ||
+			fund.body == "fenix" ||
+			fund.body == "clal" ||
+			fund.body == "xnes" ||
+			fund.body == "Amitim" ||
+			fund.body == "Ayalon" ||
+			fund.body == "IDI" ||
+			fund.body == "IBI"
+			) {
+			funds.push(fund);
+		}
+	}
+
+	exports.fetchAll(funds);
+};
+
+exports.fetchMenora = function(){
+	var allFunds = readFundsFileFetching();
+	var funds = [];
+
+	for(var i = 0; i < allFunds.length; ++i) {
+		var fund = allFunds[i];
+		if (fund.body == "Menora") {
 			funds.push(fund);
 		}
 	}
@@ -124,7 +163,7 @@ exports.fetchMenora = function(){
 
 
 exports.fetchAmitim = function(){
-	var allFunds = readFundsFile();
+	var allFunds = readFundsFileFetching();
 	var funds = [];
 
 	for(var i = 0; i < allFunds.length; ++i) {
@@ -144,6 +183,7 @@ exports.fetchHarel = function() {
 
 	for(var i = 0; i < allFunds.length; ++i) {
 		var fund = allFunds[i];
+		console.log(fund.body);
 		if (fund.body == "harel") {
 			funds.push(fund);
 		}
