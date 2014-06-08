@@ -563,6 +563,7 @@ var halvaot = function(headers, dataLines){
 		return (
 			isNotEmpty(l[ enHeaders.indexOf("instrument_id") ])
 			&& l[ enHeaders.indexOf("instrument_id") ] != 0
+			&& isNumber(l[ enHeaders.indexOf("yield") ])
 			&& isNumber(l[ enHeaders.indexOf("fair_value") ])
 			&& isNotEmpty(l[ enHeaders.indexOf("fair_value") ])
 			&& l[ enHeaders.indexOf("fair_value") ] != 0
