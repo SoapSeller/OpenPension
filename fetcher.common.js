@@ -12,7 +12,41 @@ var URL = require("url"),
  *					  url: fileurl }
  *  onDone: Callback with format void(downloadedFilePath, error)
  */
+
+function filename(fund){
+	var baseName = "res/" + fund.body;
+        if (fund['year']) {
+                baseName += "_" + fund.year;
+        }
+        if (fund['quarter']) {
+                baseName += "_" + fund.quarter;
+        }
+    	baseName += "_" + fund.number;
+        return baseName + ".xls";
+}
+
+function filenameX(fund){
+	return filename(fund) + "x";
+}
+
+function importFund(fund, onDone){
+	require("child_process").exec("node index import -f " + filenameX(fund)
+                + " -y " + fund.year + " -q " + fund.quarter + " -b " + fund.body + " -m " + fund.number, function(e){
+		if (e) console.log(e);
+                onDone(filenameX(fund));
+         });
+}
+
+var dedup = []
+
+
 exports.fetchFund = function(fund, onDone) {
+
+	if (dedup.indexOf(filename(fund)) > -1) 
+		onDone(null, "tried to fetch existing file" + filename(fund));
+	else
+		dedup.push(filename(fund));
+
 
 	if (fund.url.indexOf('http') !== 0) {
 		fund.url = 'http://' + fund.url;
@@ -30,28 +64,14 @@ exports.fetchFund = function(fund, onDone) {
 		rejectUnauthorized: false
 	};
 
-	var baseName = "res/" + fund.body;
-	if (fund['year']) {
-		baseName += "_" + fund.year;
-	}
-	if (fund['quarter']) {
-		baseName += "_" + fund.quarter;
-	}
-    baseName += "_" + fund.number;
-	var filename = baseName + ".xls";
-	var filenameX = baseName + ".xlsx";
 
-
-	if (fs.existsSync(filenameX)){
-		console.log("skipping existing file " + filenameX);
-		require("child_process").exec("node index import -f " + filenameX
-			+ " -y " + fund.year + " -q " + fund.quarter + " -b " + fund.body + " -m " + fund.number, function(e){
-			onDone(filenameX);
-		});
+	if (fs.existsSync(filenameX(fund))){
+		console.log("skipping existing file " + filenameX(fund));
+		importFund(fund, onDone);
 		return;
 	}
 
-	var stream = fs.createWriteStream(filename, { flags: 'w+', encoding: "binary", mode: 0666 });
+	var stream = fs.createWriteStream(filename(fund), { flags: 'w+', encoding: "binary", mode: 0666 });
 
 	var client = isHttps ? https : http;
 
@@ -64,41 +84,35 @@ exports.fetchFund = function(fund, onDone) {
 			stream.end();
 
 
-			cp.exec("file " + filename, function (err, stdout, stderr) {
+			cp.exec("file " + filename(fund), function (err, stdout, stderr) {
 				if (!err &&
 					(
 						stdout.toString().indexOf("CDF V2") !== -1 ||
 						stdout.toString().indexOf("Composite Document File V2 Document") !== -1 ||
 						stdout.toString().indexOf("Microsoft Excel 2007+") !== -1
 					)) {
-					var cmd = "ssconvert --export-type=Gnumeric_Excel:xlsx " + filename + " " + filenameX;
+					var cmd = "ssconvert --export-type=Gnumeric_Excel:xlsx " + filename(fund) + " " + filenameX(fund);
 					//console.log(filename);
 
 					cp.exec(cmd, function(err, stdout, stderr) {
 						//console.log(cmd);
 						//console.log(stdout);
-						fs.unlink(filename, function() {
-    						require("child_process").exec("node index import -f " + filenameX
-    							+ " -y " + fund.year + " -q " + fund.quarter + " -b " + fund.body + " -m " + fund.number, function(e){
-    							onDone(filenameX);
-    						});
-                        });
+						fs.unlink(filename(fund), function() {
+							importFund(fund, onDone);
+                        			});
 					});
 				} else if (stdout.toString().indexOf("Zip archive data, at least v2.0 to extract") !== -1) {
 					// File is already xlsx, just move it to the right name
-					cp.exec("mv -f " + filename + " " + filenameX, function(err, stdout, stderr) {
+					cp.exec("mv -f " + filename(fund) + " " + filenameX(fund), function(err, stdout, stderr) {
 						//console.log(cmd);
 						//console.log(stdout);
-						require("child_process").exec("node index import -f " + filenameX
-							+ " -y " + fund.year + " -q " + fund.quarter + " -b " + fund.body + " -m " + fund.number, function(e){
-							onDone(filenameX);
-						});
+						importFund(fund, onDone);
 					});
 				} else {
 					console.log("Error with fund: ", fund, stdout);
-					fs.unlink(filename, function() {
-                        onDone(null, "Can't convert fund: " + stdout);
-                    });
+					fs.unlink(filename(fund), function() {
+    			                    onDone(null, "Can't convert fund: " + stdout);
+			                });
 				}
 			});
 		});

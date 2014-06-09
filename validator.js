@@ -28,28 +28,6 @@ exports.validate = function(headers,data,tabIndex) {
 
 }
 
-var sendToServer = function(managingBody, fund, year, quarter, tabIndex, instrument, instrumentSub, tabData,headers){
-	request.post({
-		url : 'http://localhost:3001/save',
-		body: JSON.stringify({
-			headers:headers, 
-			tabData:tabData,
-			managingBody:managingBody, 
-			fund:fund, 
-			year:year, 
-			quarter:quarter, 
-			instrument:instrument, 
-			instrumentSub:instrumentSub
-		}),
-		headers: {'Content-Type': 'application/json'}
-	},function(err, res, body){
-		if (err) {
-			console.log("error sending to server: ",err);
-		} else {
-			console.log("done sending to server");
-		}
-	});
-}
 
 
 var writeToCsv = function(managingBody, fund, year, quarter, tabIndex, instrument, instrumentSub, tabData,headers){
@@ -126,6 +104,10 @@ var isNumber = function(value){
 
 var cleanString = function(input){
 	return input.trim().replace(/,/g,"-").replace(/\([0-9]+\)/g,'').replace(/[$%\r\n]/g,'');
+}
+
+var cleanNumber = function(input){
+	return input.replace(/([^])-/g,"$1")
 }
 
 var isContaining = function(input,word){
@@ -622,8 +604,8 @@ var normalizeValues = function(enName, value){
 		case 'par_value': 			return cleanString(value);
 		case 'rate': 				return cleanString(value);
 		case 'market_cap': 			return cleanString(value);
-		case 'fair_value': 			return cleanString(value);
-		case 'rate_of_ipo': 		return cleanString(value);
+		case 'fair_value': 			return cleanNumber(cleanString(value));
+		case 'rate_of_ipo': 		return cleanNumber(cleanString(value));
 		case 'rate_of_fund': 		return cleanString(value);
 		case 'date_of_revaluation': return parseDate(value);
 		case 'type_of_asset': 		return cleanString(value);

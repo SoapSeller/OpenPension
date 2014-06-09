@@ -7,4 +7,4 @@ handleExecErrors = (err, stdout, stderr)->
         if err then process.exit 1
 
 task 'test',->
-        exec "node_modules/jasmine-node/bin/jasmine-node --verbose --forceexit --color --coffee ./specs" , handleExecErrors
+        exec "node_modules/jasmine-node/bin/jasmine-node --verbose --forceexit --coffee ./specs" , handleExecErrors
