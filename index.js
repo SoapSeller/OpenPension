@@ -81,4 +81,13 @@ program
 		require('./fetcher').fetchAmitim();
 	});
 
+
+program
+	.command("load-dir")
+	.option("-d, --dir <name>","directory name")
+	.action(function(args){
+		require("./files_loader").loadDir(args.dir);
+	})
+
 program.parse(process.argv);
+

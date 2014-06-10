@@ -2,7 +2,6 @@ var URL = require("url"),
 	http = require("http"),
 	https = require("https"),
 	fs = require("fs"),
-	fs = require("fs"),
 	cp = require("child_process");
 
 /* fetch a fund to file
