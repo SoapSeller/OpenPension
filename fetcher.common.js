@@ -43,7 +43,7 @@ var dedup = []
 exports.fetchFund = function(fund, onDone) {
 
 	if (dedup.indexOf(filename(fund)) > -1) 
-		onDone(null, "tried to fetch existing file" + filename(fund));
+		return onDone(null, "tried to fetch existing file" + filename(fund));
 	else
 		dedup.push(filename(fund));
 
@@ -67,8 +67,7 @@ exports.fetchFund = function(fund, onDone) {
 
 	if (fs.existsSync(filenameX(fund))){
 		console.log("skipping existing file " + filenameX(fund));
-		importFund(fund, onDone);
-		return;
+		return importFund(fund, onDone);
 	}
 
 	var stream = fs.createWriteStream(filename(fund), { flags: 'w+', encoding: "binary", mode: 0666 });
