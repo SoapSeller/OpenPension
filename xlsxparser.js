@@ -54,7 +54,7 @@ var cellIdToCellIdxLogical = function(cellId) {
 
 var cellIdToCellIdx = function(sheet, cellIdxAlpha){
 
-  var logicalIndex = cellIdToCellIdxLogical(cellIdxAlpha);
+  var logicalIndex = cellIdToCellIdxLogical(cellIdxAlpha || 'A1');
 
   var col = logicalIndex.col;
   var row = logicalIndex.row;
@@ -136,10 +136,10 @@ var readSheetCell = function (uz, sharedStrings, sheet, cellId) {
 var getDimension = function(sheet) {
   var splt = sheet.worksheet.dimension[0].$.ref.split(":");
   return {
-    min : cellIdToCellIdxLogical(splt[0]),
-    max : cellIdToCellIdxLogical(splt[1]),
-    minIdx : cellIdToCellIdx(sheet, splt[0]),
-    maxIdx : cellIdToCellIdx(sheet, splt[1])
+    min : cellIdToCellIdxLogical(splt[0] || 'A1'),
+    max : cellIdToCellIdxLogical(splt[1] || 'A1'),
+    minIdx : cellIdToCellIdx(sheet, splt[0] || 'A1'),
+    maxIdx : cellIdToCellIdx(sheet, splt[1] || 'A1')
   };
 };
 
