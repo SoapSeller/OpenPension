@@ -103,11 +103,17 @@ var isNumber = function(value){
 }
 
 var cleanString = function(input){
-	return input.trim().replace(/,/g,"-").replace(/\([0-9]+\)/g,'').replace(/[$%\r\n]/g,'');
+	return input.trim().replace(/,/g,"-").replace(/\([0-9]+\)/g,'').replace(/[$%\r\n]/g,'').replace(/([^,"])"([^,"])/g,'$1""$2').replace(/,([^",][^,]+[^"])",/g,',$1"",');
 }
 
 var cleanNumber = function(input){
-	return input.replace(/([^])-/g,"$1")
+	var _input = input.replace(/([^])-/g,"$1");
+	if isNaN(parseInt(_input)) {
+		console.log("had to zero string value which was:" + input);
+		return 0;
+	}
+	else
+		return parseInt(_input);
 }
 
 var isContaining = function(input,word){
@@ -601,7 +607,7 @@ var normalizeValues = function(enName, value){
 		case 'currency': 			return normalizeCurrency(value);
   		case 'intrest_rate': 		return cleanString(value);
 		case 'yield': 				return cleanString(value);
-		case 'par_value': 			return cleanString(value);
+		case 'par_value': 			return cleanNumber(cleanString(value));
 		case 'rate': 				return cleanString(value);
 		case 'market_cap': 			return cleanString(value);
 		case 'fair_value': 			return cleanNumber(cleanString(value));
