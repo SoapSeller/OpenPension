@@ -108,7 +108,7 @@ var cleanString = function(input){
 
 var cleanNumber = function(input){
 	var _input = input.replace(/([^])-/g,"$1");
-	if isNaN(parseInt(_input)) {
+	if (isNaN(parseInt(_input))) {
 		console.log("had to zero string value which was:" + input);
 		return 0;
 	}
