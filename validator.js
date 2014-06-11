@@ -598,6 +598,7 @@ var normalizeValues = function(enName, value){
 		case 'instrument_symbol': 	return cleanString(value);
 		case 'instrument_id': 		return cleanString(value); //?????
 		case 'underlying_asset': 	return cleanString(value);
+		case 'instrument_type': 	return cleanString(value);
 		case 'instrument_sub_type': return cleanString(value);
 		case 'industry': 			return cleanString(normalizeIndustry(value));
 		case 'rating': 				return cleanString(value);
