@@ -103,7 +103,7 @@ var isNumber = function(value){
 }
 
 var cleanString = function(input){
-	return input.trim().replace(/,/g,"-").replace(/\([0-9]+\)/g,'').replace(/[$%\r\n]/g,'').replace(/([^,"])"([^,"])/g,'$1""$2').replace(/,([^",][^,]+[^"])",/g,',$1"",');
+	return input.trim().replace(/,/g,"-").replace(/\([0-9]+\)/g,'').replace(/[$%\r\n]/g,'').replace(/^"(.*?[^"])$/gm,'""$1').replace(/^([^"]*?[^"])"([^"]+)$/gm,'$1""$2').replace(/^([^"].*?[^"])"$/gm,'$1""');
 }
 
 var cleanNumber = function(input){
@@ -122,7 +122,6 @@ var isContaining = function(input,word){
 
 var normalizeCurrency = function(input){
 	var _input = cleanString(input);
-
 
 
 	switch(_input){
@@ -599,20 +598,21 @@ var normalizeValues = function(enName, value){
 		case 'instrument_symbol': 	return cleanString(value);
 		case 'instrument_id': 		return cleanString(value); //?????
 		case 'underlying_asset': 	return cleanString(value);
-		case 'industry': 			return normalizeIndustry(value);
+		case 'instrument_sub_type': return cleanString(value);
+		case 'industry': 			return cleanString(normalizeIndustry(value));
 		case 'rating': 				return cleanString(value);
 		case 'rating_agency': 		return cleanString(value);
 		case 'date_of_purchase': 	return parseDate(value);
 		case 'average_of_duration': return cleanString(value);
-		case 'currency': 			return normalizeCurrency(value);
-  		case 'intrest_rate': 		return cleanString(value);
-		case 'yield': 				return cleanString(value);
+		case 'currency': 			return cleanString(normalizeCurrency(value));
+  		case 'intrest_rate': 		return cleanNumber(cleanString(value));
+		case 'yield': 				return cleanNumber(cleanString(value));
 		case 'par_value': 			return cleanNumber(cleanString(value));
-		case 'rate': 				return cleanString(value);
+		case 'rate': 				return cleanNumber(cleanString(value));
 		case 'market_cap': 			return cleanString(value);
 		case 'fair_value': 			return cleanNumber(cleanString(value));
 		case 'rate_of_ipo': 		return cleanNumber(cleanString(value));
-		case 'rate_of_fund': 		return cleanString(value);
+		case 'rate_of_fund': 		return cleanNumber(cleanString(value));
 		case 'date_of_revaluation': return parseDate(value);
 		case 'type_of_asset': 		return cleanString(value);
 		case 'tmp_name': 			return cleanString(value);

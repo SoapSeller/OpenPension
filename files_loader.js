@@ -19,9 +19,20 @@ exports.loadDir = function(dir){
 			number : _s[3].replace(".xlsx","")
 		};
 	});
+
+	var oddFunds = []
+	var evenFunds = []
+	funds.forEach(function(f,i){
+		if (i%2 == 0) evenFunds.push(f);
+		else oddFunds.push(f);
+	})
 	
-	fetcherCommon.fetchFunds(funds,function(){
-		console.log("all done!");
+	fetcherCommon.fetchFunds(evenFunds,function(){
+		console.log("all even done!");
+	});
+
+	fetcherCommon.fetchFunds(oddFunds,function(){
+		console.log("all odd done!");
 	});
 
 }
