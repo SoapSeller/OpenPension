@@ -93,17 +93,24 @@ var isLineEmpty = function(line){
 		return true;
 }
 
+var isEmpty = function(value){
+	return !isNotEmpty(value);
+}
 
 var isNotEmpty = function(value){
-	return value != null && value != undefined && value != ""
+	return value != null && value != undefined && value != "";
+}
+
+var isNotNumber = function(value){
+	return !isNumber(value);
 }
 
 var isNumber = function(value){
-	return value != null && isNaN(parseInt(value)) == false
+	return value != null && isNaN(parseInt(value)) == false;
 }
 
 var cleanString = function(input){
-	return input.trim().replace(/,/g,"-").replace(/\([0-9]+\)/g,'').replace(/[$%\r\n]/g,'').replace(/^"(.*?[^"])$/gm,'""$1').replace(/^([^"]*?[^"])"([^"]+)$/gm,'$1""$2').replace(/^([^"].*?[^"])"$/gm,'$1""');
+	return input.trim().replace(/,/g,"-").replace(/\([0-9]+\)/g,'').replace(/[$%\r\n]/g,'').replace(/^"/g,'').replace(/"$/g,'').replace(/([^"])"([^"])/gm,'$1""$2');
 }
 
 var cleanNumber = function(input){
@@ -282,6 +289,10 @@ var agahKontzerni = function(headers, dataLines){
 	return dataLines.filter(function(l){
 		return (
 			isNumber(l[ enHeaders.indexOf("par_value") ])
+			&& (
+                                isEmpty(l[ enHeaders.indexOf('market_cap') ])
+                                        || ( isNotEmpty(l[ enHeaders.indexOf('market_cap') ]) && isNumber(l[ enHeaders.indexOf('market_cap') ]) )
+                        )
 			&& isNotEmpty(l[ enHeaders.indexOf("par_value") ])
 			&& l[ enHeaders.indexOf("par_value") ] != 0
 			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
@@ -433,6 +444,10 @@ var agahKontzerniLoSahir = function(headers, dataLines){
 	return dataLines.filter(function(l){
 		return (
 			isNumber(l[ enHeaders.indexOf("par_value") ])
+			&& (
+                                isEmpty(l[ enHeaders.indexOf('market_cap') ])
+					|| ( isNotEmpty(l[ enHeaders.indexOf('market_cap') ]) && isNumber(l[ enHeaders.indexOf('market_cap') ]) )
+                        )
 			&& isNotEmpty(l[ enHeaders.indexOf("par_value") ])
 			&& l[ enHeaders.indexOf("par_value") ] != 0
 			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
@@ -604,13 +619,13 @@ var normalizeValues = function(enName, value){
 		case 'rating': 				return cleanString(value);
 		case 'rating_agency': 		return cleanString(value);
 		case 'date_of_purchase': 	return parseDate(value);
-		case 'average_of_duration': return cleanString(value);
+		case 'average_of_duration': return cleanNumber(cleanString(value));
 		case 'currency': 			return cleanString(normalizeCurrency(value));
   		case 'intrest_rate': 		return cleanNumber(cleanString(value));
 		case 'yield': 				return cleanNumber(cleanString(value));
 		case 'par_value': 			return cleanNumber(cleanString(value));
 		case 'rate': 				return cleanNumber(cleanString(value));
-		case 'market_cap': 			return cleanString(value);
+		case 'market_cap': 			return cleanNumber(cleanString(value));
 		case 'fair_value': 			return cleanNumber(cleanString(value));
 		case 'rate_of_ipo': 		return cleanNumber(cleanString(value));
 		case 'rate_of_fund': 		return cleanNumber(cleanString(value));
