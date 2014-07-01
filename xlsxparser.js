@@ -44,6 +44,11 @@ var cellIdToCellIdxLogical = function(cellId) {
     col += cellId.charCodeAt(i) - 65;  // cell[i] - 'A'; zero based
   }
 
+  // col can not be larger then 50
+  // thats silly
+  if (col > 50)
+    col = 50;
+
   var row = parseInt(cellId.substr(i), 10) - 1;  // the row number the user is looking for (zero-based)
 
   return {
@@ -135,6 +140,7 @@ var readSheetCell = function (uz, sharedStrings, sheet, cellId) {
 
 var getDimension = function(sheet) {
   var splt = sheet.worksheet.dimension[0].$.ref.split(":");
+
   return {
     min : cellIdToCellIdxLogical(splt[0] || 'A1'),
     max : cellIdToCellIdxLogical(splt[1] || 'A1'),
