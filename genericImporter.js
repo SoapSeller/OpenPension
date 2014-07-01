@@ -34,6 +34,7 @@ var columnLetterFromNumber = function(number){
 
 /* CONFIGURATION */
 global.debug = false;
+
 function debugM(name,message /*,...*/ ){
 	if (global.debug){
 		var args = Array.apply(null, arguments);
@@ -189,7 +190,9 @@ var headersExtractor = function(inputLine, headers, foundHeadersMapping){
 				var foundInHeader = findInHeaders(remainingHeaders, cellContent);
 
 				if (foundInHeader) {
-					debugM({ column: column, origCell: cellContent, foundCell: foundInHeader })
+					if (global.debug){
+						debugM({ column: column, origCell: cellContent, foundCell: foundInHeader })
+					}
 					res.push({ column: column, origCell: cellContent, foundCell: foundInHeader });
 				}
 			} 
@@ -199,7 +202,9 @@ var headersExtractor = function(inputLine, headers, foundHeadersMapping){
 		},[]);
 
 		foundFromHeader.forEach(function(fhm){
-			debugM("headersExtractor","matched header from header line:", fhm.foundCell, " original content:",fhm.origCell);
+			if (global.debug){
+				debugM("headersExtractor","matched header from header line:", fhm.foundCell, " original content:",fhm.origCell);
+			}
 			foundHeadersMapping.push(fhm)
 		});
 
@@ -228,7 +233,9 @@ var headersExtractor = function(inputLine, headers, foundHeadersMapping){
 
 		if (foundFromData.length > 0){
 			foundFromData.forEach(function(ffd){
-				debugM("headersExtractor","* matched header from content:", ffd.foundCell, " original content:",ffd.origCell);
+				if (global.debug){
+					debugM("headersExtractor","* matched header from content:", ffd.foundCell, " original content:",ffd.origCell);
+				}
 				foundHeadersMapping.push(ffd);
 			});
 
@@ -239,11 +246,15 @@ var headersExtractor = function(inputLine, headers, foundHeadersMapping){
 	}
 
 	if (foundHeadersMapping.length == 1){
-		debugM("headersExtractor","false positive on header row, emptying results");
+		if (global.debug){
+			debugM("headersExtractor","false positive on header row, emptying results");
+		}
 		foundHeadersMapping.splice(0,1);
 		return false;
 	} else if (foundHeadersMapping.length > 1 && isLookingForHeaderLine){
-		debugM("headersExtractor","positive match for header line!");
+		if (global.debug){
+			debugM("headersExtractor","positive match for header line!");
+		}
 		return false;
 	} else if (foundHeadersMapping.length == 0){
 		return false;
@@ -268,7 +279,9 @@ var contentExtractor = function(inputLine, headersMapping){
 }
 
 var sheetValidator = function(headers, foundHeadersMapping){
-	debugM("sheetValidator", "found headers #", foundHeadersMapping.length, "num headers", headers.length)
+	if (global.debug){
+		debugM("sheetValidator", "found headers #", foundHeadersMapping.length, "num headers", headers.length)
+	}
 	return (
 		(foundHeadersMapping.length == headers.length) ||
 		(foundHeadersMapping.length > 5 && foundHeadersMapping.length >= headers.length / 3  ) ||
@@ -279,17 +292,21 @@ var sheetValidator = function(headers, foundHeadersMapping){
 
 var parseSingleSheet = function(metaTable, cellReader,sheetName,dim, indexMetaTable){
 	var foundMatchingSheet = false;
-	debugM("parseSingleSheet",indexMetaTable);
 	var headers = metaTable.columnMappingForRow(indexMetaTable).map(function(x){return x});
-	debugM("parseSingleSheet", "trying to metch tab by sheet name",sheetName);
 	var identifiedSheetIndexFromTabName = sheetSkipDetector([sheetName], indexMetaTable, metaTable);
+	if (global.debug){
+		debugM("parseSingleSheet",indexMetaTable);
+		debugM("parseSingleSheet", "trying to metch tab by sheet name",sheetName);
+	}
 	if (identifiedSheetIndexFromTabName != indexMetaTable){
 		notifyM("parseSingleSheet","identified different sheet by looking into tab name",
 			indexMetaTable,"(" + metaTable.getNameForSheetNum(indexMetaTable) + ")", " identified as:", identifiedSheetIndexFromTabName, "("+metaTable.getNameForSheetNum(identifiedSheetIndexFromTabName)+")" );
 		return parseSingleSheet(metaTable, cellReader, sheetName, dim, identifiedSheetIndexFromTabName);
 	}
 
-	debugM("parseSingleSheet","headers",headers);
+	if (global.debug){
+		debugM("parseSingleSheet","headers",headers);
+	}
 	var sheetData = [];
 	var foundHeadersMapping = [];
 	var emptyRows = 0;
@@ -308,7 +325,9 @@ var parseSingleSheet = function(metaTable, cellReader,sheetName,dim, indexMetaTa
 			rowContent[column] = cellContent
 		}
 
-		debugM("parseSingleSheet","row",rowContent.join("|"));
+		if (global.debug){
+			debugM("parseSingleSheet","row",rowContent.join("|"));
+		}
 
 		if (rowContent.some(function(x){return !!x})) {
 			emptyRows = 0;
@@ -330,7 +349,9 @@ var parseSingleSheet = function(metaTable, cellReader,sheetName,dim, indexMetaTa
 
 		if (shouldExtractContent){
 			var extractedData = contentExtractor(rowContent,foundHeadersMapping);
-			debugM("parseSingleSheet","extracted data",extractedData.join(","))
+			if (global.debug){
+				debugM("parseSingleSheet","extracted data",extractedData.join(","))
+			}
 			sheetData.push(extractedData);
 		}
 		
@@ -339,10 +360,14 @@ var parseSingleSheet = function(metaTable, cellReader,sheetName,dim, indexMetaTa
 	var sheetMatchVerified = sheetValidator(headers,foundHeadersMapping);
 	
 	if (sheetMatchVerified){
-		debugM("parseSingleSheet","verified positive match for sheet!");
+		if (global.debug){
+			debugM("parseSingleSheet","verified positive match for sheet!");
+		}
 		return {"data":sheetData,"finalIndex":indexMetaTable,"headers":foundHeadersMapping.map(function(hm){ return hm.foundCell; })};
 	} else {
-		debugM("parseSingleSheet","negative match for sheet...");
+		if (global.debug){
+			debugM("parseSingleSheet","negative match for sheet...");
+		}
 		return null;
 	}
 }
@@ -365,7 +390,9 @@ var sheetSkipDetector = function(inputLine, metaSheetNum, metaTable){
 			var i = _metaSheetNum + 1;
 			for (i = _metaSheetNum; i < metaTable.instrumentTypes.length ; i++){
 				if (sheetMetaIdentifier(cellContent, i, metaTable)){
-					debugM("sheetSkipDetector","skipping sheet! matched to meta sheet #" + i);
+					if (global.debug){
+						debugM("sheetSkipDetector","skipping sheet! matched to meta sheet #" + i);
+					}
 					return i;
 				}
 			}
@@ -398,13 +425,17 @@ var parseSheets = function(sheets){
 
 				if (sheetOutput && sheetOutput.finalIndex != res.length){
 					while(res.length < sheetOutput.finalIndex){
-						debugM("lookForNextSheet","padding output array with empty data to match expected progress of meta table idx")
+						if (global.debug){
+							debugM("lookForNextSheet","padding output array with empty data to match expected progress of meta table idx")
+						}
 						res.push([]);
 					}
 				}
 
 				if (sheetOutput && sheetOutput.data && sheetOutput.data.length > 0){
-					debugM("parseSheets","adding sheet lines count #",sheetOutput.data.length);
+					if (global.debug){
+						debugM("parseSheets","adding sheet lines count #",sheetOutput.data.length);
+					}
 					res.push(sheetOutput);
 				}
 				
