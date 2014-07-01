@@ -239,21 +239,6 @@ exports.getCellValue = function(filename, sheet, cellName, callback){
   });
 };
 
-/*
-@param String filename
-@param String sheet
-@param Function(Error,dim) callback
-*/
-exports.getDimensions = function(filename, sheet, callback){
-  exports.readFile(filename, function(err, result) {
-    var _sheet = result.sheets.filter(function(s){return s.name == sheet;})[0];
-    if (!_sheet) throw new Error("sheet not found!");
-    _sheet.read(function(err,result,dim){
-      callback(null,dim);
-    });
-  });
-};
-
 exports.openSheet = function(filename, sheet, callback){
   exports.readFile(filename, function(err, result) {
     var _sheet = result.sheets.filter(function(s){return s.name == sheet;})[0];

@@ -292,8 +292,13 @@ var parseSingleSheet = function(metaTable, cellReader,sheetName,dim, indexMetaTa
 	debugM("parseSingleSheet","headers",headers);
 	var sheetData = [];
 	var foundHeadersMapping = [];
-
+	var emptyRows = 0;
 	for(var row = dim.min.row || 1; row <= dim.max.row; row++){
+
+		// if the number of empty rowns is above 10, the sheet is reporting a size which is too
+		// big and needs to be trimmed
+		if (emptyRows >= 20) 
+			continue;
 		
 		var rowContent = []
 		for (var column = dim.min.col || 0; column <= dim.max.col; column++){
@@ -303,7 +308,13 @@ var parseSingleSheet = function(metaTable, cellReader,sheetName,dim, indexMetaTa
 			rowContent[column] = cellContent
 		}
 
-		debugM("parseSingleSheet","lines",rowContent.join("|"));
+		debugM("parseSingleSheet","row",rowContent.join("|"));
+
+		if (rowContent.some(function(x){return !!x})) {
+			emptyRows = 0;
+		} else {
+			emptyRows += 1;
+		}
 
 		var shouldExtractContent = headersExtractor(rowContent,headers, foundHeadersMapping)
 
@@ -320,7 +331,7 @@ var parseSingleSheet = function(metaTable, cellReader,sheetName,dim, indexMetaTa
 		if (shouldExtractContent){
 			var extractedData = contentExtractor(rowContent,foundHeadersMapping);
 			debugM("parseSingleSheet","extracted data",extractedData.join(","))
-			sheetData.push(extractedData)
+			sheetData.push(extractedData);
 		}
 		
 	}

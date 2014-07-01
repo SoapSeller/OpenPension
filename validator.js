@@ -106,21 +106,26 @@ var isNotNumber = function(value){
 }
 
 var isNumber = function(value){
-	return value != null && isNaN(parseInt(value)) == false;
+	return value != null && isNaN(parseFloat(value)) == false;
 }
 
 var cleanString = function(input){
-	return input.trim().replace(/,/g,"-").replace(/\([0-9]+\)/g,'').replace(/[$%\r\n]/g,'').replace(/^"/g,'').replace(/"$/g,'').replace(/([^"])"([^"])/gm,'$1""$2');
+	return input.trim().replace(/,/g,"-")
+			.replace(/\([0-9]+\)/g,'')
+			.replace(/[$%\r\n]/g,'')
+			.replace(/^"/g,'')
+			.replace(/"$/g,'')
+			.replace(/([^"])"([^"])/gm,'$1""$2');
 }
 
 var cleanNumber = function(input){
-	var _input = input.replace(/([^])-/g,"$1");
-	if (isNaN(parseInt(_input))) {
+	var _input = input.replace(/([^]+?)-/g,"$1");
+	if (isNaN(parseFloat(_input))) {
 		console.log("had to zero string value which was:" + input);
 		return 0;
 	}
 	else
-		return parseInt(_input);
+		return parseFloat(_input);
 }
 
 var isContaining = function(input,word){
