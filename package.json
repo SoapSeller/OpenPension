@@ -17,7 +17,7 @@
 	"xml2js" : "latest",
 	"commander": "latest",
 	"request": "latest",
-	"jasmine-node": "1.14.3",
+	"jasmine-node": "1.14.2",
 	"zombie": "latest",
 	"coffee-script": "latest",
     "express": "latest",
