@@ -16,6 +16,7 @@ describe "Validator Spec",->
 			{asset : "harel_2010_3_739", rows : 9}
 			{asset : "Migdal_2012_4_1161", rows : 21}
 			{asset : "psagot_2013_3_15312070", rows : 6}
+			{asset : "harel_2013_3_171", rows: 29}
 		])
 
 	it "validates noyarot ereh shirim teudot hithayvot mimshaltiyot",->

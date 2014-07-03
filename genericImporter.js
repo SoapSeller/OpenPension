@@ -391,7 +391,7 @@ var sheetSkipDetector = function(inputLine, metaSheetNum, metaTable){
 			for (i = _metaSheetNum; i < metaTable.instrumentTypes.length ; i++){
 				if (sheetMetaIdentifier(cellContent, i, metaTable)){
 					if (global.debug){
-						debugM("sheetSkipDetector","skipping sheet! matched to meta sheet #" + i);
+						debugM("sheetSkipDetector","matched to meta sheet #" + i);
 					}
 					return i;
 				}
@@ -442,9 +442,12 @@ var parseSheets = function(sheets){
 				if ( debugSheet != null && debugSheet == sheetTabNum ) {
 					process.exit();
 				}
+
 				lookForNextSheet(res, _sheets);
+
 			}) 
 		} else if (res.length == lastSheetNum || _sheets.length == 0) {
+
 			console.log("++++++ parsed & found all sheets");
 
 			res.forEach(function(resSheet, metaIdx){

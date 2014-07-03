@@ -199,19 +199,17 @@ exports.readFile = function(filename, handler) {
               sheets : []
             };
             workbook.workbook.sheets[0].sheet.forEach(function(s) {
-              //console.log(s);
               result.sheets.push({
                 name : s.$.name,
-                id : s.$.sheetId,
-                read : readSheet.bind(this, uz, sharedStrings.sst.si, s.$.sheetId)
+                id : s.$['r:id'].replace("rId",""),
+                read : readSheet.bind(this, uz, sharedStrings.sst.si, s.$['r:id'].replace("rId",""))
               });
             });
             handler(null, result);
           });
         });
       });
-    
-else
+    else
       console.log("file not found");
   });
 
