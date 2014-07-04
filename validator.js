@@ -121,7 +121,7 @@ var cleanString = function(input){
 var cleanNumber = function(input){
 	if (!input) 
 		return input;
-	var _input = parseFloat(input.replace(/([^]+?[^E])-/g,"$1"));
+	var _input = parseFloat(input.replace(/([^]+?[^Ee])-/g,"$1"));
 	
 	if (isNaN(_input)) {
 		console.log("returning 0:",input,_input,input < 0 );
