@@ -121,11 +121,11 @@ var cleanString = function(input){
 var cleanNumber = function(input){
 	if (!input) 
 		return input;
+	var _input = parseFloat(input.replace(/([^]+?[^E])-/g,"$1"));
 	
-	var _input = input.replace(/([^]+?)-/g,"$1");
-	if (isNaN(parseFloat(_input))) {
-		console.log("had to zero string value which was:" + input);
-		return 0;
+	if (isNaN(_input)) {
+		console.log("returning 0:",input,_input,input < 0 );
+		return "0";
 	}
 	else
 		return parseFloat(_input);
@@ -631,10 +631,10 @@ var normalizeValues = function(enName, value){
 		case 'currency': 			return cleanString(normalizeCurrency(value));
   		case 'intrest_rate': 		return cleanNumber(cleanString(value));
 		case 'yield': 				return cleanNumber(cleanString(value));
-		case 'par_value': 			return cleanNumber(cleanString(value));
+		case 'par_value': 			return cleanNumber(value);
 		case 'rate': 				return cleanNumber(cleanString(value));
 		case 'market_cap': 			return cleanNumber(cleanString(value));
-		case 'fair_value': 			return cleanNumber(cleanString(value));
+		case 'fair_value': 			return cleanNumber(value);
 		case 'rate_of_ipo': 		return cleanNumber(cleanString(value));
 		case 'rate_of_fund': 		return cleanNumber(cleanString(value));
 		case 'date_of_revaluation': return parseDate(value);
