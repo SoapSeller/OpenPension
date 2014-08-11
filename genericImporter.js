@@ -1,6 +1,7 @@
-var MetaTable = require('./common/MetaTable')
-var xlsx = require("./xlsxparser");
-var LevDistance = require('./LevDistance')
+var MetaTable = require('./common/MetaTable'),
+	xlsx = require("./xlsxparser"),
+	LevDistance = require('./LevDistance'),
+	detectors = require("./detectors");
 
 exports.parseXls = function(filename,callback){
 	xlsx.getSheets(filename, function(sheets){
@@ -82,18 +83,13 @@ var cleanDataStr = function(inputStr){
 	return inputStr;
 }
 
-var cleanColumnHeaderStr = function(inputStr){
-	if (inputStr)
-		return inputStr.replace(/\(.*\)/g,"").replace(/["'\n\r]/g,"").replace(/[ ]+/g," ").replace(/^.\. /,"").trim()
-	else 
-		return ""
-}
+
 
 var findFromAliasMap = function(input, headers, headersAliasMap){
 	var res = headers.filter( function(h){
 		if (headersAliasMap[h]){
 			return headersAliasMap[h].some(function(ah){
-				var _ah = cleanColumnHeaderStr(ah);
+				var _ah = detectors.cleanColumnHeaderStr(ah);
 				return input == _ah;
 			});
 		} else {
@@ -110,7 +106,7 @@ var findFromAliasMap = function(input, headers, headersAliasMap){
 
 var findFromHeadersLev = function(input, headers){
 	var res = headers.filter(function(h){
-		var _h = cleanColumnHeaderStr(h);
+		var _h = detectors.cleanColumnHeaderStr(h);
 		if (LevDistance.calc(_h,input) <= levTolerance){
 			return h;
 		} else {
@@ -129,7 +125,7 @@ var findFromAliasMapLev = function(input, headers, headersAliasMap){
 	var res = headers.filter( function(h){
 		if (headersAliasMap[h]){
 			return headersAliasMap[h].some(function(ah){
-				var _ah = cleanColumnHeaderStr(ah);
+				var _ah = detectors.cleanColumnHeaderStr(ah);
 				return LevDistance.calc(_ah,input) <= levTolerance;
 			});
 		} else {
@@ -146,7 +142,7 @@ var findFromAliasMapLev = function(input, headers, headersAliasMap){
 
 
 var findInHeaders = function(headers, cellContent){
-	var _cleanCell = cleanColumnHeaderStr(cellContent);
+	var _cleanCell = detectors.cleanColumnHeaderStr(cellContent);
 
 	if (headers.indexOf(_cleanCell) > -1) {
 		return _cleanCell;
@@ -377,9 +373,9 @@ var sheetMetaIdentifier = function(cellContent, metaSheetNum, metaTable){
 
 	var nameFromMetaTable = metaTable.instrumentSubTypes[metaSheetNum] || metaTable.instrumentTypes[metaSheetNum];
 	
-	var cleanCellContent = cleanColumnHeaderStr(cellContent);
+	var cleanCellContent = detectors.cleanColumnHeaderStr(cellContent);
 	var options = [nameFromMetaTable].concat(knownSheetContentIdentifiers[metaSheetNum] || []);
-	return options.some(function(value){ return cleanCellContent == cleanColumnHeaderStr(value) })
+	return options.some(function(value){ return cleanCellContent == detectors.cleanColumnHeaderStr(value) })
 
 }
 

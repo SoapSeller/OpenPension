@@ -3,6 +3,8 @@ var xlsx = require('./xlsxparser.js');
 var db = require('./db.js');
 var CSVWriter = require('./CSVWriter')
 var MetaTable = require('./common/MetaTable');
+require('coffee-script/register');
+var dataValidator = require("./dataValidator.coffee")
 
 program
 	.command('import')
@@ -27,6 +29,29 @@ program
 	});
 
 
+program
+	.command("validate")
+	.option("-f, --file <name>","xslx file name")
+	.action(function(args){
+		var metaTable = MetaTable.getMetaTable();
+		require('./genericImporter').parseXls(args.file, function(result){
+			var extracted =  result.map(function(r){
+				var validated = require('./validator').validate(r.engMap,r.data,r.idx)
+				var instrument = metaTable.instrumentTypes[r.idx];
+				var instrumentSub = metaTable.instrumentSubTypes[r.idx];
+				return { validated : validated, instrument : instrument, instrumentSub : instrumentSub };
+			});
+			var filename = args.file.split("/")[args.file.split("/").length -1]
+			var parts = filename.split(".")[0].split("_");
+			var company = parts[0];
+			var year = parts[1];
+			var q = parts[2];
+			var fund = parts[3];
+			
+			dataValidator.validate(extracted, metaTable,company,year,q,fund);
+
+		});		
+	});
 
 program
 	.command("db")
