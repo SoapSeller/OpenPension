@@ -71,7 +71,6 @@ var readFundsFileFetching = function(cb){
 
 var parseCsvFetch = function(parsedLines,cb){
 	
-	var parsedLines = require('fs').readFileSync('files_data.csv').toString().split("\n");
 	var reducer = function(out, line){
 		var splt = line.split(',');
 		var _out = [];

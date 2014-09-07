@@ -39,7 +39,7 @@ program
 				var validated = require('./validator').validate(r.engMap,r.data,r.idx)
 				var instrument = metaTable.instrumentTypes[r.idx];
 				var instrumentSub = metaTable.instrumentSubTypes[r.idx];
-				return { validated : validated, instrument : instrument, instrumentSub : instrumentSub };
+				return { validated : validated, instrument : instrument, instrumentSub : instrumentSub, engMap : r.engMap };
 			});
 			var filename = args.file.split("/")[args.file.split("/").length -1]
 			var parts = filename.split(".")[0].split("_");
