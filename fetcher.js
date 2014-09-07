@@ -44,8 +44,33 @@ var parseBody = function(body) {
 	return null;
 };
 
+var readFundsFileFetching = function(cb){
 
-var readFundsFileFetching = function(){
+	var options = {
+		host: "docs.google.com",
+		post : 443,
+		path : "/spreadsheets/d/1mUsNeb8gD2ELPKGpjD12AqZkuCybJlGCTz62oryLZY4/export?exportFormat=csv&gid=1311761971"
+	}
+	
+	var data = '';
+
+	https.get(options,function(res){
+		res.on('data', function(chunk){
+			data = data + chunk.toString();
+		});
+		res.on('end', function(){
+			var parsedLines = data.split("\n")
+			parseCsvFetch(parsedLines, cb);
+		});
+	}).on('errpr',function(r){
+		console.log("error fetching sheet",r);
+		process.exit();
+	});
+
+}
+
+var parseCsvFetch = function(parsedLines,cb){
+	
 	var parsedLines = require('fs').readFileSync('files_data.csv').toString().split("\n");
 	var reducer = function(out, line){
 		var splt = line.split(',');
@@ -58,7 +83,7 @@ var readFundsFileFetching = function(){
 		if (splt[2] && splt[5] && splt[13])  _out.push({ body : splt[2], number : splt[5], url : splt[13], year : 2014, quarter : 1 })
 		return out.concat(_out)
 	}
-	return parsedLines.reduce(reducer, [])
+	cb(parsedLines.reduce(reducer, []));
 }
 
 
@@ -124,7 +149,14 @@ exports.fetchAll = function(funds) {
 };
 
 exports.fetchKnown = function(){
-	var allFunds = readFundsFileFetching();
+	readFundsFileFetching(function(allFunds){
+		fetchAllFunds(allFunds);
+	})
+}
+
+
+var fetchAllFunds = function(allFunds){
+
 	var funds = [];
 
 	for(var i = 0; i < allFunds.length; ++i) {
