@@ -57,6 +57,7 @@ exports.fetchFund = function(fund, onDone) {
 	var isHttps = url.protocol == "https:";
 	var options = {
 		hostname: url.hostname,
+		headers: {'user-agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.11 (KHTML, like Gecko) Chrome/17.0.963.79 Safari/535.11'},
 		port: url.port ? url.port : (isHttps ? 443 : 80),
 		path: url.path,
 		method: 'GET',
