@@ -22,6 +22,9 @@ exports.loadDir = function(dir){
 
 	var oddFunds = []
 	var evenFunds = []
+
+	fetcherCommon.changeBaseFolder(dir);
+
 	funds.forEach(function(f,i){
 		if (i%2 == 0) evenFunds.push(f);
 		else oddFunds.push(f);

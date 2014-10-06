@@ -4,6 +4,11 @@ var URL = require("url"),
 	fs = require("fs"),
 	cp = require("child_process");
 
+
+var baseFolder = "res/";
+
+exports.changeBaseFolder = function(newFolder){ baseFolder = newFolder };
+
 /* fetch a fund to file
  * fund: Object of type:
  *					{ body: englishBody, // See 'bodys' aboce
@@ -13,7 +18,7 @@ var URL = require("url"),
  */
 
 function filename(fund){
-	var baseName = "res/" + fund.body;
+	var baseName = baseFolder + fund.body;
         if (fund['year']) {
                 baseName += "_" + fund.year;
         }
