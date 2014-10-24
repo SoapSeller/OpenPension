@@ -7,7 +7,7 @@ var URL = require("url"),
 
 var baseFolder = "res/";
 
-exports.changeBaseFolder = function(newFolder){ baseFolder = newFolder };
+exports.changeBaseFolder = function(newFolder){ baseFolder = newFolder; console.log("changing to folder:",newFolder); };
 
 /* fetch a fund to file
  * fund: Object of type:

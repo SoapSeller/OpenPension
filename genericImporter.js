@@ -64,7 +64,7 @@ var aliasMap = {
 }
 
 var detectorsMap = {
-	"שם נייר ערך" : [ "ב. ניירות ערך סחירים","בישראל","סעיף 1. נכסים המוצגים לפי שווי הוגן:" ]
+	"שם נייר ערך" : [ "ב. ניירות ערך סחירים","בישראל","סעיף 1. נכסים המוצגים לפי שווי הוגן:","בישראל:","בחו\"ל:","ישראל","חו\"ל"]
 }
 
 
@@ -211,10 +211,9 @@ var headersExtractor = function(inputLine, headers, foundHeadersMapping){
 		var remainingHeaders = headers.filter(function(h){ return knownHeaders.indexOf(h) == -1 })
 
 		var foundFromData = inputLine.reduce(function(res,cellContent, column){
-			if (knownColumns.indexOf(column) == -1){
-
+			if (cellContent && knownColumns.indexOf(column) == -1){
 				remainingHeaders.some(function(rh){
-					if (detectorsMap[rh] && detectorsMap[rh].some(function(dtc){ return dtc == cellContent; })){
+					if (detectorsMap[rh] && detectorsMap[rh].some(function(dtc){ return dtc == cellContent.trim(); })){
 						res.push({ column: column, origCell: cellContent, foundCell: rh });
 						return true;
 					} else {
