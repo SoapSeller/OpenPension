@@ -161,7 +161,7 @@ var fetchAllFunds = function(allFunds){
 	for(var i = 0; i < allFunds.length; ++i) {
 		var fund = allFunds[i];
 		if (
-		//	fund.body == "Amitim" ||
+			// fund.body == "Amitim" ||
 			fund.body == "clal" ||
 			fund.body == "DS" ||
 			fund.body == "Harel" ||

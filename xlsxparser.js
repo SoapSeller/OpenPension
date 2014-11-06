@@ -40,7 +40,10 @@ var cellIdToCellIdxLogical = function(cellId) {
       break;
     }
 
-    col *= 10;
+    if (i == 1 && col == 0){ //for handing "A_"
+      col += ("Z".charCodeAt(0) -65 +1);
+    }
+    
     col += cellId.charCodeAt(i) - 65;  // cell[i] - 'A'; zero based
   }
 

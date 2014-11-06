@@ -56,7 +56,7 @@ var aliasMap = {
 	"שיעור מנכסי ההשקעה" : [ "שיעור מנכסי הקרן", "שיעור מהנכסים" ],
 	"מספר נייר ערך" : [ "מספר ני\"ע", "מס' נייר ערך" ],
 	"שיעור מהערך הנקוב המונפק" : [ "שיעור מהע.נ המונפק", "שיעור מהע.נ המונפק" ],
-	"שווי הוגן" : [ "שווי שוק", "שווי השקעה", "שווי הוגן באלפי ש\"ח" ],
+	"שווי הוגן" : [ "שווי שוק", "שווי השקעה", "שווי הוגן באלפי ש\"ח","עלות מתואמת" ],
 	"שווי שוק" : [ "שווי הוגן" ],
 	"תשואה לפדיון" : [ "ת. לפדיון" ],
 	"שיעור ריבית": [ "תנאי ושיעור ריבית","שיעור ריבית ממוצע" ],
@@ -105,9 +105,10 @@ var findFromAliasMap = function(input, headers, headersAliasMap){
 }
 
 var findFromHeadersLev = function(input, headers){
+	var _levTolerance = input.length <= 3 ? 1 : levTolerance;
 	var res = headers.filter(function(h){
 		var _h = detectors.cleanColumnHeaderStr(h);
-		if (LevDistance.calc(_h,input) <= levTolerance){
+		if (LevDistance.calc(_h,input) <= _levTolerance){
 			return h;
 		} else {
 			return false;
@@ -122,11 +123,12 @@ var findFromHeadersLev = function(input, headers){
 }
 
 var findFromAliasMapLev = function(input, headers, headersAliasMap){
+	var _levTolerance = input.length <= 3 ? 1 : levTolerance;
 	var res = headers.filter( function(h){
 		if (headersAliasMap[h]){
 			return headersAliasMap[h].some(function(ah){
 				var _ah = detectors.cleanColumnHeaderStr(ah);
-				return LevDistance.calc(_ah,input) <= levTolerance;
+				return LevDistance.calc(_ah,input) <= _levTolerance;
 			});
 		} else {
 			return false;
@@ -313,6 +315,7 @@ var parseSingleSheet = function(metaTable, cellReader,sheetName,dim, indexMetaTa
 			continue;
 		
 		var rowContent = []
+
 		for (var column = dim.min.col || 0; column <= dim.max.col; column++){
 			var letter = columnLetterFromNumber(column);
 			var cellId = letter + row;
@@ -416,6 +419,7 @@ var parseSheets = function(sheets){
 			var sheet = _sheets.shift();
 			var sheetName = sheet.name;
 			sheet && sheet.read(function(err, sheetCB,dim){ 
+				debugM("parseSheets","sheet dim",dim)
 				var sheetOutput = parseSingleSheet(metaTable,sheetCB,sheetName,dim,res.length);
 
 				if (sheetOutput && sheetOutput.finalIndex != res.length){
