@@ -4,7 +4,8 @@ var URL = require("url"),
 	fs = require("fs"),
 	cp = require("child_process"),
 	fc = require("./fetcher.common.js"),
-	harel = require("./fetcher.harel.js");
+	harel = require("./fetcher.harel.js"),
+    db = require("./db.js");
 
 var cUrl = 6,
 	cNum = 4,
@@ -138,6 +139,32 @@ var doFetch = function(step, funds, seed) {
 	}
 };
 
+var getContribFunds = function(cb) {
+    var client = (new db.pg(true)).client;
+
+    client.query("SELECT q.id, q.year, q.quarter, q.url, q.status, f.managing_body, f.id as fund_id, f.name as fund_name, f.url as fund_url FROM admin_funds_quarters as q, admin_funds as f WHERE q.fund_id = f.id AND status = 'validated'", function(err, result) {
+
+        if(err) {
+            return console.error('error running query', err);
+        }
+
+        var funds = [];
+
+        result.rows.forEach(function(f) {
+            funds.push({
+                body: f.managing_body,
+                number: f.fund_id,
+                url: f.url,
+                year: f.year,
+                quarter: f.quarter+1
+            });
+        });
+
+
+        cb(funds);
+    });
+};
+
 /* Fetch all funds */
 exports.fetchAll = function(funds) {
 
@@ -150,8 +177,12 @@ exports.fetchAll = function(funds) {
 exports.fetchKnown = function(){
 	readFundsFileFetching(function(allFunds){
 		fetchAllFunds(allFunds);
-	})
-}
+	});
+};
+
+exports.fetchContrib = function(){
+    getContribFunds(fetchAllFunds);
+};
 
 
 var fetchAllFunds = function(allFunds){

@@ -108,6 +108,12 @@ program
 
 
 program
+    .command("fetch-contrib")
+    .action(function(){
+        require('./fetcher').fetchContrib();
+    });
+
+program
 	.command("load-dir")
 	.option("-d, --dir <name>","directory name")
 	.action(function(args){

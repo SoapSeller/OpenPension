@@ -140,30 +140,32 @@ var mapColumnType2Sql = function(type) {
 };
 
 var a  = 0;
-db.pg = function() {
+db.pg = function(noCreate) {
     var self = this;
     self.client = new pg.Client(config.connection_string);
     self.client.connect();
 
     self.tablesCounter = 0;
-    var createTable = "CREATE TABLE " + tableName + "( ";
-    var fields = _.zip(columnsNames, columnsTypes.map(mapColumnType2Sql));
-    createTable += fields.filter(function(f) { return !!f[0] && !!f[1]; }).map(function(f) { return f[0] + " " + f[1]; }).join(',');
-    createTable += ");";
+    if (noCreate === undefined || noCreate !== true) {
+        var createTable = "CREATE TABLE " + tableName + "( ";
+        var fields = _.zip(columnsNames, columnsTypes.map(mapColumnType2Sql));
+        createTable += fields.filter(function(f) { return !!f[0] && !!f[1]; }).map(function(f) { return f[0] + " " + f[1]; }).join(',');
+        createTable += ");";
 
 
-    self.client.query(createTable, function(err) {
-      if(!err) {
-        self.client.query('GRANT SELECT ON ' + tableName + ' TO opublic;', function(err) {
-          if (err) {
-            console.log("error in grant", err);
+        self.client.query(createTable, function(err) {
+          if(!err) {
+            self.client.query('GRANT SELECT ON ' + tableName + ' TO opublic;', function(err) {
+              if (err) {
+                console.log("error in grant", err);
+              }
+              console.log(">>1a");
+            });
+          } else {
+            console.log("error in create", err);
           }
-          console.log(">>1a");
         });
-      } else {
-        console.log("error in create", err);
-      }
-    });
+    }
   };
 
 db.pg.prototype = {
