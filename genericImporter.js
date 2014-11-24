@@ -73,7 +73,7 @@ var knownSheetContentIdentifiers = {
 	1 : ["מזומנים ושווי מזומנים"],
 	2 : [ "תעודות התחייבות ממשלתיות" ],
 	4 : [ "אגח קונצרני","אג\"ח קונצרני" ],
-	14 : [ "אגח קונצרני" ]
+	14 : [ "אגח קונצרני","אג\"ח קונצרני" ]
 
 }
 
@@ -215,7 +215,7 @@ var headersExtractor = function(inputLine, headers, foundHeadersMapping){
 		var foundFromData = inputLine.reduce(function(res,cellContent, column){
 			if (cellContent && knownColumns.indexOf(column) == -1){
 				remainingHeaders.some(function(rh){
-					if (detectorsMap[rh] && detectorsMap[rh].some(function(dtc){ return dtc == cellContent.trim(); })){
+					if (rh == cellContent.trim() || detectorsMap[rh] && detectorsMap[rh].some(function(dtc){ return dtc == cellContent.trim(); })){
 						res.push({ column: column, origCell: cellContent, foundCell: rh });
 						return true;
 					} else {
