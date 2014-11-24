@@ -118,6 +118,16 @@ var cleanString = function(input){
 			.replace(/([^"])"([^"])/gm,'$1""$2');
 }
 
+var re = /^IL00([0-9]+)[0-9][^0-9].*/; 
+
+var cleanInstrumentId = function(input){
+	var out = re.exec(input);
+	if (out)
+		return out[0]
+	else 
+		return input
+}
+
 var cleanNumber = function(input){
 	if (!input) 
 		return input;
@@ -698,7 +708,7 @@ var normalizeValues = function(enName, value){
 
 	switch(enName){
 		case 'instrument_symbol': 	return cleanString(value);
-		case 'instrument_id': 		return cleanString(value); //?????
+		case 'instrument_id': 		return cleanInstrumentId(cleanString(value)); //?????
 		case 'underlying_asset': 	return cleanString(value);
 		case 'instrument_type': 	return cleanString(value);
 		case 'instrument_sub_type': return cleanString(value);
