@@ -5,6 +5,7 @@ var CSVWriter = require('./CSVWriter')
 var MetaTable = require('./common/MetaTable');
 require('coffee-script/register');
 var dataValidator = require("./dataValidator.coffee")
+var initialize = require('./initialize');
 
 program
 	.command('import')
@@ -120,5 +121,8 @@ program
 		require("./files_loader").loadDir(args.dir);
 	})
 
-program.parse(process.argv);
+initialize.init()
+.then(function(){
+	program.parse(process.argv);
+})
 

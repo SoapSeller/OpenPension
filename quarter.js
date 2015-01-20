@@ -48,7 +48,7 @@ var Quarter = function(year, quarter){
 	/**
 	 * Get previous quarters, including current, one based.
 	 * @param numOfQuarters : quarter to start counting back from
-	 * @return Array : [{'quarter':'1','year:'2012'}, ...]
+	 * @return Array : [Quarter, ...]
 	 */
 	this.getLastQuarters = function (numOfQuarters){
 
@@ -56,8 +56,7 @@ var Quarter = function(year, quarter){
 		var q = this.quarter;
 		for (var i = 0; i < numOfQuarters; i++) {
 
-
-			res.push();
+			res.push(new Quarter(this.year, this.quarter).sub(i));
 
 			if (q == 1){
 				year--;
