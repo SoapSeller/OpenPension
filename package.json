@@ -11,7 +11,7 @@
     "url": "git://github.com/SoapSeller/OpenPension.git"
   },
   "dependencies": {
-    "bluebird": "^2.8.2",
+    "bluebird": "latest",
     "coffee-script": "latest",
     "commander": "latest",
     "express": "latest",
@@ -22,7 +22,8 @@
     "request": "latest",
     "underscore": "latest",
     "xml2js": "latest",
-    "zombie": "latest"
+    "zombie": "latest",
+    "mkdirp": "latest"
   },
   "devDependencies": {},
   "scripts": {

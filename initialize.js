@@ -1,12 +1,12 @@
 var Promise = require('bluebird');
-var fs = Promise.promisifyAll(require('fs'));
+var mkdirp = Promise.promisify(require('mkdirp'));
 
 
 
 
 exports.init = function(){
 
-	return fs.mkdirAsync('./tmp') 
-	.then(function(){ fs.mkdirAsync('./res') })
+	return mkdirp('./tmp') 
+	.then(function(){ mkdirp('./res') })
 	.then(function(){ console.log("Initialized.")});
 }
