@@ -1,12 +1,17 @@
-var Promise = require('bluebird');
-var mkdirp = Promise.promisify(require('mkdirp'));
-
-
+var fsep = require('fs-extra-promise');
 
 
 exports.init = function(){
 
-	return mkdirp('./tmp') 
-	.then(function(){ mkdirp('./res') })
-	.then(function(){ console.log("Initialized.")});
+	return fsep.ensureDirAsync('./tmp') 
+	.then(fsep.ensureDirAsync('./res'));
+
+}
+
+exports.clean = function(){
+
+	return fsep.removeAsync('./tmp')
+	.then(fsep.removeAsync('./res'))
+	.then(exports.init);
+
 }

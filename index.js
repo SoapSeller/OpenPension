@@ -121,8 +121,25 @@ program
 		require("./files_loader").loadDir(args.dir);
 	})
 
-initialize.init()
-.then(function(){
-	program.parse(process.argv);
-})
+
+program
+	.command("init")
+	.action(function(args){
+		require('./initialize').init()
+		.then(function(){
+			console.log('initialized.')
+		});
+	})
+
+program
+	.command("clean")
+	.action(function(args){
+		require('./initialize').clean()
+		.then(function(){
+			console.log('cleaned.')
+		});
+	})
+
+program.parse(process.argv);
+
 

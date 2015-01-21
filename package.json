@@ -23,7 +23,7 @@
     "underscore": "latest",
     "xml2js": "latest",
     "zombie": "latest",
-    "mkdirp": "latest"
+    "fs-extra-promise": "latest"
   },
   "devDependencies": {},
   "scripts": {
