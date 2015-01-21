@@ -5,7 +5,8 @@ var URL = require("url"),
 	cp = require("child_process"),
 	fc = require("./fetcher.common.js"),
 	harel = require("./fetcher.harel.js"),
-    db = require("./db.js");
+	db = require("./db.js"),
+	Quarter = require("./quarter");
 
 var cUrl = 6,
 	cNum = 4,
@@ -75,12 +76,17 @@ var parseCsvFetch = function(parsedLines,cb){
 	var reducer = function(out, line){
 		var splt = line.split(',');
 		var _out = [];
-		if (splt[2] && splt[5] && splt[8])   _out.push({ body : splt[2], number : splt[5], url : splt[8], year : 2012, quarter : 4 })
-		if (splt[2] && splt[5] && splt[9])   _out.push({ body : splt[2], number : splt[5], url : splt[9], year : 2013, quarter : 1 })
-		if (splt[2] && splt[5] && splt[10])  _out.push({ body : splt[2], number : splt[5], url : splt[10], year : 2013, quarter : 2 })
-		if (splt[2] && splt[5] && splt[11])  _out.push({ body : splt[2], number : splt[5], url : splt[11], year : 2013, quarter : 3 })
-		if (splt[2] && splt[5] && splt[12])  _out.push({ body : splt[2], number : splt[5], url : splt[12], year : 2013, quarter : 4 })
-		if (splt[2] && splt[5] && splt[13])  _out.push({ body : splt[2], number : splt[5], url : splt[13], year : 2014, quarter : 1 })
+		var startYear = 2012;
+		var startQuarter = 4;
+
+		var quarter =  new Quarter(startYear, startQuarter -1);
+
+		for (var i = 8; i < splt.length; i++){
+			if (splt[2] && splt[5] && splt[i])   
+				_out.push({ body : splt[2], number : splt[5], url : splt[i], year : quarter.year, quarter : quarter.quarter + 1 })
+
+			quarter.increase();
+		}
 		return out.concat(_out)
 	}
 	cb(parsedLines.reduce(reducer, []));
@@ -198,6 +204,12 @@ var fetchAllFunds = function(allFunds){
 			fund.body == "Harel" ||
 			fund.body == "Menora" ||
 			fund.body == "Migdal" ||
+			fund.body == "fenix" ||
+
+			fund.body == "xnes" ||
+			//fund.body == "Ayalon" ||
+			//fund.body == "IDI" ||
+			//fund.body == "IBI" ||
 			fund.body == "psagot"
 			) {
 			funds.push(fund);

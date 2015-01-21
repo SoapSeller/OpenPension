@@ -99,6 +99,9 @@ exports.fetchFund = function(fund, onDone) {
 					//console.log(filename);
 
 					cp.exec(cmd, function(err, stdout, stderr) {
+						if (err){
+							console.error(err);
+						}
 						//console.log(cmd);
 						//console.log(stdout);
 						fs.unlink(filename(fund), function() {
