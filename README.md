@@ -23,7 +23,7 @@ and then run (must be node ~v10.x..)
 ```shell
 npm install
 ```
-switch node vesrions easily with [nvm](https://github.com/creationix/nvm)
+switch node versions easily with [nvm](https://github.com/creationix/nvm)
 
     
 ## Usage
