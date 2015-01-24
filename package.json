@@ -15,15 +15,17 @@
     "coffee-script": "latest",
     "commander": "latest",
     "express": "latest",
+    "fs-extra-promise": "^0.1.0",
     "jasmine-node": "1.14.2",
     "moment": "latest",
     "node-zip": "1.0.1",
     "pg": "latest",
+    "pg-copy-streams": "^0.3.0",
     "request": "latest",
+    "throat": "^1.0.0",
     "underscore": "latest",
     "xml2js": "latest",
-    "zombie": "latest",
-    "fs-extra-promise": "latest"
+    "zombie": "latest"
   },
   "devDependencies": {},
   "scripts": {

@@ -121,6 +121,14 @@ program
 		require("./files_loader").loadDir(args.dir);
 	})
 
+program
+	.command("db-load")
+	.option("-d, --dir <name>","directory name")
+	.option("-t, --table <name>","table name")
+	.action(function(args){
+		require('./dbLoader').importDir(args.dir, args.table)
+	})
+
 
 program
 	.command("init")
