@@ -21,6 +21,7 @@
     "node-zip": "1.0.1",
     "pg": "latest",
     "pg-copy-streams": "^0.3.0",
+    "postgres-bluebird": "0.0.4",
     "request": "latest",
     "throat": "^1.0.0",
     "underscore": "latest",

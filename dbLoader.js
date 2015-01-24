@@ -1,8 +1,8 @@
+var Promise = require('bluebird');
 var fsep = require('fs-extra-promise');
-var pg = require('pg');
+var pg = require('postgres-bluebird');
 var copyFrom = require('pg-copy-streams').from;
 var config = require('./config');
-var Promise = require('bluebird');
 var throat = require('throat')
 var path = require('path');
 
@@ -41,17 +41,14 @@ var importFiles = function(files, parentDir, tableName, concurrency){
 
 		process.stdout.cursorTo (0);
 		process.stdout.write(++counter+'/'+total + ":"+ filename);
-
-	 	return new Promise(function(resolve, reject ){
 	
-			pg.connect(config.connection_string, function(err, client, release) {
+		return pg.connectAsync(config.connection_string)
+				.spread(function(client, release) {
 
 		            var filePath = path.join(parentDir, filename);
 
 					if ( filename.substr(-4) !== '.csv' ){
-						release();
-						resolve(result);
-						return;
+						return result;
 					}
 
 
@@ -61,51 +58,43 @@ var importFiles = function(files, parentDir, tableName, concurrency){
 					var quarter = filename.split('_')[3].split('.')[0];
 					var managing_body = filename.split('_')[0];
 
-					client.query("SELECT count(*) FROM "+ tableName +" WHERE managing_body='" +managing_body +"'"
+					return client.queryAsync("SELECT count(*) FROM "+ tableName +" WHERE managing_body='" +managing_body +"'"
 					+ " AND report_year='"+year+"' AND report_qurater='"+quarter+"'"
-					+ " AND fund='"+fund+"' ", function(err, qresult){
-						release();
-
-						var count = qresult.rows[0].count;
-
-						if (count > 0){ //file in DB, skip file
-							console.log("file already loaded to DB:" + filename)
+					+ " AND fund='"+fund+"' ")
+						.then(function(qresult){
 							release();
-							resolve(result);
-							return;
-						}
+
+							var count = qresult.rows[0].count;
+
+							if (count > 0){ //file in DB, skip file
+								console.log("file already loaded to DB:" + filename)
+								return result; 
+							}
 
 
-						//File not in DB, copy to table
-						var pgstream = client.query(copyFrom('COPY '+ tableName +' FROM STDIN HEADER CSV NULL \'\'' ));
-						var sqlStream = fsep.createReadStream(filePath);
-					
-					  	sqlStream.on('error', 
-						  	function(err){
-						  		result['errors'].push(filename);
-						  		console.log(err + ", " +filename )
-								release();
-								resolve(result);						  		
-					  	});
-					  	sqlStream.pipe(pgstream)
-							.on('end', 
-							  	function(){
-								  	result['done'].push(filename);
-							  		release();
-									resolve(result);
-						  		})
-						  	.on('error', 
-						  		function(err){
-							  		result['errors'].push(filename);
+							//File not in DB, copy to table
+							var pgstream = client.query(copyFrom('COPY '+ tableName +' FROM STDIN HEADER CSV NULL \'\'' ));
+							var sqlStream = fsep.createReadStream(filePath);
+						
+						  	sqlStream.on('error', 
+							  	function(err){
 							  		console.log(err + ", " +filename )
-									release();
-									resolve(result);									
-							  	});
-					});
+									return result;				  		
+						  	});
+						  	sqlStream.pipe(pgstream)
+								.on('end', 
+								  	function(){
+									  	result['done'].push(filename);
+										return result;
+							  		})
+							  	.on('error', 
+							  		function(err){
+								  		result['errors'].push(filename);
+								  		console.log(err + ", " +filename )
+										return result;
+								  	});
+					})
+			})
 
-		        });
-
-		});
-	})));
-
+	})))
 } 
