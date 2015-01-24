@@ -125,8 +125,9 @@ program
 	.command("db-load")
 	.option("-d, --dir <name>","directory name")
 	.option("-t, --table <name>","table name")
+	.option("-c, --concurrency <number>","number of concurrent DB connections, defaults to 4")
 	.action(function(args){
-		require('./dbLoader').importDir(args.dir, args.table)
+		require('./dbLoader').importDir(args.dir, args.table, args.concurrency)
 	})
 
 

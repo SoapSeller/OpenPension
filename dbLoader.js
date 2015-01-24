@@ -4,14 +4,14 @@ var copyFrom = require('pg-copy-streams').from;
 var config = require('./config');
 var Promise = require('bluebird');
 var throat = require('throat')
-
 var path = require('path');
 
-module.exports.importDir = function(parentDir, tableName){	
+
+module.exports.importDir = function(parentDir, tableName, concurrency){	
 	return fsep.readdirAsync(parentDir)
 	.then(function(files) {
 
-	    return importFiles(files, parentDir, tableName);    
+	    return importFiles(files, parentDir, tableName, concurrency); 
 	})
 	.then(function(res){
 		// console.log("done:"+res[0]['done']);
@@ -26,8 +26,9 @@ module.exports.importDir = function(parentDir, tableName){
 
 
 
-var importFiles = function(files, parentDir, tableName){
+var importFiles = function(files, parentDir, tableName, concurrency){
 
+	if ( concurrency == undefined) concurrency = 4;
 	var total = files.length;
 	var counter = 0;
 
@@ -35,7 +36,7 @@ var importFiles = function(files, parentDir, tableName){
 	result['errors'] = [];
 	result['done'] = [];
 
-	return Promise.all(files.map(throat(4, function(filename){
+	return Promise.all(files.map(throat(concurrency, function(filename){
 
 
 		process.stdout.cursorTo (0);
@@ -81,9 +82,6 @@ var importFiles = function(files, parentDir, tableName){
 					
 					  	sqlStream.on('error', 
 						  	function(err){
-						  		if (result['done'].indexOf(filename) > -1 )
-								  		console.log("fuck you111")
-
 						  		result['errors'].push(filename);
 						  		console.log(err + ", " +filename )
 								release();
@@ -92,18 +90,12 @@ var importFiles = function(files, parentDir, tableName){
 					  	sqlStream.pipe(pgstream)
 							.on('end', 
 							  	function(){
-							  		if (result['errors'].indexOf(filename) > -1 )
-								  		console.log("fuck you2222")
-
 								  	result['done'].push(filename);
 							  		release();
 									resolve(result);
 						  		})
 						  	.on('error', 
 						  		function(err){
-							  		if (result['done'].indexOf(filename) > -1 )
-								  		console.log("fuck you333")
-
 							  		result['errors'].push(filename);
 							  		console.log(err + ", " +filename )
 									release();
