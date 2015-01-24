@@ -14,9 +14,9 @@ module.exports.importDir = function(parentDir, tableName, concurrency){
 	    return importFiles(files, parentDir, tableName, concurrency); 
 	})
 	.then(function(res){
-		// console.log("done:"+res[0]['done']);
-		// console.log("errors:"+res[0]['errors']);
-		fsep.writeFile("errors.log", res[0]['errors']);
+		// console.log("done:"+res['done']);
+		// console.log("errors:"+res['errors']);
+		fsep.writeFile("errors.log", res['errors']);
 	})
 	.catch(function(err){
 		console.log("error:" +err);
@@ -48,7 +48,7 @@ var importFiles = function(files, parentDir, tableName, concurrency){
 		            var filePath = path.join(parentDir, filename);
 
 					if ( filename.substr(-4) !== '.csv' ){
-						return result;
+						return;
 					}
 
 
@@ -68,7 +68,7 @@ var importFiles = function(files, parentDir, tableName, concurrency){
 
 							if (count > 0){ //file in DB, skip file
 								console.log("file already loaded to DB:" + filename)
-								return result; 
+								return; 
 							}
 
 
@@ -79,22 +79,25 @@ var importFiles = function(files, parentDir, tableName, concurrency){
 						  	sqlStream.on('error', 
 							  	function(err){
 							  		console.log(err + ", " +filename )
-									return result;				  		
+									return;				  		
 						  	});
 						  	sqlStream.pipe(pgstream)
 								.on('end', 
 								  	function(){
 									  	result['done'].push(filename);
-										return result;
+										return;
 							  		})
 							  	.on('error', 
 							  		function(err){
 								  		result['errors'].push(filename);
 								  		console.log(err + ", " +filename )
-										return result;
+										return;
 								  	});
 					})
 			})
 
 	})))
+	.then(function(){
+		return result;
+	})
 } 
