@@ -204,13 +204,9 @@ var fetchAllFunds = function(allFunds){
 			fund.body == "Harel" ||
 			fund.body == "Menora" ||
 			fund.body == "Migdal" ||
+			fund.body == "psagot" ||
 			fund.body == "fenix" ||
-
-			fund.body == "xnes" ||
-			//fund.body == "Ayalon" ||
-			//fund.body == "IDI" ||
-			//fund.body == "IBI" ||
-			fund.body == "psagot"
+			fund.body == "xnes"
 			) {
 			funds.push(fund);
 		}

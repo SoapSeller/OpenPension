@@ -110,12 +110,16 @@ var isNumber = function(value){
 }
 
 var cleanString = function(input){
-	return input.trim().replace(/,/g,"-")
+	try { return (input || "").trim().replace(/,/g,"-")
 			.replace(/\([0-9]+\)/g,'')
 			.replace(/[$%\r\n]/g,'')
 			.replace(/^"/g,'')
 			.replace(/"$/g,'')
 			.replace(/([^"])"([^"])/gm,'$1""$2');
+	} catch(err) {
+		console.log("failed with input",input);
+		return "";
+	}
 }
 
 var re = /^IL00([0-9]+)[0-9][^0-9].*/; 
