@@ -25,6 +25,7 @@
     "request": "latest",
     "throat": "^1.0.0",
     "underscore": "latest",
+    "valid-url": "^1.0.9",
     "xml2js": "latest",
     "zombie": "latest"
   },

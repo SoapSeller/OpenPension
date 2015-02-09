@@ -6,7 +6,8 @@ var URL = require("url"),
 	fc = require("./fetcher.common.js"),
 	harel = require("./fetcher.harel.js"),
 	db = require("./db.js"),
-	Quarter = require("./quarter");
+	Quarter = require("./quarter"),
+	validUrl = require("valid-url");
 
 var cUrl = 6,
 	cNum = 4,
@@ -82,6 +83,9 @@ var parseCsvFetch = function(parsedLines,cb){
 		var quarter =  new Quarter(startYear, startQuarter -1);
 
 		for (var i = 8; i < splt.length; i++){
+			
+			if (!validUrl.isUri(splt[i])) continue;
+
 			if (splt[2] && splt[5] && splt[i])   
 				_out.push({ body : splt[2], number : splt[5], url : splt[i], year : quarter.year, quarter : quarter.quarter + 1 })
 
