@@ -100,7 +100,7 @@ exports.fetchFund = function(fund, onDone) {
 
 					cp.exec(cmd, function(err, stdout, stderr) {
 						if (err){
-							console.error(err);
+							console.error("error converting file:" + filename(fund) + " err:" + err);
 						}
 						//console.log(cmd);
 						//console.log(stdout);
