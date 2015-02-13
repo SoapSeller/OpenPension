@@ -1,3 +1,4 @@
+var fs = require('fs');
 var program = require('commander');
 var xlsx = require('./xlsxparser.js');
 var db = require('./db.js');
@@ -15,17 +16,20 @@ program
 	.option("-b, --body <body>", "body")
 	.option("-m, --monkey <monkey>", "monkey")
 	.action(function(args){
+				
+		var filename = "./tmp/" + [ args.body, args.year, args.quarter, args.monkey].join("_") + ".csv";
+
+		var exists = fs.existsSync(filename);
+
+		if (exists){
+			console.log("tried to import existing file:" + filename );
+			return;
+		}
+
 		require('./genericImporter').parseXls(args.file, function(result){
-			var metaTable = MetaTable.getMetaTable();
-			var validated =  result.map(function(r){
-				var validated = require('./validator').validate(r.engMap,r.data,r.idx)
-				var instrument = metaTable.instrumentTypes[r.idx];
-				var instrumentSub = metaTable.instrumentSubTypes[r.idx];
-				CSVWriter.write(args.body, args.monkey, args.year, args.quarter, r.idx, instrument, instrumentSub, validated,r.engMap)
-			})
 
+			CSVWriter.writeParsedResult(args.body, args.monkey, args.year, args.quarter, result);
 
-			// args.body, args.year, args.quarter, parseInt(args.monkey)
 		});
 	});
 
