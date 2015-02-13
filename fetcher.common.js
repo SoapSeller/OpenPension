@@ -2,43 +2,57 @@ var URL = require("url"),
 	http = require("http"),
 	https = require("https"),
 	fs = require("fs"),
-	cp = require("child_process");
+	path = require("path");
 
 
 var baseFolder = "res/";
+var targetFolder = "tmp/";
 
 exports.changeBaseFolder = function(newFolder){ baseFolder = newFolder; console.log("changing to folder:",newFolder); };
 
 /* fetch a fund to file
  * fund: Object of type:
- *					{ body: englishBody, // See 'bodys' aboce
+
+ *					{ body: englishBody, // See 'bodys' above
  *					  number: number,
  *					  url: fileurl }
  *  onDone: Callback with format void(downloadedFilePath, error)
  */
 
-function filename(fund){
-	var baseName = baseFolder + fund.body;
-        if (fund['year']) {
-                baseName += "_" + fund.year;
-        }
-        if (fund['quarter']) {
-                baseName += "_" + fund.quarter;
-        }
-    	baseName += "_" + fund.number;
-        return baseName + ".xls";
+function filename(folder, fund, ext){
+	var baseName = baseFolder + [fund.body, fund.year, fund.quarter, fund.number].join("_");
+
+
+    return baseName + ext;    	
+
 }
 
-function filenameX(fund){
-	return filename(fund) + "x";
-}
 
-function importFund(fund, onDone){
-	require("child_process").exec("node index import -f " + filenameX(fund)
-                + " -y " + fund.year + " -q " + fund.quarter + " -b " + fund.body + " -m " + fund.number, function(e){
-		if (e) console.log(e);
-                onDone(filenameX(fund));
-         });
+function filenameCSV(fund){
+	return [ fund.body, fund.number, fund.year, fund.quarter].join("_") + ".csv";
+}
+var CSVWriter = require('./CSVWriter')
+
+function importFund(fund, ext, onDone){
+
+	var csvFilename = filename(targetFolder, fund, ".csv");
+	var xlFilename = filename(baseFolder, fund, ext);
+
+	console.log("csvFilename"+csvFilename);
+
+	if (fs.existsSync(csvFilename)){
+		console.log("skipping existing file: " + csvFilename);
+		return onDone();
+	}
+
+
+	require("child_process").exec("node index import -f " + xlFilename
+                + " -y " + fund.year + " -q " + fund.quarter + " -b " + fund.body + " -m " + fund.number
+    	,function(e){
+			if (e) console.log(e);
+            onDone(xlFilename);
+		}
+	);
 }
 
 var dedup = []
@@ -46,18 +60,27 @@ var dedup = []
 
 exports.fetchFund = function(fund, onDone) {
 
-	if (dedup.indexOf(filename(fund)) > -1) 
-		return onDone(null, "tried to fetch existing file" + filename(fund));
-	else
-		dedup.push(filename(fund));
+	var url = URL.parse(fund.url);
+	var ext = path.extname(fund.url);
+	var xlFilename = filename(baseFolder, fund, ext);
+
+	if (dedup.indexOf(xlFilename) > -1 ){ 
+        return onDone(null, "tried to fetch existing file" + filename(fund));
+
+	}
+	else{
+		dedup.push(xlFilename);
+	}
 
 
+	if (fs.existsSync(xlFilename)){
+		console.log("tried to fetch existing file" + xlFilename);
+		return importFund(fund, ext, onDone);
+	}
+	
 	if (fund.url.indexOf('http') !== 0) {
 		fund.url = 'http://' + fund.url;
 	}
-
-	//console.log(fund.url);
-	url = URL.parse(fund.url);
 
 	var isHttps = url.protocol == "https:";
 	var options = {
@@ -69,13 +92,7 @@ exports.fetchFund = function(fund, onDone) {
 		rejectUnauthorized: false
 	};
 
-
-	if (fs.existsSync(filenameX(fund))){
-		console.log("skipping existing file " + filenameX(fund));
-		return importFund(fund, onDone);
-	}
-
-	var stream = fs.createWriteStream(filename(fund), { flags: 'w+', encoding: "binary", mode: 0666 });
+	var stream = fs.createWriteStream(xlFilename, { flags: 'w+', encoding: "binary", mode: 0666 });
 
 	var client = isHttps ? https : http;
 
@@ -87,41 +104,8 @@ exports.fetchFund = function(fund, onDone) {
 		res.on('end', function() {
 			stream.end();
 
+			importFund(fund, ext, onDone);
 
-			cp.exec("file " + filename(fund), function (err, stdout, stderr) {
-				if (!err &&
-					(
-						stdout.toString().indexOf("CDF V2") !== -1 ||
-						stdout.toString().indexOf("Composite Document File V2 Document") !== -1 ||
-						stdout.toString().indexOf("Microsoft Excel 2007+") !== -1
-					)) {
-					var cmd = "ssconvert --export-type=Gnumeric_Excel:xlsx " + filename(fund) + " " + filenameX(fund);
-					//console.log(filename);
-
-					cp.exec(cmd, function(err, stdout, stderr) {
-						if (err){
-							console.error("error converting file:" + filename(fund) + " err:" + err);
-						}
-						//console.log(cmd);
-						//console.log(stdout);
-						fs.unlink(filename(fund), function() {
-							importFund(fund, onDone);
-                        			});
-					});
-				} else if (stdout.toString().indexOf("Zip archive data, at least v2.0 to extract") !== -1) {
-					// File is already xlsx, just move it to the right name
-					cp.exec("mv -f " + filename(fund) + " " + filenameX(fund), function(err, stdout, stderr) {
-						//console.log(cmd);
-						//console.log(stdout);
-						importFund(fund, onDone);
-					});
-				} else {
-					console.log("Error with fund: ", fund, stdout);
-					fs.unlink(filename(fund), function() {
-    			                    onDone(null, "Can't convert fund: " + stdout);
-			                });
-				}
-			});
 		});
 	});
 

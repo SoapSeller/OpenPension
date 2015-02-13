@@ -1,11 +1,14 @@
 var MetaTable = require('./common/MetaTable'),
 	xlsx = require("./xlsxparser"),
 	LevDistance = require('./LevDistance'),
+	path = require('path'),
 	detectors = require("./detectors");
 
+
+
 exports.parseXls = function(filename,callback){
-	xlsx.getSheets(filename, function(sheets){
-		var result = parseSheets(sheets);
+	xlsx.getSheets(filename, function(workbook){
+		var result = parseSheets(workbook);
 		if (callback)
 			callback(result)
 	});
@@ -287,7 +290,7 @@ var sheetValidator = function(headers, foundHeadersMapping){
 }
 
 
-var parseSingleSheet = function(metaTable, cellReader,sheetName,dim, indexMetaTable){
+var parseSingleSheet = function(metaTable, workbook, sheetName, dim, indexMetaTable){
 	var foundMatchingSheet = false;
 	var headers = metaTable.columnMappingForRow(indexMetaTable).map(function(x){return x});
 	var identifiedSheetIndexFromTabName = sheetSkipDetector([sheetName], indexMetaTable, metaTable);
@@ -298,7 +301,7 @@ var parseSingleSheet = function(metaTable, cellReader,sheetName,dim, indexMetaTa
 	if (identifiedSheetIndexFromTabName != indexMetaTable){
 		notifyM("parseSingleSheet","identified different sheet by looking into tab name",
 			indexMetaTable,"(" + metaTable.getNameForSheetNum(indexMetaTable) + ")", " identified as:", identifiedSheetIndexFromTabName, "("+metaTable.getNameForSheetNum(identifiedSheetIndexFromTabName)+")" );
-		return parseSingleSheet(metaTable, cellReader, sheetName, dim, identifiedSheetIndexFromTabName);
+		return parseSingleSheet(metaTable, workbook, sheetName, dim, identifiedSheetIndexFromTabName);
 	}
 
 	if (global.debug){
@@ -307,20 +310,23 @@ var parseSingleSheet = function(metaTable, cellReader,sheetName,dim, indexMetaTa
 	var sheetData = [];
 	var foundHeadersMapping = [];
 	var emptyRows = 0;
+
 	for(var row = dim.min.row || 1; row <= dim.max.row; row++){
+	
 
 		// if the number of empty rowns is above 10, the sheet is reporting a size which is too
 		// big and needs to be trimmed
 		if (emptyRows >= 20) 
-			continue;
+			break;
 		
 		var rowContent = []
 
 		for (var column = dim.min.col || 0; column <= dim.max.col; column++){
-			var letter = columnLetterFromNumber(column);
+			var letter = columnLetterFromNumber(column);		
 			var cellId = letter + row;
-			var cellContent = cellReader(cellId);
-			rowContent[column] = cellContent
+			
+			var cellContent = xlsx.readCell(workbook, sheetName, cellId);
+			rowContent[column] = cellContent;
 		}
 
 		if (global.debug){
@@ -341,7 +347,7 @@ var parseSingleSheet = function(metaTable, cellReader,sheetName,dim, indexMetaTa
 			if (identifiedSheetIndex != indexMetaTable){
 				notifyM("parseSingleSheet","identified different sheet while looking for:",
 					indexMetaTable,"(" + metaTable.getNameForSheetNum(indexMetaTable) + ")", " identified as:", identifiedSheetIndex, "("+metaTable.getNameForSheetNum(identifiedSheetIndex)+")" );
-				return parseSingleSheet(metaTable, cellReader, sheetName, dim, identifiedSheetIndex);
+				return parseSingleSheet(metaTable, workbook, sheetName, dim, identifiedSheetIndex);
 			}
 		}
 
@@ -402,66 +408,67 @@ var sheetSkipDetector = function(inputLine, metaSheetNum, metaTable){
 }
 
 
-var parseSheets = function(sheets){
+var parseSheets = function(workbook){
 
 	var metaTable = MetaTable.getMetaTable();
 	var lastSheetNum = metaTable.getLastSheetNum();
 	var debugSheet;
 	var parsedSheetsData = []
+	var res = []
+	var _sheets = workbook.SheetNames.map(function(x){return x});
 
-	var lookForNextSheet = function(res, _sheets){
-		if (res.length < lastSheetNum && _sheets.length > 0){
-			var sheetTabNum = sheets.length - _sheets.length;
-			if (debugSheet != null && debugSheet == sheetTabNum ) {
-				global.debug = true;
-			}
+	while (res.length < lastSheetNum && _sheets.length > 0){
+		var sheetTabNum = workbook.SheetNames.length - _sheets.length;
+
+		if (debugSheet != null && debugSheet == sheetTabNum ) {
+			global.debug = true;
+		}
+
+		if (global.debug)
 			console.log("%%%%%% parsing file tab #",sheetTabNum, " looking for meta table #",res.length, "called",metaTable.getNameForSheetNum(res.length));
-			var sheet = _sheets.shift();
-			var sheetName = sheet.name;
-			sheet && sheet.read(function(err, sheetCB,dim){ 
-				debugM("parseSheets","sheet dim",dim)
-				var sheetOutput = parseSingleSheet(metaTable,sheetCB,sheetName,dim,res.length);
 
-				if (sheetOutput && sheetOutput.finalIndex != res.length){
-					while(res.length < sheetOutput.finalIndex){
-						if (global.debug){
-							debugM("lookForNextSheet","padding output array with empty data to match expected progress of meta table idx")
-						}
-						res.push([]);
-					}
+		var sheetName = _sheets.shift();
+
+		var dim = xlsx.getDimension(workbook, sheetName);
+
+		debugM("parseSheets","sheet dim",dim)
+
+		var sheetOutput = parseSingleSheet(metaTable,workbook,sheetName,dim,res.length);
+
+		if (sheetOutput && sheetOutput.finalIndex != res.length){
+			while(res.length < sheetOutput.finalIndex){
+				if (global.debug){
+					debugM("lookForNextSheet","padding output array with empty data to match expected progress of meta table idx")
 				}
+				res.push([]);
+			}
+		}
 
-				if (sheetOutput && sheetOutput.data && sheetOutput.data.length > 0){
-					if (global.debug){
-						debugM("parseSheets","adding sheet lines count #",sheetOutput.data.length);
-					}
-					res.push(sheetOutput);
-				}
-				
-				if ( debugSheet != null && debugSheet == sheetTabNum ) {
-					process.exit();
-				}
-
-				lookForNextSheet(res, _sheets);
-
-			}) 
-		} else if (res.length == lastSheetNum || _sheets.length == 0) {
-
-			console.log("++++++ parsed & found all sheets");
-
-			res.forEach(function(resSheet, metaIdx){
-				if (resSheet.headers && resSheet.data){
-					var engMap = resSheet.headers.map(function(cm){ return { "columnName" : metaTable.englishColumns[ metaTable.hebrewColumns.indexOf(cm) ] || cm }  });
-					parsedSheetsData.push({engMap : engMap, data: resSheet.data, idx: metaIdx})
-				}
-			});
-			
+		if (sheetOutput && sheetOutput.data && sheetOutput.data.length > 0){
+			if (global.debug){
+				debugM("parseSheets","adding sheet lines count #",sheetOutput.data.length);
+			}
+			res.push(sheetOutput);
+		}
+		
+		if ( debugSheet != null && debugSheet == sheetTabNum ) {
+			process.exit();
 		}
 
 	}
 
 
-	lookForNextSheet([], sheets.map(function(x){return x}));
+	console.log("++++++ parsed & found all sheets");
+
+	res.forEach(function(resSheet, metaIdx){
+		if (resSheet.headers && resSheet.data){
+			var engMap = resSheet.headers.map(function(cm){ return { "columnName" : metaTable.englishColumns[ metaTable.hebrewColumns.indexOf(cm) ] || cm }  });
+			parsedSheetsData.push({engMap : engMap, data: resSheet.data, idx: metaIdx})
+		}
+	});
+		
+
+
 
 	return parsedSheetsData;
 }
