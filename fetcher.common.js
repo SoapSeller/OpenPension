@@ -20,7 +20,7 @@ exports.changeBaseFolder = function(newFolder){ baseFolder = newFolder; console.
  */
 
 function filename(folder, fund, ext){
-	var baseName = baseFolder + [fund.body, fund.year, fund.quarter, fund.number].join("_");
+	var baseName = folder + [fund.body, fund.year, fund.quarter, fund.number].join("_");
 
 
     return baseName + ext;    	
