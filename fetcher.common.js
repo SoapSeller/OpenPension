@@ -46,13 +46,22 @@ function importFund(fund, ext, onDone){
 	}
 
 
-	require("child_process").exec("node index import -f " + xlFilename
-                + " -y " + fund.year + " -q " + fund.quarter + " -b " + fund.body + " -m " + fund.number
-    	,function(e){
-			if (e) console.log(e);
-            onDone(xlFilename);
-		}
-	);
+	var cp = require("child_process").spawn("node",["index.js","import","-f",xlFilename,"-y",fund.year,"-q",fund.quarter,"-b",fund.body,"-m",fund.number]);
+
+	cp.stdout.on('data', function (data) {
+	  console.log('' + data);
+	});
+
+	cp.stderr.on('error', function (data) {
+	  console.log('stderr: ' + data);
+	});
+
+	cp.on('close', function (code) {
+	  if (code !== 0) {
+	    console.log('grep process exited with code ' + code);
+	  }
+	  onDone(xlFilename);
+	});
 }
 
 var dedup = []
