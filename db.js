@@ -1,4 +1,3 @@
-
 var fs = require('fs'),
     pg = require('pg'),
     _ = require('underscore'),
@@ -226,6 +225,8 @@ db.pg.prototype = {
 
 exports.pg = db.pg;
 exports.csv = db.csv;
+exports.defaultColumnsNamesMapping = defaultColumnsNamesMapping;
+exports.columnsNames = columnsNames;
 exports.open = function() {
   if (config.db_mode == "csv")
     return new db.csv("dump.csv");
