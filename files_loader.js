@@ -1,22 +1,29 @@
 var fs = require("fs"),
-	cp = require("child_process")
+	cp = require("child_process"),
+	path = require('path'),
 	fetcherCommon = require('./fetcher.common');
 
 
 exports.loadDir = function(dir){
+
+	if (dir.indexOf(path.sep) != dir.length){
+		dir += path.sep;
+	}
+
 	console.log("loading dir:" + dir);
 	var files = fs.readdirSync(dir).filter(function(file){
-		return file.indexOf(".xlsx") > -1;
+		return file.indexOf(".xlsx") > -1 || file.indexOf(".xls") > -1;
 	});
+
 	var funds = files.map(function(file){
 		var _s = file.split("_");
 
 		return {
-			url: "http://some_lie.com",
+			url: "http://some_lie.com/"+file,
 			body : _s[0],
 			year : _s[1],
 			quarter :  _s[2],
-			number : _s[3].replace(".xlsx","")
+			number : _s[3].split('.')[0]
 		};
 	});
 
