@@ -14,8 +14,6 @@ module.exports.importDirCmd = function(parentDir, tableName, concurrency){
 	    return importFiles(files, parentDir, tableName, concurrency); 
 	})
 	.then(function(res){
-		// console.log("done:"+res['done']);
-		// console.log("errors:"+res['errors']);
 		fsep.writeFile("errors.log", res['errors']);
 	})
 	.catch(function(err){
@@ -47,7 +45,9 @@ module.exports.importFileCmd = function(filePath, tableName){
 }
 
 
-
+//import files to db, concurrently --> resolves to
+//result['done'] = [filenames...]
+//result['errors'] = [filenames...]
 var importFiles = function(files, parentDir, tableName, concurrency){
 
 	if ( concurrency == undefined) concurrency = 4;
@@ -68,6 +68,9 @@ var importFiles = function(files, parentDir, tableName, concurrency){
 	})))
 	.then(function(resArr){
 
+		//resArr - array of booleans, 
+		//represents success/fail of corresponding file index
+
 		var result = {}
 		result['errors'] = [];
 		result['done'] = [];
@@ -85,7 +88,7 @@ var importFiles = function(files, parentDir, tableName, concurrency){
 	})
 } 
 
-
+//import file to db --> resolves to boolean
 function importFile(parentDir, filename, tableName){
 	return  pg.connectAsync(config.connection_string)
 				.spread(function(client, release) {
