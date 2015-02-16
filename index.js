@@ -8,6 +8,8 @@ require('coffee-script/register');
 var dataValidator = require("./dataValidator.coffee")
 var initialize = require('./initialize');
 
+
+//convert excel file to csv
 program
 	.command('import')
 	.option("-f, --file <name>","file name")
@@ -118,6 +120,7 @@ program
         require('./fetcher').fetchContrib();
     });
 
+//convert directory of excel files to csv
 program
 	.command("load-dir")
 	.option("-d, --dir <name>","directory name")
@@ -131,9 +134,16 @@ program
 	.option("-t, --table <name>","table name")
 	.option("-c, --concurrency <number>","number of concurrent DB connections, defaults to 4")
 	.action(function(args){
-		require('./dbLoader').importDir(args.dir, args.table, args.concurrency)
+		require('./dbLoader').importDirCmd(args.dir, args.table, args.concurrency)
 	})
 
+program
+	.command("db-load-file")
+	.option("-f, --file <name>","directory name")
+	.option("-t, --table <name>","table name")
+	.action(function(args){
+		require('./dbLoader').importFileCmd(args.file, args.table)
+	})
 
 program
 	.command("init")
