@@ -4,6 +4,7 @@ var path = require('path');
 
 
 var trim = function (s) {
+  if (s == undefined) return "";
   s = s.replace(/(^\s*)|(\s*$)/gi, "");
   s = s.replace(/[ ]{2,}/gi, " ");
   s = s.replace(/\n /, "\n");
