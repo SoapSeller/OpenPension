@@ -51,7 +51,7 @@ var readFundsFileFetching = function(cb){
 
 	var options = {
 		host: "docs.google.com",
-		post : 443,
+		port : 443,
 		path : "/spreadsheets/d/1mUsNeb8gD2ELPKGpjD12AqZkuCybJlGCTz62oryLZY4/export?exportFormat=csv&gid=1311761971"
 	}
 	
@@ -65,7 +65,7 @@ var readFundsFileFetching = function(cb){
 			var parsedLines = data.split("\n")
 			parseCsvFetch(parsedLines, cb);
 		});
-	}).on('errpr',function(r){
+	}).on('error',function(r){
 		console.log("error fetching sheet",r);
 		process.exit();
 	});
