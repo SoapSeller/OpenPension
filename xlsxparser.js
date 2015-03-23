@@ -80,8 +80,24 @@ exports.getDimension = function(workbook, sheetName) {
 };
  
 exports.readCell = function(workbook, sheetName, cellId){
-      var cellContent = workbook.Sheets[sheetName][cellId] == undefined ? "": workbook.Sheets[sheetName][cellId].v;
+      var cellContent;
 
+      if (workbook.Sheets[sheetName][cellId] == undefined){
+        cellContent = "";
+      }
+      else{
+        cellContent = workbook.Sheets[sheetName][cellId].v;
+        
+        //number is in percent form
+        if ( workbook.Sheets[sheetName][cellId].w.indexOf("%") > -1 &&
+          Number(workbook.Sheets[sheetName][cellId].w.replace(/[^\d.-]/g, '')) == 0 ||
+          Number(workbook.Sheets[sheetName][cellId].w.replace(/[^\d.-]/g, '')) / cellContent > 10){
+            cellContent = cellContent * 100;
+        }
+
+      }
+
+      debugger;
       if (typeof cellContent === "number") {
         cellContent = cellContent.toString();
       }
