@@ -61,21 +61,6 @@ program
 	});
 
 program
-	.command("db")
-	.action(function(){
-		var map = [
-			{ columnName: "instrument_id" },
-			{ columnName: "date_of_purchase" }
-		];
-		var db = require('./db').open(true);
-		var tableWriter = db.openTable(map);
-		tableWriter("migdal", 2013, 1, "in_id", "in_sub_id", [
-			["inst1", "1/10/2004"],
-			["inst2", "2/10/2004 x"]
-		]);
-	});
-
-program
   .command("createtable")
   .action(function(){
     var pg = require('./db').pg;

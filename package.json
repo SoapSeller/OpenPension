@@ -26,7 +26,7 @@
     "throat": "^1.0.0",
     "underscore": "latest",
     "valid-url": "^1.0.9",
-    "xlsjs": "^0.7.4-a",
+    "xlsjs": "^0.7.5",
     "xlsx": "^0.7.12",
     "xml2js": "latest",
     "zombie": "latest"

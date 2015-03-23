@@ -10,8 +10,10 @@ exports.init = function(){
 
 exports.clean = function(){
 
-	return fsep.removeAsync('./tmp')
-	.then(fsep.removeAsync('./res'))
+	//TODO: are you sure?
+
+	return fsep.removeAsync('./res')
+	// .then(fsep.removeAsync('./tmp'))
 	.then(exports.init);
 
 }

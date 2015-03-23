@@ -136,13 +136,16 @@ var readFundsFile = function() {
 
 
 var doFetch = function(step, funds, seed) {
+	
+	//console.log("step: "+step +" step + seed " + step + seed);
+
 	if (seed < funds.length) {
 		var fund = funds[seed];
 		var next = doFetch.bind(this, step, funds, seed+step);
 		switch (fund.body) {
 			case "harel":
 				harel.fetchOne(fund, next);
-			break;
+				break;
 			default:
 				fc.fetchFund(fund, next);
 		}
@@ -178,15 +181,31 @@ var getContribFunds = function(cb) {
 /* Fetch all funds */
 exports.fetchAll = function(funds) {
 
-	var step = 8;
+	var step = 1;
 	for(var i = 0; i < Math.min(funds.length, step); ++i) {
 		doFetch(step, funds, i);
 	}
 };
 
 exports.fetchKnown = function(){
+
 	readFundsFileFetching(function(allFunds){
-		fetchAllFunds(allFunds);
+		
+		var body;
+		var number;
+		var year;
+		var quarter;
+
+		//TODO: get chosen attributes from user
+		var chosenFunds = allFunds.filter(function(f){
+			return (body == undefined? true: f.body == body) 
+			&& (number == undefined ? true: f.number == number)
+			&& (year == undefined ? true: f.year == year)
+			&& (quarter == undefined? true: f.quarter == quarter)
+		})
+
+		fetchAllFunds(chosenFunds);
+
 	});
 };
 
@@ -202,7 +221,7 @@ var fetchAllFunds = function(allFunds){
 	for(var i = 0; i < allFunds.length; ++i) {
 		var fund = allFunds[i];
 		if (
-			// fund.body == "Amitim" ||
+			//fund.body == "Amitim" ||
 			fund.body == "clal" ||
 			fund.body == "DS" ||
 			fund.body == "Harel" ||
@@ -220,66 +239,3 @@ var fetchAllFunds = function(allFunds){
 	exports.fetchAll(funds);
 };
 
-exports.fetchMenora = function(){
-	var allFunds = readFundsFileFetching();
-	var funds = [];
-
-	for(var i = 0; i < allFunds.length; ++i) {
-		var fund = allFunds[i];
-		if (fund.body == "Menora") {
-			funds.push(fund);
-		}
-	}
-
-	exports.fetchAll(funds);
-};
-
-
-exports.fetchAmitim = function(){
-	var allFunds = readFundsFileFetching();
-	var funds = [];
-
-	for(var i = 0; i < allFunds.length; ++i) {
-		var fund = allFunds[i];
-		if (fund.body == "amitim") {
-			funds.push(fund);
-		}
-	}
-
-	exports.fetchAll(funds);
-};
-
-exports.fetchHarel = function() {
-	var allFunds = readFundsFile();
-
-	var funds = [];
-
-	for(var i = 0; i < allFunds.length; ++i) {
-		var fund = allFunds[i];
-		console.log(fund.body);
-		if (fund.body == "harel") {
-			funds.push(fund);
-		}
-	}
-
-	exports.fetchAll(funds);
-	// var outFile = fs.createWriteStream("test.csv");
-
-	// var count = funds.length;
-	// var handleDone = function(fund, fundFiles) {
-	// 	console.log("Writing fund", fund.number, "files");
-	// 	for (var i = 0; i < fundFiles.length; ++i) {
-	// 		var file = fundFiles[i];
-	// 		outFile.write([fund.number, file.year, file. q, file.url].join(',') + "\n");
-	// 	}
-
-	// 	if (--count === 0) {
-	// 		console.log("All funds fetched.");
-	// 		outFile.end();
-	// 	}
-	// };
-
-	// for (i = 0; i < funds.length; ++i) {
-	// 	harel.fetchOne(funds[i], handleDone);
-	// }
-};
