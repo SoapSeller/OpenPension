@@ -1,17 +1,20 @@
 var DB = require('./db')
 var fs = require('fs'),
+	utils = require('./utils.js'),
     metaTable = require(__dirname + '/common/MetaTable').getMetaTable();
 
 var columnsNames = DB.columnsNames;
 
 exports.write = function(managingBody, fund, year, quarter, tabIndex, instrument, instrumentSub, tabData, headers){
-	var filename = "./tmp/" + [ managingBody, year, quarter, fund].join("_") + ".csv";
+	var fund = utils.getFundObj(managingBody, year, quarter, fund);
+	var filename = utils.filename("./tmp", fund, ".csv");
 	DB.csv.write(filename, headers,managingBody, fund, year, quarter, instrument, instrumentSub, tabData);
 }
 
-exports.writeParsedResult = function(managing_body, fund, report_year, report_qurater, result){
+exports.writeParsedResult = function(managing_body, fund_number, report_year, report_qurater, result){
 
-	var filename = "./tmp/" + [ managing_body, report_year, report_qurater, fund].join("_") + ".csv";
+	var fundObj = utils.getFundObj(managing_body, report_year, report_qurater, fund_number);
+	var filename = utils.filename("./tmp", fundObj, ".csv");
 
 	var exists = fs.existsSync(filename);
 	var stream = fs.createWriteStream(filename, { flags: 'a+', encoding: "utf8", mode: 0666 });
@@ -47,7 +50,7 @@ exports.writeParsedResult = function(managing_body, fund, report_year, report_qu
 		});
 
 		objects.forEach(function(object) {
-			object = [managing_body, fund.toString(), report_year.toString(), report_qurater.toString(), instrument_type, instrument_sub_type].concat(object);
+			object = [managing_body, fund_number.toString(), report_year.toString(), report_qurater.toString(), instrument_type, instrument_sub_type].concat(object);
 
 			var str = "";
 			for (i = 0; i < indexes.length; ++i) {

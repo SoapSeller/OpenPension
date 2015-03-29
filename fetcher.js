@@ -7,6 +7,7 @@ var URL = require("url"),
 	harel = require("./fetcher.harel.js"),
 	db = require("./db.js"),
 	Quarter = require("./quarter"),
+	Promise = require("bluebird")
 	validUrl = require("valid-url");
 
 var cUrl = 6,
@@ -47,33 +48,42 @@ var parseBody = function(body) {
 	return null;
 };
 
-var readFundsFileFetching = function(cb){
+var readFundsFileFetching = function(){
 
-	var options = {
-		host: "docs.google.com",
-		port : 443,
-		path : "/spreadsheets/d/1mUsNeb8gD2ELPKGpjD12AqZkuCybJlGCTz62oryLZY4/export?exportFormat=csv&gid=1311761971"
-	}
-	
-	var data = '';
+	return new Promise(function(resolve, reject){
 
-	https.get(options,function(res){
-		res.on('data', function(chunk){
-			data = data + chunk.toString();
+		var options = {
+			host: "docs.google.com",
+			port : 443,
+			path : "/spreadsheets/d/1mUsNeb8gD2ELPKGpjD12AqZkuCybJlGCTz62oryLZY4/export?exportFormat=csv&gid=1311761971"
+		}
+		
+		var data = '';
+
+		https.get(options,function(res){
+			res.on('data', function(chunk){
+				data = data + chunk.toString();
+			});
+			res.on('end', function(){
+				var parsedLines = data.split("\n");
+				
+				parseCsvFetch(parsedLines)
+				.then(function(funds){
+					resolve(funds);
+				});
+
+			});
+		}).on('error',function(r){
+			console.log("error fetching sheet",r);
+			process.exit();
+			reject("error fetching sheet "+r);
 		});
-		res.on('end', function(){
-			var parsedLines = data.split("\n")
-			parseCsvFetch(parsedLines, cb);
-		});
-	}).on('error',function(r){
-		console.log("error fetching sheet",r);
-		process.exit();
+
 	});
-
 }
 
-var parseCsvFetch = function(parsedLines,cb){
-	
+var parseCsvFetch = function(parsedLines){
+
 	var reducer = function(out, line){
 		var splt = line.split(',');
 		var _out = [];
@@ -93,7 +103,11 @@ var parseCsvFetch = function(parsedLines,cb){
 		}
 		return out.concat(_out)
 	}
-	cb(parsedLines.reduce(reducer, []));
+
+	return new Promise(function(resolve, reject){
+		resolve(parsedLines.reduce(reducer, []));
+	});
+
 }
 
 
@@ -181,31 +195,30 @@ var getContribFunds = function(cb) {
 /* Fetch all funds */
 exports.fetchAll = function(funds) {
 
-	var step = 1;
+	var step = 4;
 	for(var i = 0; i < Math.min(funds.length, step); ++i) {
 		doFetch(step, funds, i);
 	}
 };
 
-exports.fetchKnown = function(){
+exports.fetchKnown = function(body, year, quarter, number){
 
-	readFundsFileFetching(function(allFunds){
+	readFundsFileFetching()
+	.then(function(allFunds){
 		
-		var body;
-		var number;
-		var year;
-		var quarter;
 
 		//TODO: get chosen attributes from user
 		var chosenFunds = allFunds.filter(function(f){
-			return (body == undefined? true: f.body == body) 
-			&& (number == undefined ? true: f.number == number)
-			&& (year == undefined ? true: f.year == year)
-			&& (quarter == undefined? true: f.quarter == quarter)
+			return (body == undefined? true: f.body == body ||  ( isArray(body) && body.indexOf(f.body) > -1 ) ) 
+			&& (number == undefined ? true: f.number == number ||  ( isArray(number) && number.indexOf(f.number) > -1 ))
+			&& (year == undefined ? true: f.year == year ||  ( isArray(year) && year.indexOf(f.year) > -1 ))
+			&& (quarter == undefined? true: f.quarter == quarter ||  ( isArray(quarter) && quarter.indexOf(f.quarter) > -1 ))
 		})
 
-		fetchAllFunds(chosenFunds);
-
+		return chosenFunds;
+	})
+	.then(function(chosenFunds){
+		fetchAllFunds(chosenFunds);	
 	});
 };
 
@@ -238,4 +251,10 @@ var fetchAllFunds = function(allFunds){
 	
 	exports.fetchAll(funds);
 };
+
+
+function isArray(ar) {
+  return Array.isArray(ar) ||
+         (typeof ar === 'object' && objectToString(ar) === '[object Array]');
+}
 

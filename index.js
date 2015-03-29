@@ -82,8 +82,12 @@ program
 
 program
 	.command("fetch-known")
-	.action(function(){
-		require('./fetcher').fetchKnown();
+	.option("-y, --year <year>", "year")
+	.option("-q, --quarter <quarter>", "quarter")
+	.option("-b, --body <body>", "body")
+	.option("-m, --monkey <monkey>", "monkey")
+	.action(function(args){
+		require('./fetcher').fetchKnown(args.body, args.year, args.quarter, args.monkey);
 	});
 
 program

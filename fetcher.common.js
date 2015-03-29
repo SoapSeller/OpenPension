@@ -2,6 +2,7 @@ var URL = require("url"),
 	http = require("http"),
 	https = require("https"),
 	fs = require("fs"),
+	utils = require("./utils.js"),
 	path = require("path");
 
 
@@ -19,24 +20,11 @@ exports.changeBaseFolder = function(newFolder){ baseFolder = newFolder; console.
  *  onDone: Callback with format void(downloadedFilePath, error)
  */
 
-function filename(folder, fund, ext){
-	var baseName = folder + [fund.body, fund.year, fund.quarter, fund.number].join("_");
-
-
-    return baseName + ext;    	
-
-}
-
-
-function filenameCSV(fund){
-	return [ fund.body, fund.number, fund.year, fund.quarter].join("_") + ".csv";
-}
-var CSVWriter = require('./CSVWriter')
 
 function importFund(fund, ext, onDone){
 
-	var csvFilename = filename(targetFolder, fund, ".csv");
-	var xlFilename = filename(baseFolder, fund, ext);
+	var csvFilename = utils.filename(targetFolder, fund, ".csv");
+	var xlFilename = utils.filename(baseFolder, fund, ext);
 
 	console.log("csvFilename"+csvFilename);
 
@@ -69,23 +57,27 @@ var dedup = []
 
 exports.fetchFund = function(fund, onDone) {
 
+	console.log('--> fetch fund')
+
 	var url = URL.parse(fund.url);
 	var ext = path.extname(fund.url);
-	var xlFilename = filename(baseFolder, fund, ext);
+	var xlFilename = utils.filename(baseFolder, fund, ext);
 
-	if (dedup.indexOf(xlFilename) > -1 ){ 
-        return onDone(null, "tried to fetch existing file" + filename(fund));
+	if (dedup.indexOf(url) > -1 ){ 
+        return onDone(null, "tried to fetch already fetched url: " + url);
 
 	}
 	else{
-		dedup.push(xlFilename);
+		dedup.push(url);
 	}
 
 
 	if (fs.existsSync(xlFilename)){
-		console.log("tried to fetch existing file" + xlFilename);
+		console.log("tried to fetch existing file: " + xlFilename);
+	//	return onDone();
 		return importFund(fund, ext, onDone);
 	}
+
 	
 	if (fund.url.indexOf('http') !== 0) {
 		fund.url = 'http://' + fund.url;
@@ -101,21 +93,54 @@ exports.fetchFund = function(fund, onDone) {
 		rejectUnauthorized: false
 	};
 
-	var stream = fs.createWriteStream(xlFilename, { flags: 'w+', encoding: "binary", mode: 0666 });
+//	var stream = fs.createWriteStream(xlFilename, { flags: 'w+', encoding: "binary", mode: 0666 });
 
 	var client = isHttps ? https : http;
 
 	var req = client.request(options, function(res) {
 		//res.setEncoding('binary');
-		res.on('data', function (chunk) {
-			stream.write(chunk);
-		});
+		// res.on('data', function (chunk) {
+		// 	stream.write(chunk);
+		// });
+
+
 		res.on('end', function() {
-			stream.end();
+	/////		stream.end();
 
-			importFund(fund, ext, onDone);
+ 			importFund(fund, ext, onDone);
+			//return onDone();
 
 		});
+	});
+
+	req.on('response',  function (res) {
+
+		console.log("got response: "+ ext);
+
+		if (ext.indexOf("xls") == -1){
+			var httpExt = getExtByHttpResponse(res);
+
+			console.log("got httpExt: "+httpExt);
+			
+			if (httpExt != undefined){
+				xlFilename = utils.filename(baseFolder, fund, httpExt);
+				ext = httpExt;
+			}
+			else{
+				return onDone();
+			}
+		
+		}
+
+
+		if (fs.existsSync(xlFilename)){
+			console.log("tried to fetch existing file: " + xlFilename);
+		//	return onDone();
+			return importFund(fund, ext, onDone);
+		}
+
+		console.log('fetching ' + xlFilename );
+		res.pipe(fs.createWriteStream(xlFilename, { flags: 'w+', encoding: "binary", mode: 0666 }));
 	});
 
 	req.on('error', function(e) {
@@ -125,6 +150,34 @@ exports.fetchFund = function(fund, onDone) {
 
 	req.end();
 };
+
+
+function getExtByHttpResponse(res){
+
+	var attachment = res.headers['content-disposition'];
+	var contentType = res.headers['content-type'];
+	var ext;
+	
+	if (attachment != undefined && attachment.indexOf("filename")){
+		ext = path.extname(attachment);
+	}
+	else if (contentType != undefined){
+		if (contentType == "application/vnd.ms-excel"){
+			ext = ".xls";
+		}
+		else if (contentType == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"){
+			ext = ".xlsx"
+		}
+		else{
+			console.log("unknown contentType: "+ contentType);
+		}
+	}
+	else{
+		console.log("could not determine file name: "+ res);
+	}
+
+	return ext;
+}
 
 exports.fetchFunds = function(funds, onDone) {
 	if (funds.length === 0) {
