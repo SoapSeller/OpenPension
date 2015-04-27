@@ -1,6 +1,7 @@
 var DB = require('./db')
 var fs = require('fs'),
 	utils = require('./utils.js'),
+	Promise = require('bluebird'),
     metaTable = require(__dirname + '/common/MetaTable').getMetaTable();
 
 var columnsNames = DB.columnsNames;

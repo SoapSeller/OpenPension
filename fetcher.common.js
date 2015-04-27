@@ -46,7 +46,7 @@ function importFund(fund, ext){
 		return CSVWriter.writeParsedResult(fund.body, fund.number, fund.year, fund.quarter, result);
 	})
 	.catch(function(e){
-		console.log("fetcher.common.js: " + e);
+		console.log("fetcher.common.js: " + e.stack);
 	});
 
 }

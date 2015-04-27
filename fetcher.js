@@ -263,7 +263,7 @@ function isArray(ar) {
 }
 
 
-
+//TODO: not finished... parse query results, sort by instrument type, write csv
 exports.dumpFunds = function(body, year, quarter, fund_number){
 
 	readGoogleDocsFundsFile()
