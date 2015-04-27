@@ -5,10 +5,12 @@ var URL = require("url"),
 	cp = require("child_process"),
 	fc = require("./fetcher.common.js"),
 	harel = require("./fetcher.harel.js"),
+	CSVWriter = require("./CSVWriter.js"),
 	db = require("./db.js"),
 	Quarter = require("./quarter"),
 	Promise = require("bluebird")
-	validUrl = require("valid-url");
+	validUrl = require("valid-url"),
+	utils = require("./utils.js");
 
 var cUrl = 6,
 	cNum = 4,
@@ -48,7 +50,7 @@ var parseBody = function(body) {
 	return null;
 };
 
-var readFundsFileFetching = function(){
+var readGoogleDocsFundsFile = function(){
 
 	return new Promise(function(resolve, reject){
 
@@ -201,16 +203,16 @@ exports.fetchAll = function(funds) {
 	}
 };
 
-exports.fetchKnown = function(body, year, quarter, number){
+exports.fetchKnown = function(body, year, quarter, fund_number){
 
-	readFundsFileFetching()
+	readGoogleDocsFundsFile()
 	.then(function(allFunds){
 		
 
 		//TODO: get chosen attributes from user
 		var chosenFunds = allFunds.filter(function(f){
 			return (body == undefined? true: f.body == body ||  ( isArray(body) && body.indexOf(f.body) > -1 ) ) 
-			&& (number == undefined ? true: f.number == number ||  ( isArray(number) && number.indexOf(f.number) > -1 ))
+			&& (fund_number == undefined ? true: f.number == fund_number ||  ( isArray(fund_number) && fund_number.indexOf(f.number) > -1 ))
 			&& (year == undefined ? true: f.year == year ||  ( isArray(year) && year.indexOf(f.year) > -1 ))
 			&& (quarter == undefined? true: f.quarter == quarter ||  ( isArray(quarter) && quarter.indexOf(f.quarter) > -1 ))
 		})
@@ -221,6 +223,8 @@ exports.fetchKnown = function(body, year, quarter, number){
 		fetchAllFunds(chosenFunds);	
 	});
 };
+
+
 
 exports.fetchContrib = function(){
     getContribFunds(fetchAllFunds);
@@ -241,7 +245,7 @@ var fetchAllFunds = function(allFunds){
 			fund.body == "Menora" ||
 			fund.body == "Migdal" ||
 			fund.body == "psagot" ||
-			fund.body == "fenix" ||
+ 			fund.body == "fenix" ||
 			fund.body == "xnes"
 			) {
 			funds.push(fund);
@@ -258,3 +262,63 @@ function isArray(ar) {
          (typeof ar === 'object' && objectToString(ar) === '[object Array]');
 }
 
+
+
+exports.dumpFunds = function(body, year, quarter, fund_number){
+
+	readGoogleDocsFundsFile()
+	.then(function(allFunds){
+		
+
+		body = 'Migdal';
+		year = '2014';
+		quarter = '2';
+		fund_number = '659';
+
+		//TODO: get chosen attributes from user
+		var chosenFunds = allFunds.filter(function(f){
+			return (body == undefined? true: f.body == body ||  ( isArray(body) && body.indexOf(f.body) > -1 ) ) 
+			&& (fund_number == undefined ? true: f.number == fund_number ||  ( isArray(fund_number) && fund_number.indexOf(f.number) > -1 ))
+			&& (year == undefined ? true: f.year == year ||  ( isArray(year) && year.indexOf(f.year) > -1 ))
+			&& (quarter == undefined? true: f.quarter == quarter ||  ( isArray(quarter) && quarter.indexOf(f.quarter) > -1 ))
+		})
+
+		return chosenFunds;
+	})
+	.then(function(chosenFunds){
+
+		return chosenFunds.map(function(chosenFund){
+
+			var tableName = "pension_data_all"
+			var sql = "SELECT * FROM "+ tableName +" WHERE managing_body='" +chosenFund.body +"'"
+						+ " AND report_year='"+chosenFund.year+"' AND report_qurater='"+chosenFund.quarter+"'"
+						+ " AND fund='"+chosenFund.number+"' ";
+			return db.query(sql);
+
+		});
+	})
+	.map(function(queryResult){
+		console.log("=============================")
+		// console.log(queryResult);
+		var rowCount = queryResult.rowCount;
+		var rows = queryResult.rows;
+		var managing_body = rows[0].managing_body;
+		var report_year = rows[0].report_year;
+		var report_qurater = rows[0].managing_body;
+		var fund = rows[0].fund;
+		// var instrument_type = rows[0].
+		// var instrument_sub_type = rows[0].
+
+		var fundObj = utils.getFundObj(managing_body, report_year, report_qurater, fund);
+		var filename = utils.filename("./from_db", fundObj, ".csv");
+
+		console.log(rows);
+
+		console.log("=============================")
+
+		CSVWriter.write(managing_body, fund, report_year, report_qurater, instrument, instrumentSub, tabData, headers)
+		return;
+
+	});
+	
+};

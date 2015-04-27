@@ -1,10 +1,12 @@
 var fs = require('fs'),
-    pg = require('pg'),
     _ = require('underscore'),
     moment = require('moment'),
     metaTable = require(__dirname + '/common/MetaTable').getMetaTable(),
     columnsNames = metaTable.englishColumns,
     columnsTypes = metaTable.dataTypes;
+
+var Promise = require('bluebird');
+var pg = require('postgres-bluebird');
 
 var defaultColumnnNames = ['managing_body', 'fund' ,'report_year', 'report_qurater', 'instrument_type', 'instrument_sub_type'];
 var defaultColumnnTypes = ['string', 'number' ,'number', 'number', 'string', 'string'];
@@ -41,7 +43,7 @@ db.csv = function(filename) {
   }
 };
 
-db.csv.write = function(filename, mapping,managing_body, fund, report_year, report_qurater, instrument_type, instrument_sub_type, objects){
+db.csv.write = function(filename, mapping, managing_body, fund, report_year, report_qurater, instrument_type, instrument_sub_type, objects){
 
   var exists = fs.existsSync(filename);
   var stream = fs.createWriteStream(filename, { flags: 'a+', encoding: "utf8", mode: 0666 });
@@ -81,6 +83,10 @@ db.csv.write = function(filename, mapping,managing_body, fund, report_year, repo
   });
 
 };
+
+db.csv.dump = function(managing_body, report_year, report_qurater, fund_number){
+
+}
 
 db.csv.prototype = {
   openTable: function(mapping) {
@@ -222,6 +228,27 @@ db.pg.prototype = {
 //     });
 //   });
 // };
+
+function query(sqlQuery){
+  return  pg.connectAsync(config.connection_string)
+        .spread(function(client, release) {
+          
+          return new Promise(function(resolve,reject){
+      
+            return client.queryAsync(sqlQuery)
+            .then(function(qresult){
+              release();
+              resolve(qresult);
+            })
+            .catch(function(err){
+              reject(err);
+            });
+
+          });
+      });
+}
+
+exports.query = query;
 
 exports.pg = db.pg;
 exports.csv = db.csv;

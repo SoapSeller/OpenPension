@@ -1,6 +1,7 @@
 var XLSX = require('./xlsx');
-var XLS = require('xlsjs');
+var XLS = require('xlsx');
 var path = require('path');
+var Promise =require('bluebird');
 
 
 var trim = function (s) {
@@ -41,24 +42,34 @@ var cellIdToCellIdx = function(cellId) {
 
 
 
-exports.getSheets = function(filename, callback){
+exports.getSheets = function(filename){
 
     var reader;
-    if (path.extname(filename).toLowerCase() == ".xls"){
-      reader = XLS;
-    }
-    else if (path.extname(filename).toLowerCase() == ".xlsx"){
-      reader = XLSX;
-    }
 
-    if (reader == undefined){
-      console.log("No reader found for: "+ filename)
-    }
+    return new Promise(function(resolve, reject){
+      if (path.extname(filename).toLowerCase() == ".xls"){
+        reader = XLS;
+      }
+      else if (path.extname(filename).toLowerCase() == ".xlsx"){
+        reader = XLSX;
+      }
+
+      if (reader == undefined){
+        console.log("No reader found for: "+ filename)
+      }
 
 
-    var workbook = reader.readFile(filename);
+      try{
+        var workbook = reader.readFile(filename);
+      }
+      catch(ex){
+        console.log(ex.stack);
+        reject("xlsparser.js: error parsing file: " + filename + ", "+ex);
+      }
 
-    callback(workbook);
+      resolve(workbook);
+
+    });
 
 }
 
@@ -89,9 +100,13 @@ exports.readCell = function(workbook, sheetName, cellId){
         cellContent = workbook.Sheets[sheetName][cellId].v;
         
         //number is in percent form
-        if ( workbook.Sheets[sheetName][cellId].w.indexOf("%") > -1 &&
-          Number(workbook.Sheets[sheetName][cellId].w.replace(/[^\d.-]/g, '')) == 0 ||
-          Number(workbook.Sheets[sheetName][cellId].w.replace(/[^\d.-]/g, '')) / cellContent > 10){
+        if ( workbook.Sheets[sheetName][cellId].w &&
+          workbook.Sheets[sheetName][cellId].w.indexOf("%") > -1 &&
+            (
+              Number(workbook.Sheets[sheetName][cellId].w.replace(/[^\d.-]/g, '')) == 0 ||
+              Number(workbook.Sheets[sheetName][cellId].w.replace(/[^\d.-]/g, '')) / cellContent > 10
+            )
+          ){
             cellContent = cellContent * 100;
         }
 

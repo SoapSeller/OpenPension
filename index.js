@@ -81,6 +81,13 @@ program
 	});
 
 program
+	.command("dump-funds")
+	.action(function(){
+		require('./fetcher').dumpFunds();
+	});
+
+
+program
 	.command("fetch-known")
 	.option("-y, --year <year>", "year")
 	.option("-q, --quarter <quarter>", "quarter")

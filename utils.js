@@ -10,13 +10,14 @@ exports.filename = function(folder, fund, ext){
 	}
 
 	// var baseName = folder + [fund.body, fund.year, fund.quarter, fund.number].join("_");
+	var baseName = path.join(folder,[fund.body, fund.year, fund.quarter, fund.number].join("_"));
 
-    // return (baseName + ext).toLowerCase();    	
+    return (baseName + ext).toLowerCase();    	
 
 
-	var baseName = path.join(folder,[fund.body, fund.number, fund.year, fund.quarter].join("_"));
+	// var baseName = path.join(folder,[fund.body, fund.number, fund.year, fund.quarter].join("_"));
 
-    return baseName + ext;    	
+    // return baseName + ext;    	
 
 };
 

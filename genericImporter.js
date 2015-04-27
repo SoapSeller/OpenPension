@@ -6,12 +6,15 @@ var MetaTable = require('./common/MetaTable'),
 
 
 
-exports.parseXls = function(filename,callback){
-	xlsx.getSheets(filename, function(workbook){
+exports.parseXls = function(filename){
+	return xlsx.getSheets(filename)
+	.then(function(workbook){
 		var result = parseSheets(workbook);
-		if (callback)
-			callback(result)
-	});
+		return result;
+	})
+	.catch(function(e){
+		console.log("genericImporter:" + e.stack);
+	})
 }
 
 
@@ -462,7 +465,7 @@ var parseSheets = function(workbook){
 
 	res.forEach(function(resSheet, metaIdx){
 		if (resSheet.headers && resSheet.data){
-			var engMap = resSheet.headers.map(function(cm){ return { "columnName" : metaTable.englishColumns[ metaTable.hebrewColumns.indexOf(cm) ] || cm }  });
+			var engMap = resSheet.headers.map(function(column){ return { "columnName" : metaTable.englishColumns[ metaTable.hebrewColumns.indexOf(column) ] || column }  });
 			parsedSheetsData.push({engMap : engMap, data: resSheet.data, idx: metaIdx})
 		}
 	});

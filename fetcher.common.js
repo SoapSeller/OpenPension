@@ -2,6 +2,7 @@ var URL = require("url"),
 	http = require("http"),
 	https = require("https"),
 	fs = require("fs"),
+	CSVWriter = require('./CSVWriter.js'),
 	utils = require("./utils.js"),
 	path = require("path");
 
@@ -21,7 +22,7 @@ exports.changeBaseFolder = function(newFolder){ baseFolder = newFolder; console.
  */
 
 
-function importFund(fund, ext, onDone){
+function importFund(fund, ext){
 
 	var csvFilename = utils.filename(targetFolder, fund, ".csv");
 	var xlFilename = utils.filename(baseFolder, fund, ext);
@@ -30,26 +31,24 @@ function importFund(fund, ext, onDone){
 
 	if (fs.existsSync(csvFilename)){
 		console.log("skipping existing file: " + csvFilename);
-		return onDone();
+		return;
 	}
 
+	var exists = fs.existsSync(csvFilename);
 
-	var cp = require("child_process").spawn("node",["index.js","import","-f",xlFilename,"-y",fund.year,"-q",fund.quarter,"-b",fund.body,"-m",fund.number]);
+	if (exists){
+		console.log("tried to import existing file:" + filename );
+		return;
+	}
 
-	cp.stdout.on('data', function (data) {
-	  console.log('' + data);
+	return require('./genericImporter').parseXls(xlFilename)
+	.then(function(result){
+		return CSVWriter.writeParsedResult(fund.body, fund.number, fund.year, fund.quarter, result);
+	})
+	.catch(function(e){
+		console.log("fetcher.common.js: " + e);
 	});
 
-	cp.stderr.on('error', function (data) {
-	  console.log('stderr: ' + data);
-	});
-
-	cp.on('close', function (code) {
-	  if (code !== 0) {
-	    console.log('grep process exited with code ' + code);
-	  }
-	  onDone(xlFilename);
-	});
 }
 
 var dedup = []
@@ -74,7 +73,7 @@ exports.fetchFund = function(fund, onDone) {
 
 	if (fs.existsSync(xlFilename)){
 		console.log("tried to fetch existing file: " + xlFilename);
-	//	return onDone();
+
 		return importFund(fund, ext, onDone);
 	}
 
@@ -93,22 +92,15 @@ exports.fetchFund = function(fund, onDone) {
 		rejectUnauthorized: false
 	};
 
-//	var stream = fs.createWriteStream(xlFilename, { flags: 'w+', encoding: "binary", mode: 0666 });
 
 	var client = isHttps ? https : http;
 
 	var req = client.request(options, function(res) {
-		//res.setEncoding('binary');
-		// res.on('data', function (chunk) {
-		// 	stream.write(chunk);
-		// });
 
 
 		res.on('end', function() {
-	/////		stream.end();
 
  			importFund(fund, ext, onDone);
-			//return onDone();
 
 		});
 	});
@@ -195,5 +187,8 @@ exports.fetchFunds = function(funds, onDone) {
 		}
 	};
 
+
 	exports.fetchFund(funds[funds.length-1], handleDone);
 };
+
+exports.importFund = importFund;

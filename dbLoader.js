@@ -85,7 +85,7 @@ var importFiles = function(files, parentDir, tableName, concurrency){
 		}
 
 		return result;
-	})
+	});
 } 
 
 //import file to db --> resolves to boolean
