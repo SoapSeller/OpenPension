@@ -1,5 +1,5 @@
 var XLSX = require('./xlsx');
-var XLS = require('xlsx');
+var XLS = require('xlsjs');
 var path = require('path');
 var Promise =require('bluebird');
 

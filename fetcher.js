@@ -63,9 +63,11 @@ var readGoogleDocsFundsFile = function(){
 		var data = '';
 
 		https.get(options,function(res){
+			
 			res.on('data', function(chunk){
 				data = data + chunk.toString();
 			});
+
 			res.on('end', function(){
 				var parsedLines = data.split("\n");
 				
@@ -73,9 +75,9 @@ var readGoogleDocsFundsFile = function(){
 				.then(function(funds){
 					resolve(funds);
 				});
-
 			});
-		}).on('error',function(r){
+		})
+		.on('error',function(r){
 			console.log("error fetching sheet",r);
 			process.exit();
 			reject("error fetching sheet "+r);
@@ -151,87 +153,38 @@ var readFundsFile = function() {
 };
 
 
-var doFetch = function(step, funds, seed) {
-	
-	//console.log("step: "+step +" step + seed " + step + seed);
+var getContribFunds = function() {
 
-	if (seed < funds.length) {
-		var fund = funds[seed];
-		var next = doFetch.bind(this, step, funds, seed+step);
-		switch (fund.body) {
-			case "harel":
-				harel.fetchOne(fund, next);
-				break;
-			default:
-				fc.fetchFund(fund, next);
-		}
-	}
-};
+	return new Promise(function(resolve, reject){
 
-var getContribFunds = function(cb) {
-    var client = (new db.pg(true)).client;
+	    var client = (new db.pg(true)).client;
 
-    client.query("SELECT q.id, q.year, q.quarter, q.url, q.status, f.managing_body, f.id as fund_id, f.name as fund_name, f.url as fund_url FROM admin_funds_quarters as q, admin_funds as f WHERE q.fund_id = f.id AND status = 'validated'", function(err, result) {
+	    client.query("SELECT q.id, q.year, q.quarter, q.url, q.status, f.managing_body, f.id as fund_id, f.name as fund_name, f.url as fund_url FROM admin_funds_quarters as q, admin_funds as f WHERE q.fund_id = f.id AND status = 'validated'", function(err, result) {
 
-        if(err) {
-            return console.error('error running query', err);
-        }
+	        if(err) {
+	            return console.error('error running query', err);
+	        }
 
-        var funds = [];
+	        var funds = [];
 
-        result.rows.forEach(function(f) {
-            funds.push({
-                body: f.managing_body,
-                number: f.fund_id,
-                url: f.url,
-                year: f.year,
-                quarter: f.quarter+1
-            });
-        });
+	        result.rows.forEach(function(f) {
+	            funds.push({
+	                body: f.managing_body,
+	                number: f.fund_id,
+	                url: f.url,
+	                year: f.year,
+	                quarter: f.quarter+1
+	            });
+	        });
 
 
-        cb(funds);
-    });
-};
-
-/* Fetch all funds */
-exports.fetchAll = function(funds) {
-
-	var step = 4;
-	for(var i = 0; i < Math.min(funds.length, step); ++i) {
-		doFetch(step, funds, i);
-	}
-};
-
-exports.fetchKnown = function(body, year, quarter, fund_number){
-
-	readGoogleDocsFundsFile()
-	.then(function(allFunds){
-		
-
-		//TODO: get chosen attributes from user
-		var chosenFunds = allFunds.filter(function(f){
-			return (body == undefined? true: f.body == body ||  ( isArray(body) && body.indexOf(f.body) > -1 ) ) 
-			&& (fund_number == undefined ? true: f.number == fund_number ||  ( isArray(fund_number) && fund_number.indexOf(f.number) > -1 ))
-			&& (year == undefined ? true: f.year == year ||  ( isArray(year) && year.indexOf(f.year) > -1 ))
-			&& (quarter == undefined? true: f.quarter == quarter ||  ( isArray(quarter) && quarter.indexOf(f.quarter) > -1 ))
-		})
-
-		return chosenFunds;
-	})
-	.then(function(chosenFunds){
-		fetchAllFunds(chosenFunds);	
+	        resolve(funds);
+    	});
 	});
 };
 
-
-
-exports.fetchContrib = function(){
-    getContribFunds(fetchAllFunds);
-};
-
-
-var fetchAllFunds = function(allFunds){
+/* Fetch all funds */
+var filterFunds = function(allFunds) {
 
 	var funds = [];
 
@@ -251,10 +204,53 @@ var fetchAllFunds = function(allFunds){
 			funds.push(fund);
 		}
 	}
-	//console.log(funds);
-	
-	exports.fetchAll(funds);
+
+	return funds;
 };
+
+exports.fetchKnown = function(body, year, quarter, fund_number){
+
+	readGoogleDocsFundsFile()
+	.then(function(allFunds){
+		
+
+		//TODO: get chosen attributes from user
+		var chosenFunds = allFunds.filter(function(f){
+			return (body == undefined? true: f.body == body ||  ( isArray(body) && body.indexOf(f.body) > -1 ) ) 
+			&& (fund_number == undefined ? true: f.number == fund_number ||  ( isArray(fund_number) && fund_number.indexOf(f.number) > -1 ))
+			&& (year == undefined ? true: f.year == year ||  ( isArray(year) && year.indexOf(f.year) > -1 ))
+			&& (quarter == undefined? true: f.quarter == quarter ||  ( isArray(quarter) && quarter.indexOf(f.quarter) > -1 ))
+		})
+
+		return chosenFunds;
+	})
+	.then(function(chosenFunds){
+		return filterFunds(chosenFunds);	
+	})
+	.each(function(fund){
+		fc.downloadFundFile(fund);
+	})
+	.then(function(k){
+		console.log(k);
+	})
+	.catch(function(e){
+		console.log(e.stack);
+	});
+};
+
+
+
+exports.fetchContrib = function(){
+    getContribFunds()
+    .then(function(funds){
+    	return filterFunds(funds);
+    })
+    .each(function(fund){
+    	fc.downloadFundFile(fund);
+    });
+};
+
+
 
 
 function isArray(ar) {

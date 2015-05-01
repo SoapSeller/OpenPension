@@ -3,7 +3,9 @@ var fs = require("fs"),
 	path = require('path'),
 	utils = require('./utils.js'),
 	Promise = require('bluebird'),
-	fetcherCommon = require('./fetcher.common');
+	fetcherCommon = require('./fetcher.common'),
+	genericImporter = require("./genericImporter.js"),
+	CSVWriter = require("./CSVWriter.js")
 
 
 exports.loadDir = function(dir){
@@ -19,23 +21,23 @@ exports.loadDir = function(dir){
 
 	fetcherCommon.changeBaseFolder(dir);
 
-	return new Promise(function(resolve,reject){
-		resolve(files.map(function(file){
-			var _s = file.split("_");
+	return new Promise.each(files, function(file){
 
-			return {
-				url: "http://some_lie.com/"+file,
-				body : _s[0],
-				year : _s[1],
-				quarter :  _s[2],
-				number : _s[3].split('.')[0]
-			};
-		}));
-	})
-	.each(function(fund){
-		var ext = path.extname(fund.url).toLowerCase();
-		var fund = utils.getFundObj(fund.body, fund.year, fund.quarter, fund.number);
-		return fetcherCommon.importFund(fund, ext);
+		console.log("Converting: "+  file);
+	
+		var xlFilename = path.join(dir,file);
+		var fund = utils.getFundFromFile(file);
+		var csvFilename = utils.filename('./tmp',fund, '.csv');
+
+		if (fs.existsSync(csvFilename)){
+			console.log("converted file exists:" + csvFilename );
+			return;
+		}
+
+		return genericImporter.parseXls(xlFilename)
+			.then(function(result){
+				return CSVWriter.writeParsedResult(fund.body, fund.number, fund.year, fund.quarter, result);
+			});
 	})
 	.then(function(){
 		console.log("all done");

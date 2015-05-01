@@ -30,3 +30,14 @@ exports.getFundObj = function(body, year, quarter, number){
 		number: number
 	}
 }
+
+exports.getFundFromFile = function(filename){
+		var _s = filename.split("_");
+
+		return {
+			body : _s[0],
+			year : _s[1],
+			quarter :  _s[2],
+			number : _s[3].split('.')[0]
+		};
+}
