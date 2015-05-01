@@ -37,6 +37,13 @@ exports.loadDir = function(dir){
 		return genericImporter.parseXls(xlFilename)
 			.then(function(result){
 				return CSVWriter.writeParsedResult(fund.body, fund.number, fund.year, fund.quarter, result);
+			})
+			.catch(function(e){
+				console.log("error converting file: " + file);
+				console.log(e.stack);
+				if (fs.existsSync(csvFilename)){
+					fs.unlinkSync(csvFilename);
+				}
 			});
 	})
 	.then(function(){
