@@ -97,10 +97,8 @@ var parseCsvFetch = function(parsedLines){
 		var quarter =  new Quarter(startYear, startQuarter -1);
 
 		for (var i = 8; i < splt.length; i++){
-			
-			if (!validUrl.isUri(splt[i])) continue;
 
-			if (splt[2] && splt[5] && splt[i])   
+			if (splt[2] && splt[5] && splt[i] && validUrl.isUri(splt[i].trim()))   
 				_out.push({ body : splt[2], number : splt[5], url : splt[i], year : quarter.year, quarter : quarter.quarter + 1 })
 
 			quarter.increase();
