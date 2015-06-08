@@ -44,7 +44,7 @@ exports.downloadFundFile = function(fund) {
 
 		
 		if (fund.url.indexOf('http') !== 0) {
-			fund.url = 'http://' + fund.url;
+			reject();
 		}
 
 		var isHttps = url.protocol == "https:";
