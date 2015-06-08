@@ -2,6 +2,7 @@ var MetaTable = require('./common/MetaTable'),
 	xlsx = require("./xlsxparser"),
 	LevDistance = require('./LevDistance'),
 	path = require('path'),
+	logger = require('./logger.js'),
 	detectors = require("./detectors");
 
 
@@ -13,7 +14,7 @@ exports.parseXls = function(filename){
 		return result;
 	})
 	.catch(function(e){
-		console.log("genericImporter:" + e.stack);
+		logger.error("genericImporter:" + e.stack);
 	})
 }
 
@@ -461,7 +462,7 @@ var parseSheets = function(workbook){
 	}
 
 
-	console.log("++++++ parsed & found all sheets");
+	logger.info("++++++ parsed & found all sheets");
 
 	res.forEach(function(resSheet, metaIdx){
 		if (resSheet.headers && resSheet.data){
