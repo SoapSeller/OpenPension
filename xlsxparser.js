@@ -112,7 +112,6 @@ exports.readCell = function(workbook, sheetName, cellId){
 
       }
 
-      debugger;
       if (typeof cellContent === "number") {
         cellContent = cellContent.toString();
       }
