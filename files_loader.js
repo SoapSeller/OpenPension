@@ -10,7 +10,7 @@ var fs = require("fs"),
 	CSVWriter = require("./CSVWriter.js")
 
 
-exports.loadDir = function(dir){
+exports.convertDir = function(dir){
 
 	if (dir.indexOf(path.sep) != dir.length){
 		dir += path.sep;
@@ -47,7 +47,7 @@ exports.loadDir = function(dir){
 					fs.unlinkSync(csvFilename);
 				}
 
-				convert(xlFilename)
+				fixFileFormat(xlFilename)
 				.then(genericImporter.parseXls)
 				.then(function(result){
 					logger.info("fixed by converting:"+xlFilename);
@@ -65,7 +65,7 @@ exports.loadDir = function(dir){
 
 }
 
-function convert(xlFilename){
+function fixFileFormat(xlFilename){
 
 	return new Promise(function(resolve, reject){
 

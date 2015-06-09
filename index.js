@@ -11,7 +11,7 @@ var initialize = require('./initialize');
 
 //convert excel file to csv
 program
-	.command('import')
+	.command('convert-file')
 	.option("-f, --file <name>","file name")
 	.option("-y, --year <year>", "year")
 	.option("-q, --quarter <quarter>", "quarter")
@@ -28,11 +28,12 @@ program
 			return;
 		}
 
-		require('./genericImporter').parseXls(args.file, function(result){
-
-			CSVWriter.writeParsedResult(args.body, args.monkey, args.year, args.quarter, result);
-
-		});
+		require('./genericImporter').parseXls(args.file)
+			.then(
+				function(result){
+					CSVWriter.writeParsedResult(args.body, args.monkey, args.year, args.quarter, result);
+				}
+			);
 	});
 
 
@@ -118,10 +119,10 @@ program
 
 //convert directory of excel files to csv
 program
-	.command("load-dir")
+	.command("convert-dir")
 	.option("-d, --dir <name>","directory name")
 	.action(function(args){
-		require("./files_loader").loadDir(args.dir);
+		require("./files_loader").convertDir(args.dir);
 	})
 
 program
