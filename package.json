@@ -15,8 +15,10 @@
     "coffee-script": "latest",
     "commander": "latest",
     "express": "latest",
+    "fs-extra": "^0.18.2",
     "fs-extra-promise": "^0.1.0",
     "jasmine-node": "1.14.2",
+    "jszip": "^2.5.0",
     "moment": "latest",
     "node-zip": "1.0.1",
     "pg": "latest",
@@ -26,8 +28,11 @@
     "throat": "^1.0.0",
     "underscore": "latest",
     "valid-url": "^1.0.9",
+    "winston": "^1.0.0",
+    "xlsjs": "^0.7.5",
+    "xlsx": "^0.7.12",
     "xml2js": "latest",
-    "zombie": "latest"
+    "zombie": "3.1.0"
   },
   "devDependencies": {},
   "scripts": {
