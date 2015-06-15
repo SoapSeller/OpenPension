@@ -10,7 +10,8 @@ var URL = require("url"),
 	Quarter = require("./quarter"),
 	Promise = require("bluebird")
 	validUrl = require("valid-url"),
-	utils = require("./utils.js");
+	_ = require("underscore"),
+	Utils = require("./utils.js");
 
 var cUrl = 6,
 	cNum = 4,
@@ -181,49 +182,12 @@ var getContribFunds = function() {
 	});
 };
 
-/* Fetch all funds */
-var filterFunds = function(allFunds) {
-
-	var funds = [];
-
-	for(var i = 0; i < allFunds.length; ++i) {
-		var fund = allFunds[i];
-		if (
-			//fund.body == "Amitim" ||
-			fund.body == "clal" ||
-			fund.body == "DS" ||
-			fund.body == "Harel" ||
-			fund.body == "Menora" ||
-			fund.body == "Migdal" ||
-			fund.body == "psagot" ||
- 			fund.body == "fenix" ||
-			fund.body == "xnes"
-			) {
-			funds.push(fund);
-		}
-	}
-
-	return funds;
-};
 
 exports.fetchKnown = function(body, year, quarter, fund_number){
 
 	readGoogleDocsFundsFile()
 	.then(function(allFunds){
-		
-
-		//TODO: get chosen attributes from user
-		var chosenFunds = allFunds.filter(function(f){
-			return (body == undefined? true: f.body == body ||  ( isArray(body) && body.indexOf(f.body) > -1 ) ) 
-			&& (fund_number == undefined ? true: f.number == fund_number ||  ( isArray(fund_number) && fund_number.indexOf(f.number) > -1 ))
-			&& (year == undefined ? true: f.year == year ||  ( isArray(year) && year.indexOf(f.year) > -1 ))
-			&& (quarter == undefined? true: f.quarter == quarter ||  ( isArray(quarter) && quarter.indexOf(f.quarter) > -1 ))
-		})
-
-		return chosenFunds;
-	})
-	.then(function(chosenFunds){
-		return filterFunds(chosenFunds);	
+		return Utils.filterFunds(allFunds, body, year, quarter, fund_number);
 	})
 	.each(function(fund){
 		fc.downloadFundFile(fund);
@@ -240,9 +204,9 @@ exports.fetchKnown = function(body, year, quarter, fund_number){
 
 exports.fetchContrib = function(){
     getContribFunds()
-    .then(function(funds){
-    	return filterFunds(funds);
-    })
+    // .then(function(funds){
+    // 	return filterFunds(funds);
+    // })
     .each(function(fund){
     	fc.downloadFundFile(fund);
     });
@@ -250,11 +214,6 @@ exports.fetchContrib = function(){
 
 
 
-
-function isArray(ar) {
-  return Array.isArray(ar) ||
-         (typeof ar === 'object' && objectToString(ar) === '[object Array]');
-}
 
 
 //TODO: not finished... parse query results, sort by instrument type, write csv
@@ -271,10 +230,10 @@ exports.dumpFunds = function(body, year, quarter, fund_number){
 
 		//TODO: get chosen attributes from user
 		var chosenFunds = allFunds.filter(function(f){
-			return (body == undefined? true: f.body == body ||  ( isArray(body) && body.indexOf(f.body) > -1 ) ) 
-			&& (fund_number == undefined ? true: f.number == fund_number ||  ( isArray(fund_number) && fund_number.indexOf(f.number) > -1 ))
-			&& (year == undefined ? true: f.year == year ||  ( isArray(year) && year.indexOf(f.year) > -1 ))
-			&& (quarter == undefined? true: f.quarter == quarter ||  ( isArray(quarter) && quarter.indexOf(f.quarter) > -1 ))
+			return (body == undefined? true: f.body == body ||  ( _.isArray(body) && body.indexOf(f.body) > -1 ) ) 
+			&& (fund_number == undefined ? true: f.number == fund_number ||  ( _.isArray(fund_number) && fund_number.indexOf(f.number) > -1 ))
+			&& (year == undefined ? true: f.year == year ||  ( _.isArray(year) && year.indexOf(f.year) > -1 ))
+			&& (quarter == undefined? true: f.quarter == quarter ||  ( _.isArray(quarter) && quarter.indexOf(f.quarter) > -1 ))
 		})
 
 		return chosenFunds;
@@ -303,8 +262,8 @@ exports.dumpFunds = function(body, year, quarter, fund_number){
 		// var instrument_type = rows[0].
 		// var instrument_sub_type = rows[0].
 
-		var fundObj = utils.getFundObj(managing_body, report_year, report_qurater, fund);
-		var filename = utils.filename("./from_db", fundObj, ".csv");
+		var fundObj = Utils.getFundObj(managing_body, report_year, report_qurater, fund);
+		var filename = Utils.filename("./from_db", fundObj, ".csv");
 
 		console.log(rows);
 

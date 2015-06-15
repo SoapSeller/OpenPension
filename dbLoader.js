@@ -27,8 +27,8 @@ module.exports.importFileCmd = function(filePath, tableName){
 	var filename =  filePath.replace(/^.*(\\|\/|\:)/, '');
 	var parentDir = filePath.substr(0, filePath.length - filename.length);
 
-	process.stdout.cursorTo (0);
-	process.stdout.write("Importing: "+filename);
+	//process.stdout.cursorTo (0);
+	process.stdout.write("Importing: "+filename + "\n");
 
     return importFile(parentDir, filename, tableName)
 	.then(function(res){
@@ -56,8 +56,8 @@ var importFiles = function(files, parentDir, tableName, concurrency){
 
 	return Promise.all(files.map(throat(concurrency, function(filename){
 
-		process.stdout.cursorTo (0);
-		process.stdout.write(++counter+'/'+total + ":"+ filename);
+		//process.stdout.cursorTo (0);
+		process.stdout.write(++counter+'/'+total + ":"+ filename + "\n");
 	
 		if ( filename.substr(-4) !== '.csv' ){
 			return;

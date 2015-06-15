@@ -7,10 +7,11 @@ var fs = require("fs"),
 	genericImporter = require("./genericImporter.js"),
 	fse = require("fs-extra"),
 	logger = require("./logger.js"),
-	CSVWriter = require("./CSVWriter.js")
+	CSVWriter = require("./CSVWriter.js"),
+	Utils = require("./utils.js")
 
 
-exports.convertDir = function(dir){
+exports.convertDir = function(dir, body, fund_number, year, quarter){
 
 	if (dir.indexOf(path.sep) != dir.length){
 		dir += path.sep;
@@ -20,6 +21,8 @@ exports.convertDir = function(dir){
 	var files = fs.readdirSync(dir).filter(function(file){
 		return file.indexOf(".xlsx") > -1 || file.indexOf(".xls") > -1;
 	});
+
+	files = Utils.filterFiles(files, body, year, quarter, fund_number);
 
 	fetcherCommon.changeBaseFolder(dir);
 

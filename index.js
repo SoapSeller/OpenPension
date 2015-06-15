@@ -36,6 +36,17 @@ program
 			);
 	});
 
+//convert directory of excel files to csv
+program
+	.command("convert-dir")
+	.option("-d, --dir <name>","directory name")
+	.option("-y, --year <year>", "year")
+	.option("-q, --quarter <quarter>", "quarter")
+	.option("-b, --body <body>", "body")
+	.option("-m, --monkey <monkey>", "monkey")
+	.action(function(args){
+		require("./files_loader").convertDir(args.dir, args.body, args.monkey, args.year, args.quarter);
+	})
 
 program
 	.command("validate")
@@ -116,14 +127,6 @@ program
     .action(function(){
         require('./fetcher').fetchContrib();
     });
-
-//convert directory of excel files to csv
-program
-	.command("convert-dir")
-	.option("-d, --dir <name>","directory name")
-	.action(function(args){
-		require("./files_loader").convertDir(args.dir);
-	})
 
 program
 	.command("db-load")
