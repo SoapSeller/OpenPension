@@ -1,46 +1,75 @@
+var fs = require('fs');
 var program = require('commander');
 var xlsx = require('./xlsxparser.js');
 var db = require('./db.js');
 var CSVWriter = require('./CSVWriter')
 var MetaTable = require('./common/MetaTable');
+require('coffee-script/register');
+var dataValidator = require("./dataValidator.coffee")
+var initialize = require('./initialize');
 
+
+//convert excel file to csv
 program
-	.command('import')
+	.command('convert-file')
 	.option("-f, --file <name>","file name")
 	.option("-y, --year <year>", "year")
 	.option("-q, --quarter <quarter>", "quarter")
 	.option("-b, --body <body>", "body")
 	.option("-m, --monkey <monkey>", "monkey")
 	.action(function(args){
+				
+		var filename = "./tmp/" + [ args.body, args.year, args.quarter, args.monkey].join("_") + ".csv";
+
+		var exists = fs.existsSync(filename);
+
+		if (exists){
+			console.log("tried to import existing file:" + filename );
+			return;
+		}
+
+		require('./genericImporter').parseXls(args.file)
+			.then(
+				function(result){
+					CSVWriter.writeParsedResult(args.body, args.monkey, args.year, args.quarter, result);
+				}
+			);
+	});
+
+//convert directory of excel files to csv
+program
+	.command("convert-dir")
+	.option("-d, --dir <name>","directory name")
+	.option("-y, --year <year>", "year")
+	.option("-q, --quarter <quarter>", "quarter")
+	.option("-b, --body <body>", "body")
+	.option("-m, --monkey <monkey>", "monkey")
+	.action(function(args){
+		require("./files_loader").convertDir(args.dir, args.body, args.monkey, args.year, args.quarter);
+	})
+
+program
+	.command("validate")
+	.option("-f, --file <name>","xslx file name")
+	.action(function(args){
+		var metaTable = MetaTable.getMetaTable();
 		require('./genericImporter').parseXls(args.file, function(result){
-			var metaTable = MetaTable.getMetaTable();
-			var validated =  result.map(function(r){
+			var extracted =  result.map(function(r){
 				var validated = require('./validator').validate(r.engMap,r.data,r.idx)
 				var instrument = metaTable.instrumentTypes[r.idx];
 				var instrumentSub = metaTable.instrumentSubTypes[r.idx];
-				CSVWriter.write(args.body, args.monkey, args.year, args.quarter, r.idx, instrument, instrumentSub, validated,r.engMap)
-			})
+				return { validated : validated, instrument : instrument, instrumentSub : instrumentSub, engMap : r.engMap };
+			});
+			var filename = args.file.split("/")[args.file.split("/").length -1]
+			var parts = filename.split(".")[0].split("_");
+			var company = parts[0];
+			var year = parts[1];
+			var q = parts[2];
+			var fund = parts[3];
+			
+			dataValidator.validate(extracted, metaTable,company,year,q,fund);
 
-
-			// args.body, args.year, args.quarter, parseInt(args.monkey)
-		});
-	});
-
-
-
-program
-	.command("db")
-	.action(function(){
-		var map = [
-			{ columnName: "instrument_id" },
-			{ columnName: "date_of_purchase" }
-		];
-		var db = require('./db').open(true);
-		var tableWriter = db.openTable(map);
-		tableWriter("migdal", 2013, 1, "in_id", "in_sub_id", [
-			["inst1", "1/10/2004"],
-			["inst2", "2/10/2004 x"]
-		]);
+		});		
 	});
 
 program
@@ -64,9 +93,20 @@ program
 	});
 
 program
-	.command("fetch-known")
+	.command("dump-funds")
 	.action(function(){
-		require('./fetcher').fetchKnown();
+		require('./fetcher').dumpFunds();
+	});
+
+
+program
+	.command("fetch-known")
+	.option("-y, --year <year>", "year")
+	.option("-q, --quarter <quarter>", "quarter")
+	.option("-b, --body <body>", "body")
+	.option("-m, --monkey <monkey>", "monkey")
+	.action(function(args){
+		require('./fetcher').fetchKnown(args.body, args.year, args.quarter, args.monkey);
 	});
 
 program
@@ -83,11 +123,46 @@ program
 
 
 program
-	.command("load-dir")
+    .command("fetch-contrib")
+    .action(function(){
+        require('./fetcher').fetchContrib();
+    });
+
+program
+	.command("db-load")
 	.option("-d, --dir <name>","directory name")
+	.option("-t, --table <name>","table name")
+	.option("-c, --concurrency <number>","number of concurrent DB connections, defaults to 4")
 	.action(function(args){
-		require("./files_loader").loadDir(args.dir);
+		require('./dbLoader').importDirCmd(args.dir, args.table, args.concurrency)
+	})
+
+program
+	.command("db-load-file")
+	.option("-f, --file <name>","directory name")
+	.option("-t, --table <name>","table name")
+	.action(function(args){
+		require('./dbLoader').importFileCmd(args.file, args.table)
+	})
+
+program
+	.command("init")
+	.action(function(args){
+		require('./initialize').init()
+		.then(function(){
+			console.log('initialized.')
+		});
+	})
+
+program
+	.command("clean")
+	.action(function(args){
+		require('./initialize').clean()
+		.then(function(){
+			console.log('cleaned.')
+		});
 	})
 
 program.parse(process.argv);
+
 

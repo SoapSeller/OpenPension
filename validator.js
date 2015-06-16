@@ -106,21 +106,43 @@ var isNotNumber = function(value){
 }
 
 var isNumber = function(value){
-	return value != null && isNaN(parseInt(value)) == false;
+	return value != null && isNaN(parseFloat(value)) == false;
 }
 
 var cleanString = function(input){
-	return input.trim().replace(/,/g,"-").replace(/\([0-9]+\)/g,'').replace(/[$%\r\n]/g,'').replace(/^"/g,'').replace(/"$/g,'').replace(/([^"])"([^"])/gm,'$1""$2');
+	try { return (input || "").trim().replace(/,/g,"-")
+			.replace(/\([0-9]+\)/g,'')
+			.replace(/[$%\r\n]/g,'')
+			.replace(/^"/g,'')
+			.replace(/"$/g,'')
+			.replace(/([^"])"([^"])/gm,'$1""$2');
+	} catch(err) {
+		console.log("failed with input",input);
+		return "";
+	}
+}
+
+var re = /^IL00([0-9]+)[0-9][^0-9].*/; 
+
+var cleanInstrumentId = function(input){
+	var out = re.exec(input);
+	if (out)
+		return out[0]
+	else 
+		return input
 }
 
 var cleanNumber = function(input){
-	var _input = input.replace(/([^])-/g,"$1");
-	if (isNaN(parseInt(_input))) {
-		console.log("had to zero string value which was:" + input);
-		return 0;
+	if (!input) 
+		return input;
+	var _input = parseFloat(input.replace(/([^]+?[^Ee])-/g,"$1"));
+	
+	if (isNaN(_input)) {
+		console.log("returning 0:",input,_input,input < 0 );
+		return "0";
 	}
 	else
-		return parseInt(_input);
+		return parseFloat(_input);
 }
 
 var isContaining = function(input,word){
@@ -179,6 +201,85 @@ var normalizeCurrency = function(input){
 		case 'ריאל ברזילאי': 		return 'BRL';
 		case 'רנד': 				return 'ZAR';
 		case 'ILS': 				return 'NIS';
+		case '_פרנק שויצרי': 		return 'CHF';
+		case 'דולר אוסטרלי': 		return 'AUD';
+		case 'אוסטרלי': 			return 'AUD';
+		case 'אוסטרליה-דולר':		return 'AUD';
+		case 'אוסטרליה-דולר תקין':	return 'AUD';
+		case 'אירו שיקוף':			return 'EUR';
+		case 'אירופה-יורו':			return 'EUR';
+		case 'בטחונות דולר':		return 'USD';
+		case 'דולר  אוסטרליה':		return 'AUD';
+		case 'דולר  הונגקונג':		return 'HKD';
+		case 'דולר אוסטרלי דנאל':	return 'AUD';
+		case 'דולר אוסטרלי עדכני':	return 'AUD';
+		case 'דולר אוסטרלי שיקוף':	return 'AUD';
+		case 'דולר ארה ב':			return 'USD';
+		case 'דולר ארה~ב':			return 'USD';
+		case 'דולר ארהב':			return 'USD';
+		case 'דולר ארהב יציג':		return 'USD';
+		case 'דולר ארהב שיקוף':		return 'USD';
+		case 'דולר הונג-קונג':		return 'HKD';
+		case 'דולר הונג-קונג יציג':	return 'HKD';
+		case 'דולר הונג-קונג עדכני':return 'HKD';
+		case 'דולר הונג קונג - תקין':return 'HKD';
+		case 'דולר הונג קונג שיקוף':return 'HKD';
+		case 'דולר חדש עדכני':		return 'USD';
+		case 'דולר לאומי שוויץ':	return 'USD';
+		case 'דולר מיוחד':			return 'USD';
+		case 'דולר ניו-זילנד':		return 'NZD';
+		case 'דולר ניו זילנדי':		return 'NZD';
+		case 'דולר קנדי שיקוף':		return 'CAD';
+		case 'זלוטי':				return 'PLN';
+		case 'זלוטי פולני':			return 'PLN';
+		case 'זלוטי פולני עדכני':	return 'PLN';
+		case 'יורו יציג':			return 'EUR';
+		case 'יורו לאומי שוויץ':	return 'EUR';
+		case 'יין יפני- לאומי':		return 'JPY';
+		case 'יין יפני - תקין':		return 'JPY';
+		case 'יין יפני יובנק':		return 'JPY';
+		case 'יין יפני יציג':		return 'JPY';
+		case 'יין יפני שיקוף':		return 'JPY';
+		case 'ין יפן YPJ  לעסקת פורוורד':return 'JPY';
+		case 'ין יפני עדכני':		return 'JPY';
+		case 'ין/100':				return 'JPY';
+		case 'כתר   נורוגיה':		return 'NOK';
+		case 'כתר דנמרק':			return 'DKK';
+		case 'כתר נורבגי עדכני':	return 'NOK';
+		case 'כתר נורבגי שיקוף':	return 'NOK';
+		case 'כתר שבדי שיקוף':		return 'SEK';
+		case 'לירה טורקית חדשה':	return 'TRY';
+		case 'לירה סטרלינג':		return 'GBP';
+		case 'לירה שטרלינג':		return 'GBP';
+		case 'לירה שטרלינג יציג':	return 'GBP';
+		case 'לירה שטרלינג תקין':	return 'GBP';
+		case 'ליש':					return 'GBP';
+		case 'לישט':				return 'GBP';
+		case 'לישט - יציג':			return 'GBP';
+		case 'לישט שיקוף':			return 'GBP';
+		case 'ניו   זילנד דולר':	return 'NZD';
+		case 'פזו מקסיקני חדש':		return 'MXN';
+		case 'פזו צ\'יליאני':		return 'CLP';
+		case 'פזו צ\'יליאני עדכני':	return 'CLP';
+		case 'פזו צ יליאני':		return 'CLP';
+		case 'פזטה מקסיקני':		return 'MXN';
+		case 'פרנק שוויצרי עדכני':	return 'CHF';
+		case 'פרנק שווצרי':			return 'CHF';
+		case 'פרש':					return 'CHF';
+		case 'קנדה- דולר':			return 'CAD';
+		case 'קנדה-דולר':			return 'CAD';
+		case 'קנדה-דולר תקין':		return 'CAD';
+		case 'קנדי':				return 'CAD';
+		case 'ריאל ברזיל':			return 'BRL';
+		case 'ריאל ברזילאי  - בלל':	return 'BRL';
+		case 'ריאל ברזילאי יציג':	return 'BRL';
+		case 'ריאל ברזילאי תקין':	return 'BRL';
+		case 'רנד ד.א':				return 'ZAR';
+		case 'רנד דרא פ':			return 'ZAR';
+		case 'רנד דראפ':			return 'ZAR';
+		case 'ש\'ח':				return 'NIS';
+		case 'שטרלינג עדכני':		return 'GBP';
+		case 'שיקוף פרנק שויצרי':	return 'CHF';
 			default: return _input;
 	}
 }
@@ -611,7 +712,7 @@ var normalizeValues = function(enName, value){
 
 	switch(enName){
 		case 'instrument_symbol': 	return cleanString(value);
-		case 'instrument_id': 		return cleanString(value); //?????
+		case 'instrument_id': 		return cleanInstrumentId(cleanString(value)); //?????
 		case 'underlying_asset': 	return cleanString(value);
 		case 'instrument_type': 	return cleanString(value);
 		case 'instrument_sub_type': return cleanString(value);
@@ -623,10 +724,10 @@ var normalizeValues = function(enName, value){
 		case 'currency': 			return cleanString(normalizeCurrency(value));
   		case 'intrest_rate': 		return cleanNumber(cleanString(value));
 		case 'yield': 				return cleanNumber(cleanString(value));
-		case 'par_value': 			return cleanNumber(cleanString(value));
+		case 'par_value': 			return cleanNumber(value);
 		case 'rate': 				return cleanNumber(cleanString(value));
 		case 'market_cap': 			return cleanNumber(cleanString(value));
-		case 'fair_value': 			return cleanNumber(cleanString(value));
+		case 'fair_value': 			return cleanNumber(value);
 		case 'rate_of_ipo': 		return cleanNumber(cleanString(value));
 		case 'rate_of_fund': 		return cleanNumber(cleanString(value));
 		case 'date_of_revaluation': return parseDate(value);

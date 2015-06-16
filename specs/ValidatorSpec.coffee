@@ -16,6 +16,8 @@ describe "Validator Spec",->
 			{asset : "harel_2010_3_739", rows : 9}
 			{asset : "Migdal_2012_4_1161", rows : 21}
 			{asset : "psagot_2013_3_15312070", rows : 6}
+			{asset : "harel_2013_3_171", rows: 29}
+			{asset : "Menora_2014_1_532", rows: 1}
 		])
 
 	it "validates noyarot ereh shirim teudot hithayvot mimshaltiyot",->
@@ -28,6 +30,7 @@ describe "Validator Spec",->
 			{asset : "harel_2010_3_739", rows : 0}
 			{asset : "Migdal_2012_4_1161", rows : 28}
 			{asset : "psagot_2013_3_15312070", rows : 17}
+			{asset : "Menora_2014_1_532", rows: 0}
 		])
 
 	it "validates noyarot ereh shirim teudot hov mishariyot",->
@@ -39,6 +42,7 @@ describe "Validator Spec",->
 			{asset : "harel_2010_3_739", rows : 0}
 			{asset : "Migdal_2012_4_1161", rows : 0}
 			{asset : "psagot_2013_3_15312070", rows : 0}
+			{asset : "Menora_2014_1_532", rows: 0}
 		])
 			
 	it "validates noyarot ereh shirim agah konzerni",->
@@ -51,6 +55,7 @@ describe "Validator Spec",->
 			{asset : "harel_2010_3_739", rows : 5}
 			{asset : "Migdal_2012_4_1161", rows : 168}
 			{asset : "psagot_2013_3_15312070", rows : 152}
+			{asset : "Menora_2014_1_532", rows: 22}
 		])
 
 	it "validates noyarot ereh shirim menayot",->
@@ -63,6 +68,7 @@ describe "Validator Spec",->
 			{asset : "harel_2010_3_739", rows : 43}
 			{asset : "Migdal_2012_4_1161", rows : 132}
 			{asset : "psagot_2013_3_15312070", rows : 65}
+			{asset : "Menora_2014_1_532", rows: 4}
 		])
 
 	it "validates noyarot ereh shirim teudot sal",->
@@ -75,6 +81,7 @@ describe "Validator Spec",->
 			{asset : "harel_2010_3_739", rows : 17}
 			{asset : "Migdal_2012_4_1161", rows : 71}
 			{asset : "psagot_2013_3_15312070", rows : 41}
+			{asset : "Menora_2014_1_532", rows: 0}
 		])
 
 	it "validates noyarot ereh shirim kranot neemanut",->
@@ -87,6 +94,7 @@ describe "Validator Spec",->
 			{asset : "harel_2010_3_739", rows : 11}
 			{asset : "Migdal_2012_4_1161", rows : 17}
 			{asset : "psagot_2013_3_15312070", rows : 20}
+			{asset : "Menora_2014_1_532", rows: 0}
 		])
 
 	it "validates noyarot ereh shirim kitvei optziya",->
@@ -99,6 +107,7 @@ describe "Validator Spec",->
 			{asset : "harel_2010_3_739", rows : 3}
 			{asset : "Migdal_2012_4_1161", rows : 4}
 			{asset : "psagot_2013_3_15312070", rows : 0}
+			{asset : "Menora_2014_1_532", rows: 0}
 		])
 
 	it "validates noyarot ereh LO shirim teudot hithayvut mimshaltiyot",->
@@ -110,6 +119,7 @@ describe "Validator Spec",->
 			{asset : "harel_2010_3_739", rows : 0}
 			{asset : "Migdal_2012_4_1161", rows : 0}
 			{asset : "psagot_2013_3_15312070", rows : 31}
+			{asset : "Menora_2014_1_532", rows: 160}
 		])
 
 	it "validates noyarot ereh LO shirim agah konzerni",->
@@ -122,6 +132,7 @@ describe "Validator Spec",->
 			{asset : "harel_2010_3_739", rows : 1}
 			{asset : "Migdal_2012_4_1161", rows : 3}
 			{asset : "psagot_2013_3_15312070", rows : 0}
+			{asset : "Menora_2014_1_532", rows: 29}
 		])
 
 	it "validates noyarot ereh LO shirim menayot",->
@@ -133,6 +144,7 @@ describe "Validator Spec",->
 			{asset : "harel_2010_3_739", rows : 1}
 			{asset : "Migdal_2012_4_1161", rows : 0}
 			{asset : "psagot_2013_3_15312070", rows : 0}
+			# {asset : "Menora_2014_1_532", rows: 0}
 		])
 
 	it "validates noyarot ereh LO shirim kranot hashkaa",->

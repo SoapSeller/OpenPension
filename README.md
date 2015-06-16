@@ -3,12 +3,28 @@
 
 Import pension "single asset" files into unfied DB.
 
+
 ## Installation
 
-Clone and than simply run:
+Prerequisites
+
+ssconvert
+```shell
+sudo apt-get install gnumeric
+```
+
+Clone and initialize submodules
+```shell
+git clone ...
+git submodule init
+git submodule update
+```
+and then run (must be node ~v10.x..)
 ```shell
 npm install
 ```
+switch node versions easily with [nvm](https://github.com/creationix/nvm)
+
     
 ## Usage
 

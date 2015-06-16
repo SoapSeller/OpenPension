@@ -1,11 +1,12 @@
-
 var fs = require('fs'),
-    pg = require('pg'),
     _ = require('underscore'),
     moment = require('moment'),
     metaTable = require(__dirname + '/common/MetaTable').getMetaTable(),
     columnsNames = metaTable.englishColumns,
     columnsTypes = metaTable.dataTypes;
+
+var Promise = require('bluebird');
+var pg = require('postgres-bluebird');
 
 var defaultColumnnNames = ['managing_body', 'fund' ,'report_year', 'report_qurater', 'instrument_type', 'instrument_sub_type'];
 var defaultColumnnTypes = ['string', 'number' ,'number', 'number', 'string', 'string'];
@@ -42,7 +43,7 @@ db.csv = function(filename) {
   }
 };
 
-db.csv.write = function(filename, mapping,managing_body, fund, report_year, report_qurater, instrument_type, instrument_sub_type, objects){
+db.csv.write = function(filename, mapping, managing_body, fund, report_year, report_qurater, instrument_type, instrument_sub_type, objects){
 
   var exists = fs.existsSync(filename);
   var stream = fs.createWriteStream(filename, { flags: 'a+', encoding: "utf8", mode: 0666 });
@@ -82,6 +83,10 @@ db.csv.write = function(filename, mapping,managing_body, fund, report_year, repo
   });
 
 };
+
+db.csv.dump = function(managing_body, report_year, report_qurater, fund_number){
+
+}
 
 db.csv.prototype = {
   openTable: function(mapping) {
@@ -140,30 +145,32 @@ var mapColumnType2Sql = function(type) {
 };
 
 var a  = 0;
-db.pg = function() {
+db.pg = function(noCreate) {
     var self = this;
     self.client = new pg.Client(config.connection_string);
     self.client.connect();
 
     self.tablesCounter = 0;
-    var createTable = "CREATE TABLE " + tableName + "( ";
-    var fields = _.zip(columnsNames, columnsTypes.map(mapColumnType2Sql));
-    createTable += fields.filter(function(f) { return !!f[0] && !!f[1]; }).map(function(f) { return f[0] + " " + f[1]; }).join(',');
-    createTable += ");";
+    if (noCreate === undefined || noCreate !== true) {
+        var createTable = "CREATE TABLE " + tableName + "( ";
+        var fields = _.zip(columnsNames, columnsTypes.map(mapColumnType2Sql));
+        createTable += fields.filter(function(f) { return !!f[0] && !!f[1]; }).map(function(f) { return f[0] + " " + f[1]; }).join(',');
+        createTable += ");";
 
 
-    self.client.query(createTable, function(err) {
-      if(!err) {
-        self.client.query('GRANT SELECT ON ' + tableName + ' TO opublic;', function(err) {
-          if (err) {
-            console.log("error in grant", err);
+        self.client.query(createTable, function(err) {
+          if(!err) {
+            self.client.query('GRANT SELECT ON ' + tableName + ' TO opublic;', function(err) {
+              if (err) {
+                console.log("error in grant", err);
+              }
+              console.log(">>1a");
+            });
+          } else {
+            console.log("error in create", err);
           }
-          console.log(">>1a");
         });
-      } else {
-        console.log("error in create", err);
-      }
-    });
+    }
   };
 
 db.pg.prototype = {
@@ -222,8 +229,31 @@ db.pg.prototype = {
 //   });
 // };
 
+function query(sqlQuery){
+  return  pg.connectAsync(config.connection_string)
+        .spread(function(client, release) {
+          
+          return new Promise(function(resolve,reject){
+      
+            return client.queryAsync(sqlQuery)
+            .then(function(qresult){
+              release();
+              resolve(qresult);
+            })
+            .catch(function(err){
+              reject(err);
+            });
+
+          });
+      });
+}
+
+exports.query = query;
+
 exports.pg = db.pg;
 exports.csv = db.csv;
+exports.defaultColumnsNamesMapping = defaultColumnsNamesMapping;
+exports.columnsNames = columnsNames;
 exports.open = function() {
   if (config.db_mode == "csv")
     return new db.csv("dump.csv");

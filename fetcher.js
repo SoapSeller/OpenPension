@@ -4,7 +4,14 @@ var URL = require("url"),
 	fs = require("fs"),
 	cp = require("child_process"),
 	fc = require("./fetcher.common.js"),
-	harel = require("./fetcher.harel.js");
+	harel = require("./fetcher.harel.js"),
+	CSVWriter = require("./CSVWriter.js"),
+	db = require("./db.js"),
+	Quarter = require("./quarter"),
+	Promise = require("bluebird")
+	validUrl = require("valid-url"),
+	_ = require("underscore"),
+	Utils = require("./utils.js");
 
 var cUrl = 6,
 	cNum = 4,
@@ -44,20 +51,66 @@ var parseBody = function(body) {
 	return null;
 };
 
+var readGoogleDocsFundsFile = function(){
 
-var readFundsFileFetching = function(){
-	var parsedLines = require('fs').readFileSync('files_data.csv').toString().split("\n");
+	return new Promise(function(resolve, reject){
+
+		var options = {
+			host: "docs.google.com",
+			port : 443,
+			path : "/spreadsheets/d/1mUsNeb8gD2ELPKGpjD12AqZkuCybJlGCTz62oryLZY4/export?exportFormat=csv&gid=1311761971"
+		}
+		
+		var data = '';
+
+		https.get(options,function(res){
+			
+			res.on('data', function(chunk){
+				data = data + chunk.toString();
+			});
+
+			res.on('end', function(){
+				var parsedLines = data.split("\n");
+				
+				parseCsvFetch(parsedLines)
+				.then(function(funds){
+					resolve(funds);
+				});
+			});
+		})
+		.on('error',function(r){
+			console.log("error fetching sheet",r);
+			process.exit();
+			reject("error fetching sheet "+r);
+		});
+
+	});
+}
+
+var parseCsvFetch = function(parsedLines){
+
 	var reducer = function(out, line){
 		var splt = line.split(',');
 		var _out = [];
-		if (splt[2] && splt[4] && splt[8])   _out.push({ body : splt[2], number : splt[4], url : splt[8], year : 2012, quarter : 4 })
-		if (splt[2] && splt[4] && splt[9])   _out.push({ body : splt[2], number : splt[4], url : splt[9], year : 2013, quarter : 1 })
-		if (splt[2] && splt[4] && splt[10])  _out.push({ body : splt[2], number : splt[4], url : splt[10], year : 2013, quarter : 2 })
-		if (splt[2] && splt[4] && splt[11])  _out.push({ body : splt[2], number : splt[4], url : splt[11], year : 2013, quarter : 3 })
-		if (splt[2] && splt[4] && splt[12])  _out.push({ body : splt[2], number : splt[4], url : splt[12], year : 2013, quarter : 4 })
+		var startYear = 2012;
+		var startQuarter = 4;
+
+		var quarter =  new Quarter(startYear, startQuarter -1);
+
+		for (var i = 8; i < splt.length; i++){
+
+			if (splt[2] && splt[5] && splt[i] && validUrl.isUri(splt[i].trim()))   
+				_out.push({ body : splt[2], number : splt[5], url : splt[i], year : quarter.year, quarter : quarter.quarter + 1 })
+
+			quarter.increase();
+		}
 		return out.concat(_out)
 	}
-	return parsedLines.reduce(reducer, [])
+
+	return new Promise(function(resolve, reject){
+		resolve(parsedLines.reduce(reducer, []));
+	});
+
 }
 
 
@@ -99,114 +152,126 @@ var readFundsFile = function() {
 };
 
 
-var doFetch = function(step, funds, seed) {
-	if (seed < funds.length) {
-		var fund = funds[seed];
-		var next = doFetch.bind(this, step, funds, seed+step);
-		switch (fund.body) {
-			case "harel":
-				harel.fetchOne(fund, next);
-			break;
-			default:
-				fc.fetchFund(fund, next);
-		}
-	}
-};
+var getContribFunds = function() {
 
-/* Fetch all funds */
-exports.fetchAll = function(funds) {
+	return new Promise(function(resolve, reject){
 
-	var step = 8;
-	for(var i = 0; i < Math.min(funds.length, step); ++i) {
-		doFetch(step, funds, i);
-	}
-};
+	    var client = (new db.pg(true)).client;
 
-exports.fetchKnown = function(){
-	var allFunds = readFundsFileFetching();
-	var funds = [];
+	    client.query("SELECT q.id, q.year, q.quarter, q.url, q.status, f.managing_body, f.id as fund_id, f.name as fund_name, f.url as fund_url FROM admin_funds_quarters as q, admin_funds as f WHERE q.fund_id = f.id AND status = 'validated'", function(err, result) {
 
-	for(var i = 0; i < allFunds.length; ++i) {
-		var fund = allFunds[i];
-		if (
-			fund.body == "Menora" ||
-			fund.body == "psagot" ||
-			fund.body == "Migdal" ||
-			fund.body == "fenix" ||
-			fund.body == "clal" ||
-			fund.body == "xnes" ||
-			fund.body == "Amitim" ||
-			fund.body == "Ayalon" ||
-			fund.body == "IDI" ||
-			fund.body == "IBI"
-			) {
-			funds.push(fund);
-		}
-	}
+	        if(err) {
+	            return console.error('error running query', err);
+	        }
 
-	exports.fetchAll(funds);
-};
+	        var funds = [];
 
-exports.fetchMenora = function(){
-	var allFunds = readFundsFileFetching();
-	var funds = [];
+	        result.rows.forEach(function(f) {
+	            funds.push({
+	                body: f.managing_body,
+	                number: f.fund_id,
+	                url: f.url,
+	                year: f.year,
+	                quarter: f.quarter+1
+	            });
+	        });
 
-	for(var i = 0; i < allFunds.length; ++i) {
-		var fund = allFunds[i];
-		if (fund.body == "Menora") {
-			funds.push(fund);
-		}
-	}
 
-	exports.fetchAll(funds);
+	        resolve(funds);
+    	});
+	});
 };
 
 
-exports.fetchAmitim = function(){
-	var allFunds = readFundsFileFetching();
-	var funds = [];
+exports.fetchKnown = function(body, year, quarter, fund_number){
 
-	for(var i = 0; i < allFunds.length; ++i) {
-		var fund = allFunds[i];
-		if (fund.body == "amitim") {
-			funds.push(fund);
-		}
-	}
-
-	exports.fetchAll(funds);
+	readGoogleDocsFundsFile()
+	.then(function(allFunds){
+		return Utils.filterFunds(allFunds, body, year, quarter, fund_number);
+	})
+	.each(function(fund){
+		fc.downloadFundFile(fund);
+	})
+	.then(function(k){
+		console.log(k);
+	})
+	.catch(function(e){
+		console.log(e.stack);
+	});
 };
 
-exports.fetchHarel = function() {
-	var allFunds = readFundsFile();
 
-	var funds = [];
 
-	for(var i = 0; i < allFunds.length; ++i) {
-		var fund = allFunds[i];
-		console.log(fund.body);
-		if (fund.body == "harel") {
-			funds.push(fund);
-		}
-	}
+exports.fetchContrib = function(){
+    getContribFunds()
+    // .then(function(funds){
+    // 	return filterFunds(funds);
+    // })
+    .each(function(fund){
+    	fc.downloadFundFile(fund);
+    });
+};
 
-	exports.fetchAll(funds);
-	// var outFile = fs.createWriteStream("test.csv");
 
-	// var count = funds.length;
-	// var handleDone = function(fund, fundFiles) {
-	// 	console.log("Writing fund", fund.number, "files");
-	// 	for (var i = 0; i < fundFiles.length; ++i) {
-	// 		var file = fundFiles[i];
-	// 		outFile.write([fund.number, file.year, file. q, file.url].join(',') + "\n");
-	// 	}
 
-	// 	if (--count === 0) {
-	// 		console.log("All funds fetched.");
-	// 		outFile.end();
-	// 	}
-	// };
 
-	// for (i = 0; i < funds.length; ++i) {
-	// 	harel.fetchOne(funds[i], handleDone);
-	// }
+
+//TODO: not finished... parse query results, sort by instrument type, write csv
+exports.dumpFunds = function(body, year, quarter, fund_number){
+
+	readGoogleDocsFundsFile()
+	.then(function(allFunds){
+		
+
+		body = 'Migdal';
+		year = '2014';
+		quarter = '2';
+		fund_number = '659';
+
+		//TODO: get chosen attributes from user
+		var chosenFunds = allFunds.filter(function(f){
+			return (body == undefined? true: f.body == body ||  ( _.isArray(body) && body.indexOf(f.body) > -1 ) ) 
+			&& (fund_number == undefined ? true: f.number == fund_number ||  ( _.isArray(fund_number) && fund_number.indexOf(f.number) > -1 ))
+			&& (year == undefined ? true: f.year == year ||  ( _.isArray(year) && year.indexOf(f.year) > -1 ))
+			&& (quarter == undefined? true: f.quarter == quarter ||  ( _.isArray(quarter) && quarter.indexOf(f.quarter) > -1 ))
+		})
+
+		return chosenFunds;
+	})
+	.then(function(chosenFunds){
+
+		return chosenFunds.map(function(chosenFund){
+
+			var tableName = "pension_data_all"
+			var sql = "SELECT * FROM "+ tableName +" WHERE managing_body='" +chosenFund.body +"'"
+						+ " AND report_year='"+chosenFund.year+"' AND report_qurater='"+chosenFund.quarter+"'"
+						+ " AND fund='"+chosenFund.number+"' ";
+			return db.query(sql);
+
+		});
+	})
+	.map(function(queryResult){
+		console.log("=============================")
+		// console.log(queryResult);
+		var rowCount = queryResult.rowCount;
+		var rows = queryResult.rows;
+		var managing_body = rows[0].managing_body;
+		var report_year = rows[0].report_year;
+		var report_qurater = rows[0].managing_body;
+		var fund = rows[0].fund;
+		// var instrument_type = rows[0].
+		// var instrument_sub_type = rows[0].
+
+		var fundObj = Utils.getFundObj(managing_body, report_year, report_qurater, fund);
+		var filename = Utils.filename("./from_db", fundObj, ".csv");
+
+		console.log(rows);
+
+		console.log("=============================")
+
+		CSVWriter.write(managing_body, fund, report_year, report_qurater, instrument, instrumentSub, tabData, headers)
+		return;
+
+	});
+	
 };

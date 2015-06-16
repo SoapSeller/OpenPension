@@ -2,143 +2,139 @@ var URL = require("url"),
 	http = require("http"),
 	https = require("https"),
 	fs = require("fs"),
-	cp = require("child_process");
+	Promise = require("bluebird"),
+	CSVWriter = require('./CSVWriter.js'),
+	utils = require("./utils.js"),
+	path = require("path");
+
+
+var baseFolder = "res/";
+var targetFolder = "tmp/";
+
+exports.changeBaseFolder = function(newFolder){ baseFolder = newFolder; console.log("changing to folder:",newFolder); };
 
 /* fetch a fund to file
  * fund: Object of type:
- *					{ body: englishBody, // See 'bodys' aboce
+
+ *					{ body: englishBody, // See 'bodys' above
  *					  number: number,
  *					  url: fileurl }
  *  onDone: Callback with format void(downloadedFilePath, error)
  */
 
-function filename(fund){
-	var baseName = "res/" + fund.body;
-        if (fund['year']) {
-                baseName += "_" + fund.year;
-        }
-        if (fund['quarter']) {
-                baseName += "_" + fund.quarter;
-        }
-    	baseName += "_" + fund.number;
-        return baseName + ".xls";
-}
-
-function filenameX(fund){
-	return filename(fund) + "x";
-}
-
-function importFund(fund, onDone){
-	require("child_process").exec("node index import -f " + filenameX(fund)
-                + " -y " + fund.year + " -q " + fund.quarter + " -b " + fund.body + " -m " + fund.number, function(e){
-		if (e) console.log(e);
-                onDone(filenameX(fund));
-         });
-}
-
-var dedup = []
 
 
-exports.fetchFund = function(fund, onDone) {
+//downloadFundFile
+exports.downloadFundFile = function(fund) {
 
-	if (dedup.indexOf(filename(fund)) > -1) 
-		return onDone(null, "tried to fetch existing file" + filename(fund));
-	else
-		dedup.push(filename(fund));
+	console.log('--> fetch fund')
 
 
-	if (fund.url.indexOf('http') !== 0) {
-		fund.url = 'http://' + fund.url;
-	}
+	return new Promise(function(resolve, reject){
 
-	//console.log(fund.url);
-	url = URL.parse(fund.url);
-
-	var isHttps = url.protocol == "https:";
-	var options = {
-		hostname: url.hostname,
-		port: url.port ? url.port : (isHttps ? 443 : 80),
-		path: url.path,
-		method: 'GET',
-		rejectUnauthorized: false
-	};
+		var url = URL.parse(fund.url);
+		var ext = path.extname(fund.url);
+		var xlFilename = utils.filename(baseFolder, fund, ext);
 
 
-	if (fs.existsSync(filenameX(fund))){
-		console.log("skipping existing file " + filenameX(fund));
-		return importFund(fund, onDone);
-	}
+		if (fs.existsSync(xlFilename)){
+			console.log("tried to fetch existing file: " + xlFilename);
+			return;
+		}
 
-	var stream = fs.createWriteStream(filename(fund), { flags: 'w+', encoding: "binary", mode: 0666 });
+		
+		if (fund.url.indexOf('http') !== 0) {
+			reject();
+		}
 
-	var client = isHttps ? https : http;
+		var isHttps = url.protocol == "https:";
+		var options = {
+			hostname: url.hostname,
+			headers: {'user-agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.11 (KHTML, like Gecko) Chrome/17.0.963.79 Safari/535.11'},
+			port: url.port ? url.port : (isHttps ? 443 : 80),
+			path: url.path,
+			method: 'GET',
+			rejectUnauthorized: false
+		};
 
-	var req = client.request(options, function(res) {
-		//res.setEncoding('binary');
-		res.on('data', function (chunk) {
-			stream.write(chunk);
-		});
-		res.on('end', function() {
-			stream.end();
 
+		var client = isHttps ? https : http;
 
-			cp.exec("file " + filename(fund), function (err, stdout, stderr) {
-				if (!err &&
-					(
-						stdout.toString().indexOf("CDF V2") !== -1 ||
-						stdout.toString().indexOf("Composite Document File V2 Document") !== -1 ||
-						stdout.toString().indexOf("Microsoft Excel 2007+") !== -1
-					)) {
-					var cmd = "ssconvert --export-type=Gnumeric_Excel:xlsx " + filename(fund) + " " + filenameX(fund);
-					//console.log(filename);
+		var req = client.request(options, function(res) {
 
-					cp.exec(cmd, function(err, stdout, stderr) {
-						//console.log(cmd);
-						//console.log(stdout);
-						fs.unlink(filename(fund), function() {
-							importFund(fund, onDone);
-                        			});
-					});
-				} else if (stdout.toString().indexOf("Zip archive data, at least v2.0 to extract") !== -1) {
-					// File is already xlsx, just move it to the right name
-					cp.exec("mv -f " + filename(fund) + " " + filenameX(fund), function(err, stdout, stderr) {
-						//console.log(cmd);
-						//console.log(stdout);
-						importFund(fund, onDone);
-					});
-				} else {
-					console.log("Error with fund: ", fund, stdout);
-					fs.unlink(filename(fund), function() {
-    			                    onDone(null, "Can't convert fund: " + stdout);
-			                });
-				}
+			res.on('end', function() {
+
+				resolve(xlFilename);
+
 			});
 		});
-	});
 
-	req.on('error', function(e) {
-		console.log('problem with request(' + fund.url +  '): ' + e.message, options);
-		onDone(null, "Can't fetch fund: "  + e.message);
-	});
+		req.on('response',  function (res) {
 
-	req.end();
+			console.log("got response: "+ ext);
+
+			if (ext.indexOf("xls") == -1){
+				var httpExt = getExtFromHttpResponse(res);
+
+				console.log("got httpExt: "+httpExt);
+				
+				if (httpExt != undefined){
+					xlFilename = utils.filename(baseFolder, fund, httpExt);
+					ext = httpExt;
+				}
+				else{
+					reject();
+				}
+			
+			}
+
+			if (fs.existsSync(xlFilename)){
+				console.log("tried to fetch existing file: " + xlFilename);
+			
+				resolve(xlFilename);
+			}
+
+			console.log('fetching ' + xlFilename );
+			res.pipe(fs.createWriteStream(xlFilename, { flags: 'w+', encoding: "binary", mode: 0666 }));
+		});
+
+		req.on('error', function(e) {
+			console.log('problem with request(' + fund.url +  '): ' + e.message, options);
+			reject();
+		});
+
+		req.end();
+
+	});
+	
 };
 
-exports.fetchFunds = function(funds, onDone) {
-	if (funds.length === 0) {
-		return;
+
+
+function getExtFromHttpResponse(res){
+
+	var attachment = res.headers['content-disposition'];
+	var contentType = res.headers['content-type'];
+	var ext;
+	
+	if (attachment != undefined && attachment.indexOf("filename")){
+		ext = path.extname(attachment);
 	}
-	//var count = funds.length;
-	var handleDone = function() {
-		//--count;
-		funds.pop();
-		//if (count === 0) {
-		if (funds.length === 0) {
-			onDone();
-		} else {
-			exports.fetchFund(funds[funds.length-1], handleDone);
+	else if (contentType != undefined){
+		if (contentType == "application/vnd.ms-excel"){
+			ext = ".xls";
 		}
-	};
+		else if (contentType == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"){
+			ext = ".xlsx"
+		}
+		else{
+			console.log("unknown contentType: "+ contentType);
+		}
+	}
+	else{
+		console.log("could not determine file name: "+ res);
+	}
 
-	exports.fetchFund(funds[funds.length-1], handleDone);
-};
+	return ext;
+}
+

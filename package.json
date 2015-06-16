@@ -1,34 +1,45 @@
 {
-    "name" : "OpenPension",
-    "version" : "0.0.1",
-    "description" : "This will annoy pention funds (we hope)",
-    "main" : "./index.js",
-    "keywords" : [
-        "pension"
-    ],
-    "repository" : {
-        "type" : "git",
-        "url" : "git://github.com/SoapSeller/OpenPension.git"
-    },
-    "dependencies" : {
-	"underscore": "latest",
-	"moment": "latest",
-	"node-zip" : "1.0.1",
-	"xml2js" : "latest",
-	"commander": "latest",
-	"request": "latest",
-	"jasmine-node": ">= 1.0.26",
-	"zombie": "latest",
-	"coffee-script": "latest",
+  "name": "OpenPension",
+  "version": "0.0.1",
+  "description": "This will annoy pention funds (we hope)",
+  "main": "./index.js",
+  "keywords": [
+    "pension"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/SoapSeller/OpenPension.git"
+  },
+  "dependencies": {
+    "bluebird": "latest",
+    "coffee-script": "latest",
+    "commander": "latest",
     "express": "latest",
-    "pg": "latest"
-    },
-    "devDependencies" : {},
-    "scripts" : {
-		"test": "cake test"
-	},
-    "engine" : {"node" : ">=0.9.0"},
-    "author" : {}
+    "fs-extra": "^0.18.2",
+    "fs-extra-promise": "^0.1.0",
+    "jasmine-node": "1.14.2",
+    "jszip": "^2.5.0",
+    "moment": "latest",
+    "node-zip": "1.0.1",
+    "pg": "latest",
+    "pg-copy-streams": "^0.3.0",
+    "postgres-bluebird": "0.0.4",
+    "request": "latest",
+    "throat": "^1.0.0",
+    "underscore": "latest",
+    "valid-url": "^1.0.9",
+    "winston": "^1.0.0",
+    "xlsjs": "^0.7.5",
+    "xlsx": "^0.7.12",
+    "xml2js": "latest",
+    "zombie": "3.1.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "cake test"
+  },
+  "engine": {
+    "node": ">=0.9.0"
+  },
+  "author": {}
 }
-
-
