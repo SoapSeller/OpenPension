@@ -73,11 +73,10 @@ program
 	});
 
 program
-  .command("createtable")
-  .action(function(){
-    var pg = require('./db').pg;
-    var db = new pg();
-    // done
+  .command("create-table")
+  .option("-t, --table <name>","table name")
+  .action(function(args){
+    require('./db').createTable(args.table);
   });
 
 program
