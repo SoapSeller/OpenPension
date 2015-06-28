@@ -1,6 +1,8 @@
 var fs = require('fs'),
     _ = require('underscore'),
     moment = require('moment'),
+    handlebars = require('handlebars'),
+    createTableTemplate = handlebars.compile(fs.readFileSync('sql/createTable.hbs').toString()),
     metaTable = require(__dirname + '/common/MetaTable').getMetaTable(),
     columnsNames = metaTable.englishColumns,
     columnsTypes = metaTable.dataTypes;
@@ -248,10 +250,22 @@ function query(sqlQuery){
       });
 }
 
-exports.query = query;
+function createTable(tableName){
 
+	var data = {
+		tableName : tableName
+	};
+
+	var createTableSql = createTableTemplate(data);
+
+	return query(createTableSql);
+}
+
+
+exports.query = query;
 exports.pg = db.pg;
 exports.csv = db.csv;
+exports.createTable = createTable;
 exports.defaultColumnsNamesMapping = defaultColumnsNamesMapping;
 exports.columnsNames = columnsNames;
 exports.open = function() {

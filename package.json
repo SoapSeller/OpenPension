@@ -17,6 +17,7 @@
     "express": "latest",
     "fs-extra": "^0.18.2",
     "fs-extra-promise": "^0.1.0",
+    "handlebars": "^3.0.3",
     "jasmine-node": "1.14.2",
     "jszip": "^2.5.0",
     "moment": "latest",
