@@ -13,43 +13,6 @@ var URL = require("url"),
 	_ = require("underscore"),
 	Utils = require("./utils.js");
 
-var cUrl = 6,
-	cNum = 4,
-	cBody = 3;
-
-var bodys = {
-	"אחר": "other",
-	"מגדל": "migdal",
-	"מנורה": "menora",
-	"פניקס": "fenix",
-	"כלל": "clal",
-	"דש איפקס": "dash",
-	"הראל": "harel",
-	"אנליסט": "analyst",
-	"אלטשולר": "altshuler",
-	"איילון": "ayalon",
-	"אי.בי.אי": "IBI",
-	"אקסלנס": "xnes",
-	"אינפיניטי": "infinity",
-	"הלמן": "helman",
-	"ארגון המורים העל יסודיים": "highschools_teachers",
-	"הסתדרות המורים בישראל": "teachers",
-	"דיסקונט": "discount",
-	"אקדמאים במדעי החברה": "havera_acdemics",
-	"ביוכימאים": "biochemists" ,
-	"הסוכנות היהודית": "hasochnut",
-	"עמיתים" : "amitim"
-};
-
-var parseBody = function(body) {
-	for (var k in bodys) {
-		if (body.indexOf(k) != -1) {
-			return bodys[k];
-		}
-	}
-
-	return null;
-};
 
 var readGoogleDocsFundsFile = function(){
 
@@ -113,43 +76,6 @@ var parseCsvFetch = function(parsedLines){
 
 }
 
-
-/* Read & parse files_data.csv file */
-var readFundsFile = function() {
-
-	var parsedLines = require('fs').readFileSync('files_data.csv').toString().split("\n");
-
-	var funds = [];
-
-	var columnsCount = parsedLines[0].split(',').length;
-
-	for (var i = 2; i < parsedLines.length; ++i) {
-		var splt = parsedLines[i].split(',');
-
-		if (splt.length != columnsCount) {
-			continue;
-		}
-
-		var url = splt[cUrl].trim();
-		if (url !== '') {
-			var body = splt[cBody];
-
-			var englishBody = parseBody(body);
-
-			if (englishBody === null) {
-				console.log("Unknwon body: ", body);
-			} else {
-				funds.push({
-					body: englishBody,
-					number: splt[cNum],
-					url: url
-				});
-			}
-		}
-	}
-
-	return funds;
-};
 
 
 var getContribFunds = function() {
@@ -275,3 +201,5 @@ exports.dumpFunds = function(body, year, quarter, fund_number){
 	});
 	
 };
+
+exports.readGoogleDocsFundsFile = readGoogleDocsFundsFile;
