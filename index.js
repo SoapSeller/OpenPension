@@ -4,102 +4,67 @@ var xlsx = require('./xlsxparser.js');
 var db = require('./db.js');
 var CSVWriter = require('./CSVWriter')
 var MetaTable = require('./common/MetaTable');
-require('coffee-script/register');
-var dataValidator = require("./dataValidator.coffee")
 var initialize = require('./initialize');
 
 
-//convert excel file to csv
+//creates system dirs on first run
 program
-	.command('convert-file')
-	.option("-f, --file <name>","file name")
-	.option("-y, --year <year>", "year")
-	.option("-q, --quarter <quarter>", "quarter")
-	.option("-b, --body <body>", "body")
-	.option("-m, --monkey <monkey>", "monkey")
+	.command("init", "create system directories")
 	.action(function(args){
-				
-		var filename = "./tmp/" + [ args.body, args.year, args.quarter, args.monkey].join("_") + ".csv";
+		require('./initialize').init()
+		.then(function(){
+			console.log('initialized.')
+		});
+	})
 
-		var exists = fs.existsSync(filename);
 
-		if (exists){
-			console.log("tried to import existing file:" + filename );
-			return;
-		}
-
-		require('./genericImporter').parseXls(args.file)
-			.then(
-				function(result){
-					CSVWriter.writeParsedResult(args.body, args.monkey, args.year, args.quarter, result);
-				}
-			);
-	});
-
-//convert directory of excel files to csv
+//clean system dirs (deletes files!)
 program
-	.command("convert-dir")
+	.command("clean", "clean (delete files) in system directories")
+	.action(function(args){
+		require('./initialize').clean()
+		.then(function(){
+			console.log('cleaned.')
+		});
+	})
+
+//convert excel file(s) in directory to csv
+program
+	.command("convert-files", "convert excel files to csv")
 	.option("-d, --dir <name>","directory name")
 	.option("-y, --year <year>", "year")
 	.option("-q, --quarter <quarter>", "quarter")
 	.option("-b, --body <body>", "body")
 	.option("-m, --monkey <monkey>", "monkey")
 	.action(function(args){
-		require("./files_loader").convertDir(args.dir, args.body, args.monkey, args.year, args.quarter);
+		require("./files_loader").convertFiles(args.dir, args.body, args.monkey, args.year, args.quarter);
 	})
 
+//create table in database
 program
-	.command("validate")
-	.option("-f, --file <name>","xslx file name")
-	.action(function(args){
-		var metaTable = MetaTable.getMetaTable();
-		require('./genericImporter').parseXls(args.file, function(result){
-			var extracted =  result.map(function(r){
-				var validated = require('./validator').validate(r.engMap,r.data,r.idx)
-				var instrument = metaTable.instrumentTypes[r.idx];
-				var instrumentSub = metaTable.instrumentSubTypes[r.idx];
-				return { validated : validated, instrument : instrument, instrumentSub : instrumentSub, engMap : r.engMap };
-			});
-			var filename = args.file.split("/")[args.file.split("/").length -1]
-			var parts = filename.split(".")[0].split("_");
-			var company = parts[0];
-			var year = parts[1];
-			var q = parts[2];
-			var fund = parts[3];
-			
-			dataValidator.validate(extracted, metaTable,company,year,q,fund);
-
-		});		
-	});
-
-program
-  .command("create-table")
+  .command("db-create-table", "create table in database")
   .option("-t, --table <name>","table name")
   .action(function(args){
     require('./db').createTable(args.table);
   });
 
+//truncate table in database
 program
-	.command("fetch")
-	.action(function(){
-		require('./fetcher').fetchAll();
-	});
+  .command("db-empty-table", "truncate table in database")  
+  .option("-t, --table <name>","table name")
+  .action(function(args){
+    require('./db').emptyTable(args.table);
+  });
 
 program
-	.command("fetch-harel")
-	.action(function(){
-		require('./fetcher').fetchHarel();
-	});
-
-program
-	.command("dump-funds")
+	.command("dump-funds", "create csv files from database data")
 	.action(function(){
 		require('./fetcher').dumpFunds();
 	});
 
-
+//download and convert files in Google Doc
 program
-	.command("fetch-known")
+	.command("fetch-known", "download and convert files in Google Doc")
 	.option("-y, --year <year>", "year")
 	.option("-q, --quarter <quarter>", "quarter")
 	.option("-b, --body <body>", "body")
@@ -108,58 +73,26 @@ program
 		require('./fetcher').fetchKnown(args.body, args.year, args.quarter, args.monkey);
 	});
 
+//download and convert contributed files
 program
-	.command("fetch-menora")
-	.action(function(){
-		require('./fetcher').fetchMenora();
-	});
-
-program
-	.command("fetch-amitim")
-	.action(function(){
-		require('./fetcher').fetchAmitim();
-	});
-
-
-program
-    .command("fetch-contrib")
+    .command("fetch-contrib", "download and convert contributed files")
     .action(function(){
         require('./fetcher').fetchContrib();
     });
 
+//load files to database
 program
-	.command("db-load")
+	.command("db-load-files", "load csv files to database")
 	.option("-d, --dir <name>","directory name")
+	.option("-y, --year <year>", "year")
+	.option("-q, --quarter <quarter>", "quarter")
+	.option("-b, --body <body>", "body")
+	.option("-f, --fund <fund number>", "fund number")
 	.option("-t, --table <name>","table name")
 	.option("-c, --concurrency <number>","number of concurrent DB connections, defaults to 4")
 	.action(function(args){
-		require('./dbLoader').importDirCmd(args.dir, args.table, args.concurrency)
-	})
-
-program
-	.command("db-load-file")
-	.option("-f, --file <name>","directory name")
-	.option("-t, --table <name>","table name")
-	.action(function(args){
-		require('./dbLoader').importFileCmd(args.file, args.table)
-	})
-
-program
-	.command("init")
-	.action(function(args){
-		require('./initialize').init()
-		.then(function(){
-			console.log('initialized.')
-		});
-	})
-
-program
-	.command("clean")
-	.action(function(args){
-		require('./initialize').clean()
-		.then(function(){
-			console.log('cleaned.')
-		});
+		require('./dbLoader').importFilesCmd(args.dir, args.body, args.year, args.quarter, args.fund, 
+			args.table, args.concurrency);
 	})
 
 program.parse(process.argv);
