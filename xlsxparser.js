@@ -2,10 +2,11 @@ var XLSX = require('./xlsx');
 var XLS = require('xlsjs');
 var path = require('path');
 var Promise =require('bluebird');
-
+var _ = require('underscore');
 
 var trim = function (s) {
   if (s == undefined) return "";
+  if (_.isBoolean(s)) return s.toString();
   s = s.replace(/(^\s*)|(\s*$)/gi, "");
   s = s.replace(/[ ]{2,}/gi, " ");
   s = s.replace(/\n /, "\n");
@@ -47,22 +48,24 @@ exports.getSheets = function(filename){
     var reader;
 
     return new Promise(function(resolve, reject){
-      if (path.extname(filename).toLowerCase() == ".xls"){
-        reader = XLS;
-      }
-      else if (path.extname(filename).toLowerCase() == ".xlsx"){
-        reader = XLSX;
-      }
-
-      if (reader == undefined){
-        console.log("No reader found for: "+ filename)
-      }
-
-
       try{
+        if (path.extname(filename).toLowerCase() == ".xls"){
+          reader = XLS;
+        }
+        else if (path.extname(filename).toLowerCase() == ".xlsx"){
+          reader = XLSX;
+        }
+
+        if (reader == undefined){
+          console.log("No reader found for: "+ filename)
+        }
+
+
+      
         var workbook = reader.readFile(filename);
       }
       catch(ex){
+        console.log(ex);
         console.log(ex.stack);
         reject("xlsparser.js: error parsing file: " + filename + ", "+ex);
       }
