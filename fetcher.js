@@ -118,8 +118,8 @@ exports.fetchKnown = function(body, year, quarter, fund_number){
 	.each(function(fund){
 		fc.downloadFundFile(fund);
 	})
-	.then(function(k){
-		console.log(k);
+	.then(function(xlFilename){
+		console.log(xlFilename);
 	})
 	.catch(function(e){
 		console.log(e.stack);
