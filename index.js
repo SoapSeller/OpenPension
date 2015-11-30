@@ -38,9 +38,9 @@ program
 	.option("-y, --year <year>", "year")
 	.option("-q, --quarter <quarter>", "quarter")
 	.option("-b, --body <body>", "body")
-	.option("-m, --monkey <monkey>", "monkey")
+	.option("-f, --fund <fund number>", "fund")
 	.action(function(env, args){
-		require("./files_loader").convertFiles(args.dir, args.body, args.monkey, args.year, args.quarter);
+		require("./files_loader").convertFiles(args.dir, args.body, args.fund, args.year, args.quarter);
 	})
 
 //create table in database
@@ -70,14 +70,14 @@ program
 
 //download and convert files in Google Doc
 program
-	.command("fetch-known")
-	.description("download and convert files in Google Doc")
+	.command("fetch-google")
+	.description("download and convert files in Google Doc.")
 	.option("-y, --year <year>", "year")
 	.option("-q, --quarter <quarter>", "quarter")
 	.option("-b, --body <body>", "body")
-	.option("-m, --monkey <monkey>", "monkey")
+	.option("-f, --fund <fund number>", "fund number")
 	.action(function(env, args){
-		require('./fetcher').fetchKnown(args.body, args.year, args.quarter, args.monkey);
+		require('./fetcher').fetchKnown(args.body, args.year, args.quarter, args.fund);
 	});
 
 //download and convert contributed files
