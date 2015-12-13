@@ -2,7 +2,10 @@ var fs = require('fs'),
     _ = require('underscore'),
     moment = require('moment'),
     handlebars = require('handlebars'),
-    createTableTemplate = handlebars.compile(fs.readFileSync('sql/createTable.hbs').toString()),
+    createTableTemplate = handlebars.compile(fs.readFileSync(__dirname + '/sql/createTable.hbs').toString()),
+    emptyTableTemplate = handlebars.compile(fs.readFileSync(__dirname + '/sql/emptyTable.hbs').toString()),
+    getFundValueTemplate = handlebars.compile(fs.readFileSync(__dirname + '/sql/getFundValue.hbs').toString()),
+    deleteFundValuesTemplate = handlebars.compile(fs.readFileSync(__dirname + '/sql/deleteFundValues.hbs').toString()),
     metaTable = require(__dirname + '/common/MetaTable').getMetaTable(),
     columnsNames = metaTable.englishColumns,
     columnsTypes = metaTable.dataTypes;
@@ -27,7 +30,7 @@ try {
 
 exports.config = config;
 
-var tableName = config.table || 'data';
+var tableName = config.table;
 
 var db = {};
 
@@ -252,6 +255,10 @@ function query(sqlQuery){
 
 function createTable(tableName){
 
+  if (_.isEmpty(tableName) ){
+    throw "tableName cannot be empty";
+  }
+
 	var data = {
 		tableName : tableName
 	};
@@ -261,13 +268,74 @@ function createTable(tableName){
 	return query(createTableSql);
 }
 
+function emptyTable(tableName){
+
+  if (_.isEmpty(tableName) ){
+    throw "tableName cannot be empty";
+  }
+
+  var data = {
+    tableName : tableName
+  };
+
+  var emptyTableSql = emptyTableTemplate(data);
+
+  return query(emptyTableSql);
+}
+
+function getFundValue(managing_body, report_year, report_quarter, fund, tableName){
+
+  if (_.isEmpty(tableName) ){
+    tableName = config.table;
+  }
+
+  var data = {
+    tableName : tableName,
+    report_year : report_year,
+    report_quarter : report_quarter,
+    fund : fund,
+    managing_body : managing_body
+  };
+
+  var getFundValueSql = getFundValueTemplate(data);
+
+  console.log(getFundValueSql);
+
+  return query(getFundValueSql);
+}
+
+function deleteFundValues(managing_body, report_year, report_quarter, fund, tableName){
+
+  if (_.isEmpty(tableName) ){
+    tableName = config.table;
+  }
+
+  var data = {
+    tableName : tableName,
+    report_year : report_year,
+    report_quarter : report_quarter,
+    fund : fund,
+    managing_body : managing_body
+  };
+
+  var deleteFundValuesSql = deleteFundValuesTemplate(data);
+
+  console.log(deleteFundValuesSql);
+
+  return query(deleteFundValuesSql);
+}
+
 
 exports.query = query;
 exports.pg = db.pg;
 exports.csv = db.csv;
 exports.createTable = createTable;
+exports.emptyTable = emptyTable;
 exports.defaultColumnsNamesMapping = defaultColumnsNamesMapping;
 exports.columnsNames = columnsNames;
+exports.deleteFundValues = deleteFundValues;
+exports.getFundValue = getFundValue;
+
 exports.open = function() {
   if (config.db_mode == "csv")
     return new db.csv("dump.csv");

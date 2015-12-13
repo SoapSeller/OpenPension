@@ -14,6 +14,7 @@ exports.parseXls = function(filename){
 		return result;
 	})
 	.catch(function(e){
+		console.log(e);
 		logger.error("genericImporter:" + e.stack);
 	})
 }
@@ -420,8 +421,9 @@ var parseSheets = function(workbook){
 	var parsedSheetsData = []
 	var res = []
 	var _sheets = workbook.SheetNames.map(function(x){return x});
-
-	while (res.length < lastSheetNum && _sheets.length > 0){
+	var maxSheets = 25;
+	
+	while (res.length < /*lastSheetNum*/ maxSheets && _sheets.length > 0){
 		var sheetTabNum = workbook.SheetNames.length - _sheets.length;
 
 		if (debugSheet != null && debugSheet == sheetTabNum ) {

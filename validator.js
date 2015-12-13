@@ -1,5 +1,7 @@
 var MetaTable = require('./common/MetaTable');
 var request = require('request');
+var _ = require('underscore');
+var logger = require('./logger');
 
 exports.validate = function(headers,data,tabIndex) {
 // managingBody; (string) 'Migdal' לדגמ
@@ -21,19 +23,18 @@ exports.validate = function(headers,data,tabIndex) {
 	var tabData = parseTabSpecificData(tabIndex, headers, data);
 
 	return tabData.filter(function(l){
-		return (
-			!isLineEmpty(l)
-		)
-	});
+		if(	isLineEmpty(l) 	|| 
+			_.intersection(l,
+					["1","2","3","4","5","6","7","8","9","10","11","12"]
+				).length > 3 ){
 
-}
+				logger.warn('skipping line:' + l);
+				return false;
+			}
+			return true;
+		});
+	
 
-
-
-var writeToCsv = function(managingBody, fund, year, quarter, tabIndex, instrument, instrumentSub, tabData,headers){
-	var DB =  require('./db');
-	var filename = "./tmp/" + [ managingBody, fund, year, quarter].join("_") + ".csv";
-	DB.csv.write(filename, headers,managingBody, fund, year, quarter, instrument, instrumentSub, tabData);
 }
 
 var debugData = function(data){
@@ -135,7 +136,8 @@ var cleanInstrumentId = function(input){
 var cleanNumber = function(input){
 	if (!input) 
 		return input;
-	var _input = parseFloat(input.replace(/([^]+?[^Ee])-/g,"$1"));
+
+	var _input = parseFloat(input.replace(/,|`|'/g,"").replace(/([^]+?[^Ee])-/g,"$1"));
 	
 	if (isNaN(_input)) {
 		console.log("returning 0:",input,_input,input < 0 );
@@ -284,6 +286,51 @@ var normalizeCurrency = function(input){
 	}
 }
 
+var normalizeRating = function(input){
+	
+	var _input = cleanString(input);
+
+	if (_.isEmpty(input)) return input;
+
+	input = input.toUpperCase();
+
+    if (input == 'פנימי') return 'פנימי';
+    else if (input == 'AAA') return 'AAA';
+    else if (input == 'AA1') return 'AA+';
+    else if (input == 'AA2') return 'AA';
+    else if (input == 'AA3') return 'AA-';
+    else if (input == 'A1') return 'A+';
+    else if (input == 'A2') return 'A';
+    else if (input == 'A3') return 'A-';
+    else if (input == 'BAA1') return 'BBB+';
+    else if (input == 'BAA2') return 'BBB';
+    else if (input == 'BAA3') return 'BBB-';
+    else if (input == 'BA1') return 'B+';
+    else if (input == 'BA2') return 'B';
+    else if (input == 'BA3') return 'B-';
+    else if (input == 'CAA') return 'CCC+';
+    else if (input == 'CAA2') return 'CCC';
+    else if (input == 'CA') return 'CCC';
+    else if (input == 'C') return 'CCC-';
+    else if (input == 'RF') return 'AAA';
+    else if (/.*N.*R.*/.test(input) ) return 'לא מדורג';
+    else if (input == 'NR') return 'לא מדורג';
+    else if (input == 'D') return 'D';
+    else if (input == '+BBB') return 'BBB+';
+    else if (input == '-AA') return 'AA-';
+    else if (input == '+A') return 'A+';
+    else if (input == '-A') return 'A-';
+    else if (input == 'ללא דירוג') return 'לא מדורג';
+    else if (/.*דורג.*/.test(input) ) return 'לא מדורג';
+    else if (/.*דירוג.*/.test(input) ) return 'לא מדורג';
+
+    return input;
+
+//            WHEN ((((production.rating IS NULL) OR ((production.rating)::text ~~ '%0%'::text)) OR ((production.rating)::text = '-'::text)) AND (((production.instrument_sub_type)::text = ANY ((ARRAY['תעודות התחייבות ממשלתיות'::character varying, 'תעודות חוב מסחריות'::character varying, 'אג"ח קונצרני'::character varying])::text[])) OR ((production.instrument_type)::text = 'הלוואות'::text))) THEN ('לא דווח'::character varying(128))::text
+  //          WHEN (((((production.rating)::text ~~ '%0%'::text) OR ((production.rating)::text = '-'::text)) AND ((production.instrument_sub_type IS NULL) OR ((production.instrument_sub_type)::text <> ALL ((ARRAY['תעודות התחייבות ממשלתיות'::character varying, 'תעודות חוב מסחריות'::character varying, 'אג"ח קונצרני'::character varying])::text[])))) AND (NOT ((production.instrument_type)::text = 'הלוואות'::text))) THEN NULL::text
+    //        ELSE upper((production.rating)::text)
+}
+
 var normalizeIndustry = function(input){
 	var _input = cleanString(input);
 	switch(_input){
@@ -330,7 +377,8 @@ var shumNehaseiHakeren = function(headers,dataLines){
 			&& isNotEmpty(l[ enHeaders.indexOf("instrument_symbol") ])
 		)
 	}).map(function(l){
-		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c) });
+		var row = _.object(enHeaders,l);
+		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c, row) });
 	})
 }
 
@@ -349,7 +397,8 @@ var mezumanim = function(headers, dataLines){
 				&& l[ enHeaders.indexOf("currency") ] != 0))
 		)
 	}).map(function(l){
-		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c) });
+		var row = _.object(enHeaders,l);
+		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c, row) });
 	})
 
 }
@@ -366,7 +415,8 @@ var teudatHihayvutMimshalti = function(headers, dataLines){
 			&& isNumber(l[ enHeaders.indexOf("rate") ])
 		);
 	}).map(function(l){
-		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c) });
+		var row = _.object(enHeaders,l);
+		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c, row) });
 	});
 }
 
@@ -381,7 +431,8 @@ var taudatHovMisharit = function(headers, dataLines){
 			&& l[ enHeaders.indexOf("rate") ] != 0
 		);
 	}).map(function(l){
-		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c) });
+		var row = _.object(enHeaders,l);
+		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c, row) });
 	});
 }
 
@@ -400,7 +451,8 @@ var agahKontzerni = function(headers, dataLines){
 			&& l[ enHeaders.indexOf("rate") ] != 0
 		);
 	}).map(function(l){
-		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c) });
+		var row = _.object(enHeaders,l);
+		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c, row) });
 	});
 }
 
@@ -415,7 +467,8 @@ var menayot = function(headers, dataLines){
 			&& l[ enHeaders.indexOf("rate") ] != 0
 		);
 	}).map(function(l){
-		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c) });
+		var row = _.object(enHeaders,l);
+		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c, row) });
 	});
 }
 
@@ -430,7 +483,8 @@ var teudotSal = function(headers, dataLines){
 			&& l[ enHeaders.indexOf("rate") ] != 0
 		);
 	}).map(function(l){
-		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c) });
+		var row = _.object(enHeaders,l);
+		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c, row) });
 	});
 }
 
@@ -445,7 +499,8 @@ var kranotNemanut = function(headers, dataLines){
 			&& l[ enHeaders.indexOf("rate") ] != 0
 		);
 	}).map(function(l){
-		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c) });
+		var row = _.object(enHeaders,l);
+		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c, row) });
 	});
 }
 
@@ -460,7 +515,8 @@ var kitveiOptzia = function(headers, dataLines){
 			&& l[ enHeaders.indexOf("rate") ] != 0
 		);
 	}).map(function(l){
-		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c) });
+		var row = _.object(enHeaders,l);
+		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c, row) });
 	});
 }
 
@@ -475,7 +531,8 @@ var opttziyot = function(headers, dataLines){
 			&& l[ enHeaders.indexOf("rate") ] != 0
 		);
 	}).map(function(l){
-		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c) });
+		var row = _.object(enHeaders,l);
+		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c, row) });
 	});
 }
 
@@ -490,7 +547,8 @@ var hozimAtidiim = function(headers, dataLines){
 			&& l[ enHeaders.indexOf("rate") ] != 0
 		);
 	}).map(function(l){
-		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c) });
+		var row = _.object(enHeaders,l);
+		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c, row) });
 	});
 }
 
@@ -505,7 +563,8 @@ var motzarimMuvnim = function(headers, dataLines){
 			&& l[ enHeaders.indexOf("rate") ] != 0
 		);
 	}).map(function(l){
-		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c) });
+		var row = _.object(enHeaders,l);
+		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c, row) });
 	});
 }
 
@@ -521,7 +580,8 @@ var teudatHihayvutMimshaltiLoSahir = function(headers, dataLines){
 			&& isNumber(l[ enHeaders.indexOf("rate") ])
 		);
 	}).map(function(l){
-		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c) });
+		var row = _.object(enHeaders,l);
+		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c, row) });
 	});
 }
 
@@ -536,7 +596,8 @@ var taudatHovMisharitLoSahir = function(headers, dataLines){
 			&& l[ enHeaders.indexOf("rate") ] != 0
 		);
 	}).map(function(l){
-		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c) });
+		var row = _.object(enHeaders,l);
+		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c, row) });
 	});
 }
 
@@ -555,7 +616,8 @@ var agahKontzerniLoSahir = function(headers, dataLines){
 			&& l[ enHeaders.indexOf("rate") ] != 0
 		);
 	}).map(function(l){
-		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c) });
+		var row = _.object(enHeaders,l);
+		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c, row) });
 	});
 }
 
@@ -570,7 +632,8 @@ var menayotLoSahir = function(headers, dataLines){
 			&& l[ enHeaders.indexOf("rate") ] != 0
 		);
 	}).map(function(l){
-		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c) });
+		var row = _.object(enHeaders,l);
+		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c, row) });
 	});
 }
 
@@ -585,7 +648,8 @@ var kranotHashkaaLoSahir = function(headers, dataLines){
 			&& l[ enHeaders.indexOf("rate") ] != 0
 		);
 	}).map(function(l){
-		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c) });
+		var row = _.object(enHeaders,l);
+		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c, row) });
 	});
 }
 
@@ -599,7 +663,8 @@ var kitveiOptziaLoSahir = function(headers, dataLines){
 			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
 		);
 	}).map(function(l){
-		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c) });
+		var row = _.object(enHeaders,l);
+		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c, row) });
 	});
 }
 
@@ -614,7 +679,8 @@ var opttziyotLoSahir = function(headers, dataLines){
 			&& l[ enHeaders.indexOf("rate") ] != 0
 		);
 	}).map(function(l){
-		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c) });
+		var row = _.object(enHeaders,l);
+		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c, row) });
 	});
 }
 
@@ -629,7 +695,8 @@ var hozimAtidiimLoSahir = function(headers, dataLines){
 			&& l[ enHeaders.indexOf("rate") ] != 0
 		);
 	}).map(function(l){
-		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c) });
+		var row = _.object(enHeaders,l);
+		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c, row) });
 	});
 }
 
@@ -644,7 +711,8 @@ var motzarimMuvnimLoSahir = function(headers, dataLines){
 			&& l[ enHeaders.indexOf("rate") ] != 0
 		);
 	}).map(function(l){
-		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c) });
+		var row = _.object(enHeaders,l);
+		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c, row) });
 	});
 }
 
@@ -663,7 +731,8 @@ var halvaot = function(headers, dataLines){
 			&& l[ enHeaders.indexOf("fair_value") ] != 0
 		);
 	}).map(function(l){
-		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c) });
+		var row = _.object(enHeaders,l);
+		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c, row) });
 	});
 }
 
@@ -678,7 +747,8 @@ var pikdonot = function(headers, dataLines){
 			&& l[ enHeaders.indexOf("rate") ] != 0
 		);
 	}).map(function(l){
-		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c) });
+		var row = _.object(enHeaders,l);
+		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c, row) });
 	});
 }
 
@@ -693,7 +763,8 @@ var zhuyotMekarkein = function(headers, dataLines){
 			&& isNotEmpty(l[ enHeaders.indexOf("type_of_asset") ])
 		);
 	}).map(function(l){
-		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c) });
+		var row = _.object(enHeaders,l);
+		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c, row) });
 	});
 }
 
@@ -704,11 +775,14 @@ var haskaotAherot = function(headers, dataLines){
 			isNotEmpty(l[ enHeaders.indexOf("rating_agency") ])
 		);
 	}).map(function(l){
-		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c) });
+		var row = _.object(enHeaders,l);
+		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c, row) });
 	});
 }
 
-var normalizeValues = function(enName, value){
+var normalizeValues = function(enName, value, row){
+
+//	console.log("row" + JSON.stringify(row));
 
 	switch(enName){
 		case 'instrument_symbol': 	return cleanString(value);
@@ -717,7 +791,7 @@ var normalizeValues = function(enName, value){
 		case 'instrument_type': 	return cleanString(value);
 		case 'instrument_sub_type': return cleanString(value);
 		case 'industry': 			return cleanString(normalizeIndustry(value));
-		case 'rating': 				return cleanString(value);
+		case 'rating': 				return cleanString(normalizeRating(value));
 		case 'rating_agency': 		return cleanString(value);
 		case 'date_of_purchase': 	return parseDate(value);
 		case 'average_of_duration': return cleanNumber(cleanString(value));
@@ -726,7 +800,7 @@ var normalizeValues = function(enName, value){
 		case 'yield': 				return cleanNumber(cleanString(value));
 		case 'par_value': 			return cleanNumber(value);
 		case 'rate': 				return cleanNumber(cleanString(value));
-		case 'market_cap': 			return cleanNumber(cleanString(value));
+		case 'market_cap': 			return cleanNumber(value);
 		case 'fair_value': 			return cleanNumber(value);
 		case 'rate_of_ipo': 		return cleanNumber(cleanString(value));
 		case 'rate_of_fund': 		return cleanNumber(cleanString(value));

@@ -8,43 +8,29 @@ var URL = require("url"),
 	path = require("path");
 
 
-var baseFolder = "res/";
-var targetFolder = "tmp/";
-
-exports.changeBaseFolder = function(newFolder){ baseFolder = newFolder; console.log("changing to folder:",newFolder); };
-
-/* fetch a fund to file
- * fund: Object of type:
-
- *					{ body: englishBody, // See 'bodys' above
- *					  number: number,
- *					  url: fileurl }
- *  onDone: Callback with format void(downloadedFilePath, error)
- */
-
-
 
 //downloadFundFile
-exports.downloadFundFile = function(fund) {
+exports.downloadFundFile = function(fund, trgdir) {
 
-	console.log('--> fetch fund')
+	console.log('--> fetch fund');
 
 
 	return new Promise(function(resolve, reject){
 
 		var url = URL.parse(fund.url);
 		var ext = path.extname(fund.url);
-		var xlFilename = utils.filename(baseFolder, fund, ext);
+		var xlFilename = utils.filename(trgdir, fund, ext);
 
 
 		if (fs.existsSync(xlFilename)){
 			console.log("tried to fetch existing file: " + xlFilename);
-			return;
+			return resolve(xlFilename);
 		}
 
 		
 		if (fund.url.indexOf('http') !== 0) {
-			reject();
+			console.log("Malformed URL");
+			reject("Malformed URL");
 		}
 
 		var isHttps = url.protocol == "https:";
@@ -64,12 +50,18 @@ exports.downloadFundFile = function(fund) {
 
 			res.on('end', function() {
 
-				resolve(xlFilename);
+				return resolve(xlFilename);
 
 			});
 		});
 
 		req.on('response',  function (res) {
+
+			//check HTTP status code
+			if ( String(res.statusCode).charAt(0) !== '2'){
+				console.log("Fund: " + [fund.body, fund.year, fund.quarter, fund.number].join("_") + "\nError downloading file from " + fund.url + " StatusCode: " + res.statusCode);
+				return reject("Fund: " + [fund.body, fund.year, fund.quarter, fund.number].join("_") + "\nError downloading file from " + fund.url + " StatusCode: " + res.statusCode);
+			}
 
 			console.log("got response: "+ ext);
 
@@ -79,11 +71,11 @@ exports.downloadFundFile = function(fund) {
 				console.log("got httpExt: "+httpExt);
 				
 				if (httpExt != undefined){
-					xlFilename = utils.filename(baseFolder, fund, httpExt);
+					xlFilename = utils.filename(trgdir, fund, httpExt);
 					ext = httpExt;
 				}
 				else{
-					reject();
+					return reject();
 				}
 			
 			}
@@ -91,7 +83,7 @@ exports.downloadFundFile = function(fund) {
 			if (fs.existsSync(xlFilename)){
 				console.log("tried to fetch existing file: " + xlFilename);
 			
-				resolve(xlFilename);
+				return resolve(xlFilename);
 			}
 
 			console.log('fetching ' + xlFilename );
@@ -100,7 +92,7 @@ exports.downloadFundFile = function(fund) {
 
 		req.on('error', function(e) {
 			console.log('problem with request(' + fund.url +  '): ' + e.message, options);
-			reject();
+			return reject('problem with request(' + fund.url +  '): ' + e.message);
 		});
 
 		req.end();

@@ -4,32 +4,39 @@ var _ = require("underscore");
 exports.filename = function(folder, fund, ext){
 
 	if (ext.indexOf("?") != -1){
-
 		ext = ext.split("?")[0];
-		ext = ext.toLowerCase();
-
 	}
 
-	// var baseName = folder + [fund.body, fund.year, fund.quarter, fund.number].join("_");
-	var baseName = path.join(folder,[fund.body, fund.year, fund.quarter, fund.number].join("_"));
+	ext = ext.toLowerCase();
+	
+	var filename = [fund.body, fund.year, fund.quarter, fund.number].join("_").toLowerCase();
 
-    return (baseName + ext).toLowerCase();    	
+	var result = path.join(folder, filename) + ext;
 
-
-	// var baseName = path.join(folder,[fund.body, fund.number, fund.year, fund.quarter].join("_"));
-
-    // return baseName + ext;    	
+    return result;
 
 };
 
 
-exports.getFundObj = function(body, year, quarter, number){
-	return {
-		body: body,
-		year: year,
-		quarter: quarter,
-		number: number
+exports.getFundObj = function(body, year, quarter, number, url){
+	var fund = {};
+	if (body){
+		fund.body = body;
 	}
+	if (year){
+		fund.year = year;
+	}
+	if (quarter){
+		fund.quarter = quarter;		
+	}
+	if (number){
+		fund.number = number;
+	}
+	if (url){
+		fund.url = url;
+	}
+
+	return fund;
 }
 
 exports.getFundFromFile = function(filename){

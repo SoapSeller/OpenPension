@@ -5,19 +5,23 @@ var copyFrom = require('pg-copy-streams').from;
 var config = require('./config');
 var throat = require('throat')
 var path = require('path');
+var fs = require('fs');
+var logger = require('./logger');
+var Utils = require('./utils');
+var Promise = require('bluebird');
 
-
-module.exports.importDirCmd = function(parentDir, tableName, concurrency){	
+module.exports.importFilesCmd = function(parentDir, body, year, quarter, fund_number, tableName, concurrency){	
 	return fsep.readdirAsync(parentDir)
 	.then(function(files) {
 
-	    return importFiles(files, parentDir, tableName, concurrency); 
+		files = Utils.filterFiles(files, body, year, quarter, fund_number);
+		return module.exports.importFiles(parentDir, files, tableName, concurrency); 
 	})
 	.then(function(res){
 		fsep.writeFile("errors.log", res['errors']);
 	})
 	.catch(function(err){
-		console.log("error:" +err);
+		logger.error("error:" + err)
 	})
 }
 
@@ -30,25 +34,30 @@ module.exports.importFileCmd = function(filePath, tableName){
 	//process.stdout.cursorTo (0);
 	process.stdout.write("Importing: "+filename + "\n");
 
-    return importFile(parentDir, filename, tableName)
+    return module.exports.importFile(parentDir, filename, tableName)
 	.then(function(res){
 		if (!res){
-			console.log("Not imported")
+			logger.info("Not imported")
 		}
 		else{
-			console.log("Done.")
+			logger.info("Done importing.")
 		}
 	})
 	.catch(function(err){
-		console.log("error:" +err);
+		logger.error("error:" +err);
 	})
 }
 
 
-//import files to db, concurrently --> resolves to
-//result['done'] = [filenames...]
-//result['errors'] = [filenames...]
-var importFiles = function(files, parentDir, tableName, concurrency){
+
+/**
+ * Import files to db, concurrently --> resolves to
+ *
+ * 
+ * result['done'] = [filenames...]
+ * result['errors'] = [filenames...]
+ */
+module.exports.importFiles = function(parentDir, files, tableName, concurrency){
 
 	if ( concurrency == undefined) concurrency = 4;
 	var total = files.length;
@@ -63,7 +72,7 @@ var importFiles = function(files, parentDir, tableName, concurrency){
 			return;
 		}
 
-		return importFile(parentDir, filename, tableName);
+		return module.exports.importFile(parentDir, filename, tableName);
 
 	})))
 	.then(function(resArr){
@@ -89,21 +98,28 @@ var importFiles = function(files, parentDir, tableName, concurrency){
 } 
 
 //import file to db --> resolves to boolean
-function importFile(parentDir, filename, tableName){
+module.exports.importFile = function(parentDir, filename, tableName){
 	return  pg.connectAsync(config.connection_string)
 				.spread(function(client, release) {
 
 		            var filePath = path.join(parentDir, filename);
-
+		            
+		            if (!fs.existsSync(filePath)){
+			            var absolutePath = path.resolve(filePath);
+			            console.log("File not found " + absolutePath);
+		            }
+		            
 					//Check if file already loaded to DB
-					var fund = filename.split('_')[1];
-					var year = filename.split('_')[2];
-					var quarter = filename.split('_')[3].split('.')[0];
+					var year = filename.split('_')[1];
+					var quarter = filename.split('_')[2];
+					var fund = filename.split('_')[3].split('.')[0];
 					var managing_body = filename.split('_')[0];
 
-					return client.queryAsync("SELECT count(*) FROM "+ tableName +" WHERE managing_body='" +managing_body +"'"
-					+ " AND report_year='"+year+"' AND report_qurater='"+quarter+"'"
-					+ " AND fund='"+fund+"' ")
+					var countFundSql = "SELECT count(*) FROM "+ tableName +" WHERE managing_body='" +managing_body +"'"
+										+ " AND report_year='"+year+"' AND report_qurater='"+quarter+"'"
+										+ " AND fund='"+fund+"' ";
+
+					return client.queryAsync(countFundSql)
 						.then(function(qresult){
 							release();
 							return new Promise(function(resolve,reject){
@@ -111,7 +127,7 @@ function importFile(parentDir, filename, tableName){
 								var count = qresult.rows[0].count;
 
 								if (count > 0){ //file in DB, skip file
-									console.log(" file already loaded to DB	");
+									logger.info([managing_body, year, quarter, fund].join("_") + " file already loaded to DB	")
 									resolve();
 									return; 
 								}
@@ -122,7 +138,7 @@ function importFile(parentDir, filename, tableName){
 							
 							  	sqlStream.on('error', 
 								  	function(err){
-								  		console.log(" " +err)
+								  		logger.error(" " +err)
 										resolve(false);				  		
 							  	});
 							  	sqlStream.pipe(pgstream)
@@ -132,7 +148,7 @@ function importFile(parentDir, filename, tableName){
 								  		})
 								  	.on('error', 
 								  		function(err){
-									  		console.log(" " +err)
+									  		logger.error(" " +err)
 											resolve(false);
 									  	});
 
