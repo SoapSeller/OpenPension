@@ -1,6 +1,7 @@
 var DB = require(__dirname + '/db')
 var fs = require('fs'),
 	utils = require(__dirname + '/utils.js'),
+	dirs = require(__dirname + '/dirs.js'),
 	Promise = require('bluebird'),
     metaTable = require(__dirname + '/common/MetaTable').getMetaTable();
 
@@ -8,17 +9,17 @@ var columnsNames = DB.columnsNames;
 
 exports.write = function(managingBody, fund, year, quarter, instrument, instrumentSub, tabData, headers){
 	var fund = utils.getFundObj(managingBody, year, quarter, fund);
-	var filename = utils.filename(__dirname+"/tmp", fund, ".csv");
+	var filename = utils.filename(dirs.csv, fund, ".csv");
 	DB.csv.write(filename, headers, managingBody, fund, year, quarter, instrument, instrumentSub, tabData);
 }
 
-exports.writeParsedResult = function(managing_body, fund_number, report_year, report_qurater, result){
+exports.writeParsedResult = function(managing_body, fund_number, report_year, report_qurater, result, trgdir){
 
 
 	return new Promise(function(resolve, reject){
 
 		var fundObj = utils.getFundObj(managing_body, report_year, report_qurater, fund_number);
-		var filename = utils.filename(__dirname + "/tmp", fundObj, ".csv");
+		var filename = utils.filename(trgdir, fundObj, ".csv");
 		var exists = fs.existsSync(filename);
 		// var stream = fs.createWriteStream(filename, { flags: 'a+', encoding: "utf8", mode: 0666 });
 

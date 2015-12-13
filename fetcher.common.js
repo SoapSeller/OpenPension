@@ -8,14 +8,9 @@ var URL = require("url"),
 	path = require("path");
 
 
-var baseFolder = __dirname + "/res/";
-var targetFolder = __dirname + "/tmp/";
-
-exports.changeBaseFolder = function(newFolder){ baseFolder = newFolder; console.log("changing to folder:",newFolder); };
-
 
 //downloadFundFile
-exports.downloadFundFile = function(fund) {
+exports.downloadFundFile = function(fund, trgdir) {
 
 	console.log('--> fetch fund');
 
@@ -24,7 +19,7 @@ exports.downloadFundFile = function(fund) {
 
 		var url = URL.parse(fund.url);
 		var ext = path.extname(fund.url);
-		var xlFilename = utils.filename(baseFolder, fund, ext);
+		var xlFilename = utils.filename(trgdir, fund, ext);
 
 
 		if (fs.existsSync(xlFilename)){
@@ -76,7 +71,7 @@ exports.downloadFundFile = function(fund) {
 				console.log("got httpExt: "+httpExt);
 				
 				if (httpExt != undefined){
-					xlFilename = utils.filename(baseFolder, fund, httpExt);
+					xlFilename = utils.filename(trgdir, fund, httpExt);
 					ext = httpExt;
 				}
 				else{

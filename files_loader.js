@@ -13,30 +13,34 @@ var fs = require("fs"),
 
 /**
  * Convert XLS/XLSX files to CSV
- *
+ * 
+ * body - managing body of files to convert
+ * fund_number - fund of files to convert
+ * year - year of files to convert
+ * quarter - quarter of files to convert
+ * srcdir - path of excel files
+ * trgdir - path to write csv files
  */
-exports.convertFiles = function(dir, body, fund_number, year, quarter){
+exports.convertFiles = function(body, fund_number, year, quarter, srcdir, trgdir){
 
-	if (dir.indexOf(path.sep) != dir.length){
-		dir += path.sep;
+	if (srcdir.indexOf(path.sep) != srcdir.length){
+		srcdir += path.sep;
 	}
 
-	console.log("loading dir:" + dir);
-	var files = fs.readdirSync(dir).filter(function(file){
+	console.log("loading dir:" + srcdir);
+	var xlfiles = fs.readdirSync(srcdir).filter(function(file){
 		return file.indexOf(".xlsx") > -1 || file.indexOf(".xls") > -1;
 	});
 
-	files = Utils.filterFiles(files, body, year, quarter, fund_number);
+	xlfiles = Utils.filterFiles(xlfiles, body, year, quarter, fund_number);
 
-	fetcherCommon.changeBaseFolder(dir);
-
-	return new Promise.each(files, function(file){
+	return new Promise.each(xlfiles, function(file){
 
 		logger.info("Converting: "+  file);
 	
-		var xlFilename = path.join(dir,file);
+		var xlFilename = path.join(srcdir,file);
 		var fund = Utils.getFundFromFile(file);
-		var csvFilename = Utils.filename('./tmp',fund, '.csv');
+		var csvFilename = Utils.filename(trgdir, fund, '.csv');
 
 		if (fs.existsSync(csvFilename)){
 			logger.warn("converted file exists:" + csvFilename );
@@ -46,7 +50,7 @@ exports.convertFiles = function(dir, body, fund_number, year, quarter){
 
 		return genericImporter.parseXls(xlFilename)
 			.then(function(result){
-				return CSVWriter.writeParsedResult(fund.body, fund.number, fund.year, fund.quarter, result);
+				return CSVWriter.writeParsedResult(fund.body, fund.number, fund.year, fund.quarter, result, trgdir);
 			})
 			.catch(function(e){
 				logger.warn("error converting file: " + file);
@@ -60,7 +64,7 @@ exports.convertFiles = function(dir, body, fund_number, year, quarter){
 				.then(genericImporter.parseXls)
 				.then(function(result){
 					logger.info("fixed by converting:"+xlFilename);
-					return CSVWriter.writeParsedResult(fund.body, fund.number, fund.year, fund.quarter, result);
+					return CSVWriter.writeParsedResult(fund.body, fund.number, fund.year, fund.quarter, result, trgdir);
 				})
 				.catch(function(e){
 					logger.error("final: error converting file: " + file);
@@ -72,8 +76,6 @@ exports.convertFiles = function(dir, body, fund_number, year, quarter){
 	.then(function(){
 		logger.info("all done");
 	})
-	
-
 }
 
 /**

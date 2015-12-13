@@ -109,17 +109,17 @@ var getContribFunds = function() {
 };
 
 
-exports.fetchKnown = function(body, year, quarter, fund_number){
+exports.fetchKnown = function(body, year, quarter, fund_number, trgdir){
 
 	readGoogleDocsFundsFile()
 	.then(function(allFunds){
 		return Utils.filterFunds(allFunds, body, year, quarter, fund_number);
 	})
 	.each(function(fund){
-		fc.downloadFundFile(fund);
+		fc.downloadFundFile(fund, trgdir);
 	})
 	.then(function(xlFilename){
-		console.log(xlFilename);
+		//console.log(xlFilename);
 	})
 	.catch(function(e){
 		console.log(e.stack);
