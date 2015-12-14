@@ -1,8 +1,8 @@
 {
     "db_mode": "csv",
-    "connection_string": "tcp://op:a0e620de1473fc97c7f410e1dc65f2a3@199.223.234.81:5432/op",
-    "db": "db.openpension.org.il",
+    "connection_string": "",
+    "db": "",
     "user": "op",
-    "password":"a0e620de1473fc97c7f410e1dc65f2a3",
+    "password":"",
     "table": "data"
 }
