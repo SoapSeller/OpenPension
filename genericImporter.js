@@ -6,6 +6,7 @@ var MetaTable = require('./common/MetaTable'),
 	detectors = require("./detectors");
 
 
+var metaTable = MetaTable.getMetaTable();
 
 exports.parseXls = function(filename){
 	return xlsx.getSheets(filename)
@@ -42,7 +43,7 @@ var columnLetterFromNumber = function(number){
 
 
 /* CONFIGURATION */
-global.debug = false;
+global.debug = true;
 
 function debugM(name,message /*,...*/ ){
 	if (global.debug){
@@ -290,28 +291,37 @@ var sheetValidator = function(headers, foundHeadersMapping){
 	return (
 		(foundHeadersMapping.length == headers.length) ||
 		(foundHeadersMapping.length > 5 && foundHeadersMapping.length >= headers.length / 3  ) ||
-		(headers.length - foundHeadersMapping.length < Math.ceil(headers.length * 0.3))
+		(headers.length - foundHeadersMapping.length <= Math.ceil(headers.length / 0.3))
 	);
 }
 
-
-var parseSingleSheet = function(metaTable, workbook, sheetName, dim, indexMetaTable){
+var headers = metaTable.columnMappingForRow(1).map(function(x){return x});
+console.log(headers);
+var parseSingleSheet = function(workbook, sheetName, dim, tabIndex){
 	var foundMatchingSheet = false;
-	var headers = metaTable.columnMappingForRow(indexMetaTable).map(function(x){return x});
-	var identifiedSheetIndexFromTabName = sheetSkipDetector([sheetName], indexMetaTable, metaTable);
+	//getHeadersForTab
+	var headers = metaTable.columnMappingForRow(tabIndex).map(function(x){return x});
+	var identifiedSheetIndexFromTabName = sheetSkipDetector([sheetName], tabIndex);
+
 	if (global.debug){
-		debugM("parseSingleSheet",indexMetaTable);
-		debugM("parseSingleSheet", "trying to metch tab by sheet name",sheetName);
+		debugM("identifiedSheetIndexFromTabName", identifiedSheetIndexFromTabName);
+		debugM("parseSingleSheet", tabIndex);
+		debugM("parseSingleSheet", "trying to match tab by sheet name",sheetName);
 	}
-	if (identifiedSheetIndexFromTabName != indexMetaTable){
+	if (identifiedSheetIndexFromTabName != tabIndex){
 		notifyM("parseSingleSheet","identified different sheet by looking into tab name",
-			indexMetaTable,"(" + metaTable.getNameForSheetNum(indexMetaTable) + ")", " identified as:", identifiedSheetIndexFromTabName, "("+metaTable.getNameForSheetNum(identifiedSheetIndexFromTabName)+")" );
-		return parseSingleSheet(metaTable, workbook, sheetName, dim, identifiedSheetIndexFromTabName);
+			tabIndex,"(" + metaTable.getNameForSheetNum(tabIndex) + ")", " identified as:", identifiedSheetIndexFromTabName, "("+metaTable.getNameForSheetNum(identifiedSheetIndexFromTabName)+")" );
+		return parseSingleSheet(workbook, sheetName, dim, identifiedSheetIndexFromTabName);
 	}
 
 	if (global.debug){
 		debugM("parseSingleSheet","headers",headers);
 	}
+
+	if (dim.max.col < headers.length){
+		notifyM("dim too small");
+	}
+
 	var sheetData = [];
 	var foundHeadersMapping = [];
 	var emptyRows = 0;
@@ -347,12 +357,12 @@ var parseSingleSheet = function(metaTable, workbook, sheetName, dim, indexMetaTa
 		var shouldExtractContent = headersExtractor(rowContent,headers, foundHeadersMapping)
 
 		// Allow looking few lines after the headers line to detect the correct sheet
-		if ((indexMetaTable != 0 && indexMetaTable != 1) && (!shouldExtractContent ||  sheetData.length < 4)) {
-			var identifiedSheetIndex = sheetSkipDetector(rowContent, indexMetaTable, metaTable);
-			if (identifiedSheetIndex != indexMetaTable){
+		if ((tabIndex != 0 && tabIndex != 1) && (!shouldExtractContent ||  sheetData.length < 4)) {
+			var identifiedSheetIndex = sheetSkipDetector(rowContent, tabIndex);
+			if (identifiedSheetIndex != tabIndex){
 				notifyM("parseSingleSheet","identified different sheet while looking for:",
-					indexMetaTable,"(" + metaTable.getNameForSheetNum(indexMetaTable) + ")", " identified as:", identifiedSheetIndex, "("+metaTable.getNameForSheetNum(identifiedSheetIndex)+")" );
-				return parseSingleSheet(metaTable, workbook, sheetName, dim, identifiedSheetIndex);
+					tabIndex,"(" + metaTable.getNameForSheetNum(tabIndex) + ")", " identified as:", identifiedSheetIndex, "("+metaTable.getNameForSheetNum(identifiedSheetIndex)+")" );
+				return parseSingleSheet(workbook, sheetName, dim, identifiedSheetIndex);
 			}
 		}
 
@@ -372,7 +382,7 @@ var parseSingleSheet = function(metaTable, workbook, sheetName, dim, indexMetaTa
 		if (global.debug){
 			debugM("parseSingleSheet","verified positive match for sheet!");
 		}
-		return {"data":sheetData,"finalIndex":indexMetaTable,"headers":foundHeadersMapping.map(function(hm){ return hm.foundCell; })};
+		return {"data":sheetData,"finalIndex":tabIndex,"headers":foundHeadersMapping.map(function(hm){ return hm.foundCell; })};
 	} else {
 		if (global.debug){
 			debugM("parseSingleSheet","negative match for sheet...");
@@ -392,7 +402,10 @@ var sheetMetaIdentifier = function(cellContent, metaSheetNum, metaTable){
 
 }
 
-var sheetSkipDetector = function(inputLine, metaSheetNum, metaTable){
+var sheetSkipDetector = function(inputLine, metaSheetNum){
+	debugM("sheetSkipDetector","inputLine" + inputLine);
+	debugM("sheetSkipDetector","metaSheetNum" + metaSheetNum);
+
 	// for the first two tabs, skip detection
 	return inputLine.reduce(function(_metaSheetNum, cellContent){
 		if (_metaSheetNum == metaSheetNum) {
@@ -439,7 +452,7 @@ var parseSheets = function(workbook){
 
 		debugM("parseSheets","sheet dim",dim)
 
-		var sheetOutput = parseSingleSheet(metaTable,workbook,sheetName,dim,res.length);
+		var sheetOutput = parseSingleSheet(workbook,sheetName,dim,res.length);
 
 		if (sheetOutput && sheetOutput.finalIndex != res.length){
 			while(res.length < sheetOutput.finalIndex){

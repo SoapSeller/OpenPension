@@ -16,23 +16,21 @@ var trim = function (s) {
 var cellIdToCellIdx = function(cellId) {
 
   var i, col = 0;
-  for ( i = 0; i < cellId.length; ++i) {
-    if (cellId[i] < 65) {
-      break;
-    }
 
-    if (i == 1 && col == 0){ //for handing "A_"
-      col += ("Z".charCodeAt(0) -65 +1);
-    }
-    
-    col += cellId.charCodeAt(i) - 65;  // cell[i] - 'A'; zero based
+  //calc column from letters
+  var letters = cellId.replace(/[0-9]/g, '');
+  for ( i = 0; i < letters.length; i++) {    
+      col += (letters.charCodeAt(i) - 64) * Math.pow(26, i);
   }
+
+  col--;//zero based
 
   // col can not be larger then 50
   // thats silly
   if (col > 50)
     col = 50;
 
+  //calc row from numbers
   var row = parseInt(cellId.substr(i), 10) - 1;  // the row number the user is looking for (zero-based)
 
   return {
