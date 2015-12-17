@@ -56,7 +56,6 @@ function notifyM(name, message /*,...*/){
 	console.log.apply(null, ["#NOTIFY", args.shift(),">"].concat(args));
 }
 
-var strictMode = false;
 var levTolerance = 2;
 var aliasMap = {
 	"סוג מטבע" : [ "מטבע" ],
