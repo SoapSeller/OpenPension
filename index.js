@@ -1,36 +1,8 @@
 var fs = require('fs');
 var program = require('commander');
-var xlsx = require('./xlsxparser.js');
 var db = require('./db.js');
-var CSVWriter = require('./CSVWriter')
-var MetaTable = require('./common/MetaTable');
-var initialize = require('./initialize');
 var dirs = require('./dirs');
 
-
-
-//creates system dirs on first run
-program
-	.command("init")
-	.description("create system directories")
-	.action(function(args){
-		require('./initialize').init()
-		.then(function(){
-			console.log('initialized.')
-		});
-	})
-
-
-//clean system dirs (deletes files!)
-// program
-// 	.command("clean")
-// 	.description("clean (delete files) in system directories")
-// 	.action(function(args){
-// 		require('./initialize').clean()
-// 		.then(function(){
-// 			console.log('cleaned.')
-// 		});
-// 	})
 
 //convert excel file(s) in directory to csv
 program

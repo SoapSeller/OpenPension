@@ -33,7 +33,8 @@
     "xlsjs": "^0.7.5",
     "xlsx": "^0.7.12",
     "xml2js": "latest",
-    "zombie": "3.1.0"
+    "zombie": "3.1.0",
+    "json-2-csv": "~2.0.10"
   },
   "devDependencies": {},
   "scripts": {
