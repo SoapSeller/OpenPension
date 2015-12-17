@@ -1,7 +1,6 @@
 var MetaTable = require('./common/MetaTable');
-var request = require('request');
 var _ = require('underscore');
-var logger = require('./logger');
+var logger = require('./logger')(module);
 
 exports.validate = function(headers,data,tabIndex) {
 // managingBody; (string) 'Migdal' לדגמ
@@ -140,7 +139,7 @@ var cleanNumber = function(input){
 	var _input = parseFloat(input.replace(/,|`|'/g,"").replace(/([^]+?[^Ee])-/g,"$1"));
 	
 	if (isNaN(_input)) {
-		console.log("returning 0:",input,_input,input < 0 );
+		logger.warn("Expecting number, found '" +input + "' returning 0");
 		return "0";
 	}
 	else
