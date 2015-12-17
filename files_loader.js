@@ -3,7 +3,6 @@ var fs = require("fs"),
 	path = require('path'),
 	_ = require('underscore'),
 	Promise = require('bluebird'),
-	fetcherCommon = require('./fetcher.common'),
 	genericImporter = require("./genericImporter.js"),
 	fse = require("fs-extra"),
 	logger = require("./logger.js"),
@@ -102,7 +101,7 @@ exports.countFileValues = function(dir, body, year, quarter, fund_number){
 	        	if (row.instrument_id == undefined) return memo;
 
 
-        		return memo + ( row.market_cap || 0 ) * 1000 + 
+        		return memo + ( row.market_cap || 0 ) * 1000 +
         						( row.fair_value || 0 ) * 1000;
         	},0);
 
