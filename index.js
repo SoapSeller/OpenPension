@@ -3,7 +3,6 @@ var program = require('commander');
 var db = require('./db.js');
 var dirs = require('./dirs');
 
-
 //convert excel file(s) in directory to csv
 program
 	.command("convert-files")
@@ -14,6 +13,7 @@ program
 	.option("-f, --fund <fund number>", "fund")
 	.option("-s, --srcdir <name>","path of Excel files, default:"+dirs.excel)
 	.option("-t, --trgdir <name>","path of CSV files, default:"+dirs.csv)
+	.option("-o, --overwrite","overwrite existing CSV files, default: false")
 	.action(function(args){
 		if (!process.argv.slice(3).length) {
 			this.outputHelp();
@@ -21,33 +21,52 @@ program
 		}
 		var srcdir = args.srcdir || dirs.excel;
 		var trgdir = args.trgdir || dirs.csv;
-		require("./files_loader").convertFiles(args.body, args.fund, args.year, args.quarter, srcdir, trgdir);
+		var overwrite = args.overwrite || false;
+		try{
+			require("./files_loader").convertFilesCmd(args.body, args.fund, args.year, args.quarter, srcdir, trgdir, overwrite);
+		}
+		catch(err){
+			console.error("Error:" + err);
+		}
+
 	})
 
 //create table in database
 program
-  .command("db-create-table")
-  .description("create table in database")
-  .option("-t, --table <name>","table name")
-  .action(function(args){
-  	if (!process.argv.slice(3).length) {
-		this.outputHelp();
-		return;
-	}
-    require('./db').createTable(args.table);
-  });
+	.command("db-create-table")
+	.description("create table in database")
+	.option("-t, --table <name>","table name")
+	.action(function(args){
+		if (!process.argv.slice(3).length) {
+			this.outputHelp();
+			return;
+		}
+
+		try{
+			require('./db').createTable(args.table);
+		}
+		catch(err){
+			console.error("Error:" + err);
+		}
+	});
 
 //truncate table in database
 program
-  .command("db-empty-table")
-  .description("truncate table in database")  
-  .option("-t, --table <name>","table name")
-  .action(function(args){
-  	if (!process.argv.slice(3).length) {
-		this.outputHelp();
-		return;
-	}
-    require('./db').emptyTable(args.table);
+	.command("db-empty-table")
+	.description("truncate table in database")
+	.option("-t, --table <name>","table name")
+	.action(function(args){
+		if (!process.argv.slice(3).length) {
+			this.outputHelp();
+			return;
+		}
+		try{
+			require('./db').emptyTable(args.table);
+		}
+		catch(err){
+			console.error("Error:" + err);
+		}
+
   });
 
 //load files to database
@@ -69,9 +88,14 @@ program
 
 		var srcdir = args.srcdir || dirs.csv;
 
-		require('./dbLoader').importFilesCmd(srcdir, args.body, args.year, args.quarter, args.fund, 
-			args.table, args.concurrency);
-	})
+		try{
+			require('./dbLoader').importFilesCmd(srcdir, args.body, args.year, args.quarter, args.fund,
+				args.table, args.concurrency);
+		}
+		catch(err){
+			console.error("Error:" + err);
+		}
+	});
 
 // program
 // 	.command("dump-funds")
@@ -97,7 +121,12 @@ program
 
 		var trgdir = args.trgdir || dirs.excel;
 
-		require('./fetcher').fetchKnown(args.body, args.year, args.quarter, args.fund, trgdir);
+		try{
+			require('./fetcher').fetchKnown(args.body, args.year, args.quarter, args.fund, trgdir);
+		}
+		catch(err){
+			console.error("Error:" + err);
+		}
 	});
 
 //download and convert contributed files
