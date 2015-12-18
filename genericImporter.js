@@ -179,7 +179,7 @@ var headersExtractor = function(inputLine, headers, foundHeadersMapping){
 
 				if (foundInHeader) {
 					if (global.debug){
-						logger.debug({ column: column, origCell: cellContent, foundCell: foundInHeader })
+						logger.debug("headersExtractor","column:",column,"origCell:",cellContent,"foundCell:",foundInHeader);
 					}
 					res.push({ column: column, origCell: cellContent, foundCell: foundInHeader });
 				}
@@ -267,7 +267,7 @@ var contentExtractor = function(inputLine, headersMapping){
 
 var sheetValidator = function(headers, foundHeadersMapping){
 	if (global.debug){
-		logger.debug("sheetValidator", "found headers #", foundHeadersMapping.length, "num headers", headers.length)
+		logger.debug("sheetValidator", "found ", foundHeadersMapping.length, " headers out of ", headers.length)
 	}
 	return (
 		(foundHeadersMapping.length == headers.length) ||
@@ -277,24 +277,25 @@ var sheetValidator = function(headers, foundHeadersMapping){
 }
 
 var parseSingleSheet = function(workbook, sheetName, dim, tabIndex){
-	var foundMatchingSheet = false;
+
+	logger.info(">>parseSingleSheet","parsing sheet number", tabIndex, sheetName );
 
 	var headers = metaTable.getHeadersForTab(tabIndex).map(function(x){return x});
 	var identifiedSheetIndexFromTabName = sheetSkipDetector([sheetName], tabIndex);
 
 	if (global.debug){
-		logger.debug("identifiedSheetIndexFromTabName", identifiedSheetIndexFromTabName);
+		logger.debug("parseSingleSheet","identifiedSheetIndexFromTabName", identifiedSheetIndexFromTabName);
 		logger.debug("parseSingleSheet", tabIndex);
 		logger.debug("parseSingleSheet", "trying to match tab by sheet name",sheetName);
 	}
 	if (identifiedSheetIndexFromTabName != tabIndex){
-		logger.debug("parseSingleSheet","identified different sheet by looking into tab name",
+		logger.debug("parseSingleSheet","identified different sheet by looking into sheet name",
 			tabIndex,"(" + metaTable.getNameForSheetNum(tabIndex) + ")", " identified as:", identifiedSheetIndexFromTabName, "("+metaTable.getNameForSheetNum(identifiedSheetIndexFromTabName)+")" );
 		return parseSingleSheet(workbook, sheetName, dim, identifiedSheetIndexFromTabName);
 	}
 
 	if (global.debug){
-		logger.debug("parseSingleSheet","headers",headers);
+		logger.debug("parseSingleSheet","headers",JSON.stringify(headers));
 	}
 
 	if (dim.max.col < headers.length){
@@ -308,7 +309,7 @@ var parseSingleSheet = function(workbook, sheetName, dim, tabIndex){
 	for(var row = dim.min.row || 1; row <= dim.max.row; row++){
 	
 
-		// if the number of empty rowns is above 10, the sheet is reporting a size which is too
+		// if the number of empty rowns is above 20, the sheet is reporting a size which is too
 		// big and needs to be trimmed
 		if (emptyRows >= 20) 
 			break;
@@ -352,19 +353,18 @@ var parseSingleSheet = function(workbook, sheetName, dim, tabIndex){
 			}
 			sheetData.push(extractedData);
 		}
-		
-	}
+    }
 
 	var sheetMatchVerified = sheetValidator(headers,foundHeadersMapping);
-	
-	if (sheetMatchVerified){
+
+    if (sheetMatchVerified){
 		if (global.debug){
-			logger.debug("parseSingleSheet","verified positive match for sheet!");
+			logger.debug("<<parseSingleSheet","verified positive match for sheet!");
 		}
 		return {"data":sheetData,"finalIndex":tabIndex,"headers":foundHeadersMapping.map(function(hm){ return hm.foundCell; })};
 	} else {
 		if (global.debug){
-			logger.debug("parseSingleSheet","negative match for sheet...");
+			logger.debug("<<parseSingleSheet","negative match for sheet...");
 		}
 		return null;
 	}
@@ -429,7 +429,7 @@ var parseSheets = function(workbook){
 
 		var dim = xlsx.getDimension(workbook, sheetName);
 
-		logger.debug("parseSheets","sheet dim",dim)
+		logger.debug("parseSheets","sheet dim",JSON.stringify(dim));
 
 		var sheetOutput = parseSingleSheet(workbook,sheetName,dim,res.length);
 
@@ -445,6 +445,9 @@ var parseSheets = function(workbook){
 		if (sheetOutput && sheetOutput.data && sheetOutput.data.length > 0){
 			if (global.debug){
 				logger.debug("parseSheets","adding sheet lines count #",sheetOutput.data.length);
+                sheetOutput.data.forEach(function(row){
+                    logger.debug("parseSheets","adding sheet row", row.join("|"));
+                });
 			}
 			res.push(sheetOutput);
 		}
