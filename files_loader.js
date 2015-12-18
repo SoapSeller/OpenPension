@@ -5,7 +5,7 @@ var fs = require("fs"),
 	Promise = require('bluebird'),
 	genericImporter = require("./genericImporter.js"),
 	fse = require("fs-extra"),
-	logger = require("./logger.js"),
+	logger = require('./logger.js')(module),
 	CSVWriter = require("./CSVWriter.js"),
 	Utils = require("./utils.js"),
 	CSVParser = Promise.promisify(require('json-2-csv').csv2json);
@@ -124,11 +124,11 @@ function fixFileFormat(xlFilename){
 
 	return new Promise(function(resolve, reject){
 
-		logger.info("Checking format: " + xlFilename);	
+		logger.info("Checking format: " + xlFilename);
 
 		cp.exec("file " + xlFilename, function (err, stdout, stderr) {
 
-			logger.info("Got file info :"+ stdout);
+			logger.debug("Got file info :"+ stdout);
 			//if file is XLSX format, convert to XLSX
 			if (!err &&
 				(
@@ -140,7 +140,7 @@ function fixFileFormat(xlFilename){
 			{
 				var cmd = "ssconvert --export-type=Gnumeric_Excel:xlsx " + xlFilename;
 
-				logger.info("converting to XLSX: " + xlFilename );
+				logger.debug("converting to XLSX: " + xlFilename );
 				cp.exec(cmd, function(err, stdout, stderr) {
 					if (err){
 						logger.warn("error converting file:" + xlFilename + " err:" + err);

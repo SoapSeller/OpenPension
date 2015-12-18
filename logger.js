@@ -7,7 +7,7 @@ module.exports = function(module){
   return new (winston.Logger)({
     transports: [
       new (winston.transports.Console)({
-            level: 'info', //debug
+            level: 'debug', //debug
             formatter: function(log) {
               return "["+ log.level.toUpperCase() +"] "+moduleFileName+": "+ log.message;
             }
