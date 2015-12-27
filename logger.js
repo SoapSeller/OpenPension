@@ -7,21 +7,21 @@ module.exports = function(module){
   return new (winston.Logger)({
     transports: [
       new (winston.transports.Console)({
-            level: 'debug', //debug
+            level: 'error', //info
             formatter: function(log) {
               return "["+ log.level.toUpperCase() +"] "+moduleFileName+": "+ log.message;
             }
           }
       ),
-      new (winston.transports.File)({
-        name: 'debug-file',
-        filename: 'debug.log',
-        json: false,
-        level: 'debug',
-        formatter: function(log) {
-          return "["+ log.level.toUpperCase() +"] "+moduleFileName+": "+ log.message;
-        }
-      }),
+      //new (winston.transports.File)({
+      //  name: 'debug-file',
+      //  filename: 'debug.log',
+      //  json: false,
+      //  level: 'trace', //debug,trace
+      //  formatter: function(log) {
+      //    return "["+ log.level.toUpperCase() +"] "+moduleFileName+": "+ log.message;
+      //  }
+      //}),
       new (winston.transports.File)({
         name: 'error-file',
         json: false,
@@ -33,10 +33,11 @@ module.exports = function(module){
       })
     ],
     levels: {
-      error: 4,
-      warn: 3,
-      info: 2,
-      debug: 1
+      error: 5,
+      warn: 4,
+      info: 3,
+      debug: 2,
+      trace: 1
     }
   });
 };
