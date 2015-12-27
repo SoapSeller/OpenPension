@@ -386,14 +386,24 @@ var mezumanim = function(headers, dataLines){
 
 	return dataLines.filter(function(l){
 		return (
-			(isContaining( l[ enHeaders.indexOf("instrument_symbol") ], "יתרות" ) == false &&
-				isContaining( l[ enHeaders.indexOf("instrument_symbol") ], "פח\"ק/פר\"י" ) == false)
-			&& ((isNotEmpty(l[ enHeaders.indexOf("rating") ])
-				&& l[ enHeaders.indexOf("rating") ] != 0)
-				|| (isNotEmpty(l[ enHeaders.indexOf("rating_agency") ]) 
-				&& l[ enHeaders.indexOf("rating_agency") ] != 0)
-				|| (isNotEmpty(l[ enHeaders.indexOf("currency") ]) 
-				&& l[ enHeaders.indexOf("currency") ] != 0))
+			(
+				isContaining( l[ enHeaders.indexOf("instrument_symbol") ], "יתרות" ) == false &&
+				isContaining( l[ enHeaders.indexOf("instrument_symbol") ], "פח\"ק/פר\"י" ) == false
+			) &&
+			(
+				(
+					isNotEmpty(l[ enHeaders.indexOf("rating") ]) &&
+					l[ enHeaders.indexOf("rating") ] != -1
+				) ||
+				(
+				isNotEmpty(l[ enHeaders.indexOf("rating_agency") ]) &&
+				l[ enHeaders.indexOf("rating_agency") ] != -1
+				) ||
+				(
+				isNotEmpty(l[ enHeaders.indexOf("currency") ]) &&
+				l[ enHeaders.indexOf("currency") ] != -1
+				)
+			)
 		)
 	}).map(function(l){
 		var row = _.object(enHeaders,l);
@@ -408,9 +418,9 @@ var teudatHihayvutMimshalti = function(headers, dataLines){
 		return (
 			isNumber(l[ enHeaders.indexOf("rate") ])
 			&& isNotEmpty(l[ enHeaders.indexOf("par_value") ])
-			&& l[ enHeaders.indexOf("par_value") ] != 0
+			&& l[ enHeaders.indexOf("par_value") ] != -1
 			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
-			&& l[ enHeaders.indexOf("rate") ] != 0
+			&& l[ enHeaders.indexOf("rate") ] != -1
 			&& isNumber(l[ enHeaders.indexOf("rate") ])
 		);
 	}).map(function(l){
@@ -425,9 +435,9 @@ var taudatHovMisharit = function(headers, dataLines){
 		return (
 			isNumber(l[ enHeaders.indexOf("par_value") ])
 			&& isNotEmpty(l[ enHeaders.indexOf("par_value") ])
-			&& l[ enHeaders.indexOf("par_value") ] != 0
+			&& l[ enHeaders.indexOf("par_value") ] != -1
 			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
-			&& l[ enHeaders.indexOf("rate") ] != 0
+			&& l[ enHeaders.indexOf("rate") ] != -1
 		);
 	}).map(function(l){
 		var row = _.object(enHeaders,l);
@@ -445,9 +455,9 @@ var agahKontzerni = function(headers, dataLines){
                                         || ( isNotEmpty(l[ enHeaders.indexOf('market_cap') ]) && isNumber(l[ enHeaders.indexOf('market_cap') ]) )
                         )
 			&& isNotEmpty(l[ enHeaders.indexOf("par_value") ])
-			&& l[ enHeaders.indexOf("par_value") ] != 0
+			&& l[ enHeaders.indexOf("par_value") ] != -1
 			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
-			&& l[ enHeaders.indexOf("rate") ] != 0
+			&& l[ enHeaders.indexOf("rate") ] != -1
 		);
 	}).map(function(l){
 		var row = _.object(enHeaders,l);
@@ -461,9 +471,9 @@ var menayot = function(headers, dataLines){
 		return (
 			isNumber(l[ enHeaders.indexOf("par_value") ])
 			&& isNotEmpty(l[ enHeaders.indexOf("par_value") ])
-			&& l[ enHeaders.indexOf("par_value") ] != 0
+			&& l[ enHeaders.indexOf("par_value") ] != -1
 			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
-			&& l[ enHeaders.indexOf("rate") ] != 0
+			&& l[ enHeaders.indexOf("rate") ] != -1
 		);
 	}).map(function(l){
 		var row = _.object(enHeaders,l);
@@ -477,9 +487,9 @@ var teudotSal = function(headers, dataLines){
 		return (
 			isNumber(l[ enHeaders.indexOf("par_value") ])
 			&& isNotEmpty(l[ enHeaders.indexOf("par_value") ])
-			&& l[ enHeaders.indexOf("par_value") ] != 0
+			&& l[ enHeaders.indexOf("par_value") ] != -1
 			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
-			&& l[ enHeaders.indexOf("rate") ] != 0
+			&& l[ enHeaders.indexOf("rate") ] != -1
 		);
 	}).map(function(l){
 		var row = _.object(enHeaders,l);
@@ -493,9 +503,9 @@ var kranotNemanut = function(headers, dataLines){
 		return (
 			isNumber(l[ enHeaders.indexOf("par_value") ])
 			&& isNotEmpty(l[ enHeaders.indexOf("par_value") ])
-			&& l[ enHeaders.indexOf("par_value") ] != 0
+			&& l[ enHeaders.indexOf("par_value") ] != -1
 			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
-			&& l[ enHeaders.indexOf("rate") ] != 0
+			&& l[ enHeaders.indexOf("rate") ] != -1
 		);
 	}).map(function(l){
 		var row = _.object(enHeaders,l);
@@ -509,9 +519,9 @@ var kitveiOptzia = function(headers, dataLines){
 		return (
 			isNumber(l[ enHeaders.indexOf("par_value") ])
 			&& isNotEmpty(l[ enHeaders.indexOf("par_value") ])
-			&& l[ enHeaders.indexOf("par_value") ] != 0
+			&& l[ enHeaders.indexOf("par_value") ] != -1
 			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
-			&& l[ enHeaders.indexOf("rate") ] != 0
+			&& l[ enHeaders.indexOf("rate") ] != -1
 		);
 	}).map(function(l){
 		var row = _.object(enHeaders,l);
@@ -525,9 +535,9 @@ var opttziyot = function(headers, dataLines){
 		return (
 			isNumber(l[ enHeaders.indexOf("par_value") ])
 			&& isNotEmpty(l[ enHeaders.indexOf("par_value") ])
-			&& l[ enHeaders.indexOf("par_value") ] != 0
+			&& l[ enHeaders.indexOf("par_value") ] != -1
 			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
-			&& l[ enHeaders.indexOf("rate") ] != 0
+			&& l[ enHeaders.indexOf("rate") ] != -1
 		);
 	}).map(function(l){
 		var row = _.object(enHeaders,l);
@@ -541,9 +551,9 @@ var hozimAtidiim = function(headers, dataLines){
 		return (
 			isNumber(l[ enHeaders.indexOf("par_value") ])
 			&& isNotEmpty(l[ enHeaders.indexOf("par_value") ])
-			&& l[ enHeaders.indexOf("par_value") ] != 0
+			&& l[ enHeaders.indexOf("par_value") ] != -1
 			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
-			&& l[ enHeaders.indexOf("rate") ] != 0
+			&& l[ enHeaders.indexOf("rate") ] != -1
 		);
 	}).map(function(l){
 		var row = _.object(enHeaders,l);
@@ -557,9 +567,9 @@ var motzarimMuvnim = function(headers, dataLines){
 		return (
 			isNumber(l[ enHeaders.indexOf("par_value") ])
 			&& isNotEmpty(l[ enHeaders.indexOf("par_value") ])
-			&& l[ enHeaders.indexOf("par_value") ] != 0
+			&& l[ enHeaders.indexOf("par_value") ] != -1
 			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
-			&& l[ enHeaders.indexOf("rate") ] != 0
+			&& l[ enHeaders.indexOf("rate") ] != -1
 		);
 	}).map(function(l){
 		var row = _.object(enHeaders,l);
@@ -573,9 +583,9 @@ var teudatHihayvutMimshaltiLoSahir = function(headers, dataLines){
 		return (
 			isNumber(l[ enHeaders.indexOf("par_value") ])
 			&& isNotEmpty(l[ enHeaders.indexOf("par_value") ])
-			&& l[ enHeaders.indexOf("par_value") ] != 0
+			&& l[ enHeaders.indexOf("par_value") ] != -1
 			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
-			&& l[ enHeaders.indexOf("rate") ] != 0
+			&& l[ enHeaders.indexOf("rate") ] != -1
 			&& isNumber(l[ enHeaders.indexOf("rate") ])
 		);
 	}).map(function(l){
@@ -590,9 +600,9 @@ var taudatHovMisharitLoSahir = function(headers, dataLines){
 		return (
 			isNumber(l[ enHeaders.indexOf("par_value") ])
 			&& isNotEmpty(l[ enHeaders.indexOf("par_value") ])
-			&& l[ enHeaders.indexOf("par_value") ] != 0
+			&& l[ enHeaders.indexOf("par_value") ] != -1
 			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
-			&& l[ enHeaders.indexOf("rate") ] != 0
+			&& l[ enHeaders.indexOf("rate") ] != -1
 		);
 	}).map(function(l){
 		var row = _.object(enHeaders,l);
@@ -610,9 +620,9 @@ var agahKontzerniLoSahir = function(headers, dataLines){
 					|| ( isNotEmpty(l[ enHeaders.indexOf('market_cap') ]) && isNumber(l[ enHeaders.indexOf('market_cap') ]) )
                         )
 			&& isNotEmpty(l[ enHeaders.indexOf("par_value") ])
-			&& l[ enHeaders.indexOf("par_value") ] != 0
+			&& l[ enHeaders.indexOf("par_value") ] != -1
 			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
-			&& l[ enHeaders.indexOf("rate") ] != 0
+			&& l[ enHeaders.indexOf("rate") ] != -1
 		);
 	}).map(function(l){
 		var row = _.object(enHeaders,l);
@@ -626,9 +636,9 @@ var menayotLoSahir = function(headers, dataLines){
 		return (
 			isNumber(l[ enHeaders.indexOf("par_value") ])
 			&& isNotEmpty(l[ enHeaders.indexOf("par_value") ])
-			&& l[ enHeaders.indexOf("par_value") ] != 0
+			&& l[ enHeaders.indexOf("par_value") ] != -1
 			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
-			&& l[ enHeaders.indexOf("rate") ] != 0
+			&& l[ enHeaders.indexOf("rate") ] != -1
 		);
 	}).map(function(l){
 		var row = _.object(enHeaders,l);
@@ -642,9 +652,9 @@ var kranotHashkaaLoSahir = function(headers, dataLines){
 		return (
 			isNumber(l[ enHeaders.indexOf("par_value") ])
 			&& isNotEmpty(l[ enHeaders.indexOf("par_value") ])
-			&& l[ enHeaders.indexOf("par_value") ] != 0
+			&& l[ enHeaders.indexOf("par_value") ] != -1
 			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
-			&& l[ enHeaders.indexOf("rate") ] != 0
+			&& l[ enHeaders.indexOf("rate") ] != -1
 		);
 	}).map(function(l){
 		var row = _.object(enHeaders,l);
@@ -658,7 +668,7 @@ var kitveiOptziaLoSahir = function(headers, dataLines){
 		return (
 			isNumber(l[ enHeaders.indexOf("par_value") ])
 			&& isNotEmpty(l[ enHeaders.indexOf("par_value") ])
-			&& l[ enHeaders.indexOf("par_value") ] != 0
+			&& l[ enHeaders.indexOf("par_value") ] != -1
 			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
 		);
 	}).map(function(l){
@@ -673,9 +683,9 @@ var opttziyotLoSahir = function(headers, dataLines){
 		return (
 			isNumber(l[ enHeaders.indexOf("par_value") ])
 			&& isNotEmpty(l[ enHeaders.indexOf("par_value") ])
-			&& l[ enHeaders.indexOf("par_value") ] != 0
+			&& l[ enHeaders.indexOf("par_value") ] != -1
 			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
-			&& l[ enHeaders.indexOf("rate") ] != 0
+			&& l[ enHeaders.indexOf("rate") ] != -1
 		);
 	}).map(function(l){
 		var row = _.object(enHeaders,l);
@@ -689,9 +699,9 @@ var hozimAtidiimLoSahir = function(headers, dataLines){
 		return (
 			isNumber(l[ enHeaders.indexOf("par_value") ])
 			&& isNotEmpty(l[ enHeaders.indexOf("par_value") ])
-			&& l[ enHeaders.indexOf("par_value") ] != 0
+			&& l[ enHeaders.indexOf("par_value") ] != -1
 			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
-			&& l[ enHeaders.indexOf("rate") ] != 0
+			&& l[ enHeaders.indexOf("rate") ] != -1
 		);
 	}).map(function(l){
 		var row = _.object(enHeaders,l);
@@ -705,9 +715,9 @@ var motzarimMuvnimLoSahir = function(headers, dataLines){
 		return (
 			isNumber(l[ enHeaders.indexOf("par_value") ])
 			&& isNotEmpty(l[ enHeaders.indexOf("par_value") ])
-			&& l[ enHeaders.indexOf("par_value") ] != 0
+			&& l[ enHeaders.indexOf("par_value") ] != -1
 			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
-			&& l[ enHeaders.indexOf("rate") ] != 0
+			&& l[ enHeaders.indexOf("rate") ] != -1
 		);
 	}).map(function(l){
 		var row = _.object(enHeaders,l);
@@ -720,14 +730,14 @@ var halvaot = function(headers, dataLines){
 	return dataLines.filter(function(l){
 		return (
 			isNotEmpty(l[ enHeaders.indexOf("instrument_id") ])
-			&& l[ enHeaders.indexOf("instrument_id") ] != 0
+			&& l[ enHeaders.indexOf("instrument_id") ] != -1
 			&& ( (isNotEmpty(l[ enHeaders.indexOf("yield") ])
 					&& isNumber(l[ enHeaders.indexOf("yield") ]))
 				|| (!isNotEmpty(l[ enHeaders.indexOf("yield") ]))
 			)
 			&& isNumber(l[ enHeaders.indexOf("fair_value") ])
 			&& isNotEmpty(l[ enHeaders.indexOf("fair_value") ])
-			&& l[ enHeaders.indexOf("fair_value") ] != 0
+			&& l[ enHeaders.indexOf("fair_value") ] != -1
 		);
 	}).map(function(l){
 		var row = _.object(enHeaders,l);
@@ -741,9 +751,9 @@ var pikdonot = function(headers, dataLines){
 		return (
 			isNumber(l[ enHeaders.indexOf("par_value") ])
 			&& isNotEmpty(l[ enHeaders.indexOf("par_value") ])
-			&& l[ enHeaders.indexOf("par_value") ] != 0
+			&& l[ enHeaders.indexOf("par_value") ] != -1
 			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
-			&& l[ enHeaders.indexOf("rate") ] != 0
+			&& l[ enHeaders.indexOf("rate") ] != -1
 		);
 	}).map(function(l){
 		var row = _.object(enHeaders,l);
@@ -757,7 +767,7 @@ var zhuyotMekarkein = function(headers, dataLines){
 		return (
 			isNotEmpty(l[ enHeaders.indexOf("fair_value") ])
 			&& isNumber(l[ enHeaders.indexOf("fair_value") ])
-			&& l[ enHeaders.indexOf("fair_value") ] != 0	
+			&& l[ enHeaders.indexOf("fair_value") ] != -1	
 			&& l[ enHeaders.indexOf("fair_value") ] > 0.1
 			&& isNotEmpty(l[ enHeaders.indexOf("type_of_asset") ])
 		);
@@ -806,6 +816,7 @@ var normalizeValues = function(enName, value, row){
 		case 'date_of_revaluation': return parseDate(value);
 		case 'type_of_asset': 		return cleanString(value);
 		case 'tmp_name': 			return cleanString(value);
+		case 'issuer_number':		return cleanNumber(cleanString(value));
 		default:
 			throw new Error("Unexpected column header value given: \"" + enName + "\"")
 	}
