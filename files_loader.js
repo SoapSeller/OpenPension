@@ -13,37 +13,53 @@ var fs = require("fs"),
 /**
  * Convert XLS/XLSX files to CSV
  * 
- * body - managing body of files to convert
- * fund_number - fund of files to convert
- * year - year of files to convert
- * quarter - quarter of files to convert
- * srcdir - path of excel files
- * trgdir - path to write csv files
+ * @param body - managing body of files to convert
+ * @param fund_number - fund of files to convert
+ * @param year - year of files to convert
+ * @param quarter - quarter of files to convert
+ * @param srcdir - path of excel files
+ * @param trgdir - path to write csv files
  */
-exports.convertFiles = function(body, fund_number, year, quarter, srcdir, trgdir){
+exports.convertFilesCmd = function(body, fund_number, year, quarter, srcdir, trgdir, overwrite){
+
+	logger.info("convertFilesCmd","Converting Excel files in "+srcdir);
 
 	if (srcdir.indexOf(path.sep) != srcdir.length){
 		srcdir += path.sep;
 	}
 
-	console.log("loading dir:" + srcdir);
+	if (!fs.existsSync(srcdir)){
+		throw("Unknown directory:" +srcdir);
+	}
+
+	if (!fs.existsSync(trgdir)){
+		logger.info("convertFilesCmd","Creating directory:" +trgdir);
+		fs.mkdirSync(trgdir);
+	}
+
 	var xlfiles = fs.readdirSync(srcdir).filter(function(file){
 		return file.indexOf(".xlsx") > -1 || file.indexOf(".xls") > -1;
 	});
 
 	xlfiles = Utils.filterFiles(xlfiles, body, year, quarter, fund_number);
 
+	return exports.convertFiles(xlfiles, srcdir, trgdir, overwrite)
+	.then(function(){
+		logger.info("convertFilesCmd","All done");
+	})
+}
+
+exports.convertFiles = function(xlfiles, srcdir, trgdir, overwrite){
 	return new Promise.each(xlfiles, function(file){
 
 		logger.info("Converting: "+  file);
-	
+
 		var xlFilename = path.join(srcdir,file);
 		var fund = Utils.getFundFromFile(file);
 		var csvFilename = Utils.filename(trgdir, fund, '.csv');
 
-		if (fs.existsSync(csvFilename)){
-			logger.warn("converted file exists:" + csvFilename );
-			// throw({"msg" : "Converted file exists"});
+		if (fs.existsSync(csvFilename) && !overwrite){
+			logger.warn("Converted file exists:" + csvFilename );
 			return;
 		}
 
@@ -52,7 +68,7 @@ exports.convertFiles = function(body, fund_number, year, quarter, srcdir, trgdir
 				return CSVWriter.writeParsedResult(fund.body, fund.number, fund.year, fund.quarter, result, trgdir);
 			})
 			.catch(function(e){
-				logger.warn("error converting file: " + file);
+				logger.error("Error converting file: " + file, e.message);
 
 				if (fs.existsSync(csvFilename)){
 					fs.unlinkSync(csvFilename);
@@ -60,20 +76,17 @@ exports.convertFiles = function(body, fund_number, year, quarter, srcdir, trgdir
 
 				//Try to fix by file format
 				fixFileFormat(xlFilename)
-				.then(genericImporter.parseXls)
-				.then(function(result){
-					logger.info("fixed by converting:"+xlFilename);
-					return CSVWriter.writeParsedResult(fund.body, fund.number, fund.year, fund.quarter, result, trgdir);
-				})
-				.catch(function(e){
-					logger.error("final: error converting file: " + file);
-					// throw({"msg" : "Error converting file " + e});
-					return;
-				});
+					.then(genericImporter.parseXls)
+					.then(function(result){
+						logger.debug("fixed by converting:"+xlFilename);
+						return CSVWriter.writeParsedResult(fund.body, fund.number, fund.year, fund.quarter, result, trgdir);
+					})
+					.catch(function(e){
+						logger.error("final: error converting file: " + file);
+						// throw({"msg" : "Error converting file " + e});
+						return;
+					});
 			});
-	})
-	.then(function(){
-		logger.info("all done");
 	})
 }
 
@@ -149,15 +162,15 @@ function fixFileFormat(xlFilename){
 
 //					fs.renameSync(xlFilename, newPath)
 
-					fs.unlink(xlFilename, function() {
+					//fs.unlink(xlFilename, function() {
 
 						var fund = Utils.getFundFromFile(xlFilename);
 						var xlsxFilename = Utils.filename("",fund,".xlsx");
 
-						logger.info("converted "+xlFilename+" to XLSX: " + xlsxFilename);
+						logger.debug("converted "+xlFilename+" to XLSX: " + xlsxFilename);
 
 						resolve(xlsxFilename);
-	       			});
+	       			//});
 				});
 			} 
 			else if (stdout.toString().indexOf("Zip archive data, at least v2.0 to extract") !== -1) {
