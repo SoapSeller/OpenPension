@@ -1,5 +1,6 @@
 var path = require("path");
 var _ = require("underscore");
+var fs = require("fs");
 
 exports.filename = function(folder, fund, ext){
 
@@ -80,3 +81,12 @@ exports.filterFiles = function(allFiles, body, year, quarter, fund_number) {
 	return chosenFiles;
 };
 
+exports.mkdirIfNotExists = function(path){
+	try{
+		fs.statSync(path);
+	}
+	catch(e){
+		fs.mkdirSync(path);
+	}
+
+}
