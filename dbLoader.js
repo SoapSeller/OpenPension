@@ -8,7 +8,6 @@ var path = require('path');
 var fs = require('fs');
 var logger = require('./logger');
 var Utils = require('./utils');
-var Promise = require('bluebird');
 
 module.exports.importFilesCmd = function(parentDir, body, year, quarter, fund_number, tableName, concurrency){	
 	return fsep.readdirAsync(parentDir)
