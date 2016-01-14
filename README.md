@@ -29,10 +29,16 @@ switch node versions easily with [nvm](https://github.com/creationix/nvm)
 ## Usage
 
 ```shell
-node index.js debug
-```
+  Usage: [options] [command]
 
-This will load the sample xlsx(res/migdal.xlsx), and import it into dump.csv.
+  Commands:
+
+    convert-files [options]     convert excel files to csv
+    db-create-table [options]   create table in database
+    db-empty-table [options]    truncate table in database
+    db-load-files [options]     load csv files to database
+    fetch-google [options]      download and convert files in Google Doc.
+```
 
 ## License
 
