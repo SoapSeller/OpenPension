@@ -8,6 +8,7 @@ var fs = require('fs');
 var logger = require('./logger')(module);
 var Utils = require('./utils');
 var Promise = require('bluebird');
+var handlebars = require('handlebars');
 var countFundRowsTemplate = handlebars.compile(fs.readFileSync(__dirname + '/sql/countFundRows.hbs').toString());
 
 module.exports.importFilesCmd = function(parentDir, body, year, quarter, fund_number, tableName, concurrency){	
