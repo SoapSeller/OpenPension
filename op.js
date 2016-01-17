@@ -107,7 +107,7 @@ program
 //download and convert files in Google Doc
 program
 	.command("fetch-google")
-	.description("download and convert files in Google Doc.")
+	.description("download files in Google Doc.")
 	.option("-y, --year <year>", "year")
 	.option("-q, --quarter <quarter>", "quarter")
 	.option("-b, --body <body>", "body")
