@@ -38,7 +38,7 @@ $ node op.js [command] [options]
     db-create-table [options]   create table in database
     db-empty-table [options]    truncate table in database
     db-load-files [options]     load csv files to database
-    fetch-google [options]      download and convert files in Google Doc.
+    fetch-google [options]      download files in Google Doc.
 ```
 
 ## Convert Excel files to CSV
@@ -110,7 +110,7 @@ $ node op.js fetch-google [options]
     -b, --body <body>         body
     -f, --fund <fund number>  fund number
     -t, --trgdir <name>       path of Excel files, default:/Users/shakhallevinson/duvdev/OpenPension/excel/
-    -o, --overwrite           overwrite existing Excel files, default: false```
+    -o, --overwrite           overwrite existing Excel files, default: false
 ```
 
 
