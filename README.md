@@ -100,7 +100,7 @@ $ node op.js db-load-files [options]
 ## Fetch Excel files from Google Sheet
 
 Usage:
-$ node op.js db-load-files [options]
+$ node op.js fetch-google [options]
 
 ```
   Options:
