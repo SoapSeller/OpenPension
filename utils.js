@@ -65,8 +65,6 @@ exports.filterFunds = function(allFunds, body, year, quarter, fund_number) {
 
 exports.filterFiles = function(allFiles, body, year, quarter, fund_number) {
 
-	var funds = allFiles.map(exports.getFundFromFile);
-
 	var chosenFiles = allFiles.filter(function(file){
 		
 		var f = exports.getFundFromFile(file);

@@ -1,15 +1,11 @@
-var URL = require("url"),
-	http = require("http"),
+var http = require("http"),
 	https = require("https"),
 	fs = require("fs"),
-	cp = require("child_process"),
 	fc = require("./fetcher.common.js"),
-	harel = require("./fetcher.harel.js"),
 	CSVWriter = require("./CSVWriter.js"),
 	db = require("./db.js"),
 	Quarter = require("./quarter"),
-	Promise = require("bluebird")
-	validUrl = require("valid-url"),
+	Promise = require("bluebird"),
 	_ = require("underscore"),
 	Utils = require("./utils.js");
 
@@ -33,9 +29,12 @@ var readGoogleDocsFundsFile = function(){
 			});
 
 			res.on('end', function(){
-				var parsedLines = data.split("\n");
-				
-				parseCsvFetch(parsedLines)
+				var Baby = require('babyparse');
+
+				data = String(data).replace(/ /g,''); //remove whitespaces
+				data = Baby.parse(data, {header:false}).data;
+
+				parseCsvFetch(data)
 				.then(function(funds){
 					resolve(funds);
 				});
@@ -50,20 +49,44 @@ var readGoogleDocsFundsFile = function(){
 	});
 }
 
+var validateUrl = function(url){
+	var RegExp = /(http|https):\/\//;
+
+	if(RegExp.test(url)){
+		if (url.indexOf('http') == 0 ){
+			return url;
+		}
+		else{ //try to find start of url
+			url = url.slice(url.indexOf('http'));
+			return url;
+		}
+	}else{
+		return null;
+	}
+}
+
+
+
 var parseCsvFetch = function(parsedLines){
 
 	var reducer = function(out, line){
-		var splt = line.split(',');
+
 		var _out = [];
+
+		//beginning cell
 		var startYear = 2012;
 		var startQuarter = 4;
 
 		var quarter =  new Quarter(startYear, startQuarter -1);
 
-		for (var i = 8; i < splt.length; i++){
+		for (var i = 8; i < line.length; i++){
 
-			if (splt[2] && splt[5] && splt[i] && validUrl.isUri(splt[i].trim()))   
-				_out.push({ body : splt[2], number : splt[5], url : splt[i], year : quarter.year, quarter : quarter.quarter + 1 })
+			var url = validateUrl(line[i]);
+			var body = line[2];
+			var number = line[5];
+
+			if (body && number && url )
+				_out.push({ body : body, number : number, url : url, year : quarter.year, quarter : quarter.quarter + 1 })
 
 			quarter.increase();
 		}
@@ -109,7 +132,7 @@ var getContribFunds = function() {
 };
 
 
-exports.fetchKnown = function(body, year, quarter, fund_number, trgdir){
+exports.fetchKnown = function(body, year, quarter, fund_number, trgdir, overwrite){
 
 	if (!fs.existsSync(trgdir)){
 		logger.info("Creating directory:" +trgdir);
@@ -121,7 +144,7 @@ exports.fetchKnown = function(body, year, quarter, fund_number, trgdir){
 		return Utils.filterFunds(allFunds, body, year, quarter, fund_number);
 	})
 	.each(function(fund){
-		fc.downloadFundFile(fund, trgdir);
+		fc.downloadFundFile(fund, trgdir, overwrite);
 	})
 	.then(function(xlFilename){
 		//console.log(xlFilename);

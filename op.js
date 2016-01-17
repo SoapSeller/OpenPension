@@ -113,6 +113,7 @@ program
 	.option("-b, --body <body>", "body")
 	.option("-f, --fund <fund number>", "fund number")
 	.option("-t, --trgdir <name>","path of Excel files, default:"+dirs.excel)
+	.option("-o, --overwrite","overwrite existing Excel files, default: false")
 	.action(function(args){
 		if (!process.argv.slice(3).length) {
 			this.outputHelp();
@@ -120,9 +121,10 @@ program
 		}
 
 		var trgdir = args.trgdir || dirs.excel;
+		var overwrite = args.overwrite || false;
 
 		try{
-			require('./fetcher').fetchKnown(args.body, args.year, args.quarter, args.fund, trgdir);
+			require('./fetcher').fetchKnown(args.body, args.year, args.quarter, args.fund, trgdir, overwrite);
 		}
 		catch(err){
 			console.error("Error:" + err);

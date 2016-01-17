@@ -10,7 +10,7 @@ var URL = require("url"),
 
 
 //downloadFundFile
-exports.downloadFundFile = function(fund, trgdir) {
+exports.downloadFundFile = function(fund, trgdir, overwrite) {
 
 	console.log('--> fetch fund');
 
@@ -18,18 +18,18 @@ exports.downloadFundFile = function(fund, trgdir) {
 	return new Promise(function(resolve, reject){
 
 		var url = URL.parse(fund.url);
-		var ext = path.extname(fund.url);
-		var xlFilename = utils.filename(trgdir, fund, ext);
+		var urlExt = path.extname(fund.url); //get extention from URL
+		var xlFilename = utils.filename(trgdir, fund, urlExt);
 
 
-		if (fs.existsSync(xlFilename)){
+		if (!overwrite && fs.existsSync(xlFilename)){
 			console.log("tried to fetch existing file: " + xlFilename);
 			return resolve(xlFilename);
 		}
 
 		
 		if (fund.url.indexOf('http') !== 0) {
-			console.log("Malformed URL");
+			console.log("Malformed URL:" + fund.url);
 			reject("Malformed URL");
 		}
 
@@ -57,32 +57,30 @@ exports.downloadFundFile = function(fund, trgdir) {
 
 		req.on('response',  function (res) {
 
-			//check HTTP status code
+			//check HTTP status code is 2xx
 			if ( String(res.statusCode).charAt(0) !== '2'){
 				console.log("Fund: " + [fund.body, fund.year, fund.quarter, fund.number].join("_") + "\nError downloading file from " + fund.url + " StatusCode: " + res.statusCode);
 				return reject("Fund: " + [fund.body, fund.year, fund.quarter, fund.number].join("_") + "\nError downloading file from " + fund.url + " StatusCode: " + res.statusCode);
 			}
 
-			console.log("got response: "+ ext);
+			console.log("got response: "+ urlExt); //ext by url
 
-			if (ext.indexOf("xls") == -1){
-				var httpExt = getExtFromHttpResponse(res);
+			if (urlExt.indexOf("xls") == -1){
+				var contentTypeExt = getExtByResponseContentType(res);
 
-				console.log("got httpExt: "+httpExt);
+				console.log("ext by response content type: "+contentTypeExt);
 				
-				if (httpExt != undefined){
-					xlFilename = utils.filename(trgdir, fund, httpExt);
-					ext = httpExt;
+				if (contentTypeExt != undefined){
+					xlFilename = utils.filename(trgdir, fund, contentTypeExt);
 				}
 				else{
 					return reject();
 				}
-			
+
 			}
 
-			if (fs.existsSync(xlFilename)){
+			if (!overwrite && fs.existsSync(xlFilename)){
 				console.log("tried to fetch existing file: " + xlFilename);
-			
 				return resolve(xlFilename);
 			}
 
@@ -103,7 +101,7 @@ exports.downloadFundFile = function(fund, trgdir) {
 
 
 
-function getExtFromHttpResponse(res){
+function getExtByResponseContentType(res){
 
 	var attachment = res.headers['content-disposition'];
 	var contentType = res.headers['content-type'];
