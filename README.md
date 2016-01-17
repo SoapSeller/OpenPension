@@ -1,7 +1,7 @@
 # Open Pension
 [![Build Status](https://travis-ci.org/hasadna/OpenPension.png?branch=master)](https://travis-ci.org/hasadna/OpenPension)
 
-Import pension "single asset" files into unfied DB.
+Import pension "single asset" files into unified DB.
 
 
 ## Installation
