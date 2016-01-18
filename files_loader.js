@@ -50,9 +50,13 @@ exports.convertFilesCmd = function(body, fund_number, year, quarter, srcdir, trg
 }
 
 exports.convertFiles = function(xlfiles, srcdir, trgdir, overwrite){
+	var total = xlfiles.length;
+	var counter = 0;
+
 	return new Promise.each(xlfiles, function(file){
 
-		logger.info("Converting: "+  file);
+		//process.stdout.cursorTo (0);
+		process.stdout.write(++counter+'/'+total + ":"+ file + "\n");
 
 		var xlFilename = path.join(srcdir,file);
 		var fund = Utils.getFundFromFile(file);

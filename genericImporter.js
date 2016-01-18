@@ -21,26 +21,6 @@ exports.parseXls = function(filename){
 }
 
 
-var columnLetterFromNumber = function(number){
-
-	var enStart = 65;
-	var enEnd = 90;
-	var enDiff = enEnd - enStart;
-	
-	var remainder = (number <= enDiff) ? null : columnLetterFromNumber( Math.floor( number / enDiff ) -1 );
-	
-	if (number == enDiff) { var thisLetterNum = number }
-	else if (number > enDiff)  { var thisLetterNum = number % enDiff -1 }
-	else var thisLetterNum = number
-	
-	var thisLetter = String.fromCharCode(enStart + thisLetterNum)
-
-	if (remainder) 
-		return remainder + thisLetter
-	else 
-		return thisLetter
-}
-
 
 /* CONFIGURATION */
 global.debug = true;
@@ -284,11 +264,24 @@ var sheetValidator = function(headers, foundHeadersMapping){
 	);
 }
 
+var readRow = function(workbook, sheetName, dim, rowIdx){
+
+	var rowContent = [];
+
+	for (var column = dim.min.col || 0; column <= dim.max.col; column++){
+		var cellContent = xlsx.readCell(workbook, sheetName, column, rowIdx);
+		rowContent[column] = cellContent;
+	}
+
+	return rowContent;
+
+}
+
 var parseSingleSheet = function(workbook, sheetName, dim, tabIndex){
 
 	logger.info(">>parseSingleSheet","parsing sheet number", tabIndex, sheetName );
 
-	var headers = metaTable.getHeadersForTab(tabIndex).map(function(x){return x});
+	var metaHeaders = metaTable.getHeadersForTab(tabIndex).map(function(x){return x});
 	var identifiedSheetIndexFromTabName = sheetSkipDetector([sheetName], tabIndex);
 
 	if (global.debug){
@@ -302,11 +295,16 @@ var parseSingleSheet = function(workbook, sheetName, dim, tabIndex){
 		return parseSingleSheet(workbook, sheetName, dim, identifiedSheetIndexFromTabName);
 	}
 
-	if (global.debug){
-		logger.debug("parseSingleSheet","headers",JSON.stringify(headers));
+
+	if (isMetaSheet(workbook, sheetName, dim)){
+		return;
 	}
 
-	if (dim.max.col < headers.length){
+	if (global.debug){
+		logger.debug("parseSingleSheet","headers",JSON.stringify(metaHeaders));
+	}
+
+	if (dim.max.col < metaHeaders.length){
 		logger.debug("dim too small");
 	}
 
@@ -314,36 +312,31 @@ var parseSingleSheet = function(workbook, sheetName, dim, tabIndex){
 	var foundHeadersMapping = [];
 	var emptyRows = 0;
 
-	for(var row = dim.min.row || 1; row <= dim.max.row; row++){
+	for(var rowIdx = dim.min.row || 1; rowIdx <= dim.max.row; rowIdx++){
 	
 
-		// if the number of empty rowns is above 20, the sheet is reporting a size which is too
+		// if the number of empty rows is above 20, the sheet is reporting a size which is too
 		// big and needs to be trimmed
 		if (emptyRows >= 20) 
 			break;
 		
-		var rowContent = []
+		var rowContent = readRow(workbook, sheetName, dim, rowIdx);
 
-		for (var column = dim.min.col || 0; column <= dim.max.col; column++){
-			var letter = columnLetterFromNumber(column);		
-			var cellId = letter + row;
-			
-			var cellContent = xlsx.readCell(workbook, sheetName, cellId);
-			rowContent[column] = cellContent;
-		}
 
 		if (global.debug){
 			logger.debug("parseSingleSheet","row",rowContent.join("|"));
 		}
 
+		//empty rows streak counter
 		if (rowContent.some(function(x){return !!x})) {
 			emptyRows = 0;
 		} else {
 			emptyRows += 1;
+			continue;
 		}
 
 		//true when header is found and sheet body is reached
-		var shouldExtractContent = headersExtractor(rowContent,headers, foundHeadersMapping)
+		var shouldExtractContent = headersExtractor(rowContent,metaHeaders, foundHeadersMapping)
 
 		// Look for header
 		// Allow looking few lines after the headers line to detect the correct sheet
@@ -365,7 +358,7 @@ var parseSingleSheet = function(workbook, sheetName, dim, tabIndex){
 		}
     }
 
-	var sheetMatchVerified = sheetValidator(headers,foundHeadersMapping);
+	var sheetMatchVerified = sheetValidator(metaHeaders,foundHeadersMapping);
 
     if (sheetMatchVerified){
 		if (global.debug){
@@ -413,7 +406,6 @@ var sheetMetaIdentifier = function(cellContent, metaSheetNum){
  * @returns {*}
  */
 var sheetSkipDetector = function(inputLine, metaSheetNum){
-    logger.debug(">>sheetSkipDetector","inputLine", JSON.stringify(inputLine));
 
     logger.debug("sheetSkipDetector","inputLine", JSON.stringify(inputLine));
 	logger.debug("sheetSkipDetector","metaSheetNum", metaSheetNum);
@@ -510,6 +502,38 @@ var parseSheets = function(workbook){
 	});
 
 	return parsedSheetsData;
+}
+
+//check if sheet is MetaSheet,
+//which is sometimes present in Excel files
+var isMetaSheet = function(workbook, sheetName, dim){
+
+	var metaRowsCounter = 0;
+	var metaColsThreshold = 4;
+	var metaRowsThreshold = 4;
+
+	var metaHeaders = metaTable.getHeadersForTab(2).map(function(x){return x});
+
+
+	for(var rowIdx = dim.min.row || 1; rowIdx <= dim.max.row; rowIdx++) {
+
+		var foundHeadersMapping = [];
+
+		var rowContent = readRow(workbook, sheetName, dim, rowIdx);
+
+		headersExtractor(rowContent,metaHeaders, foundHeadersMapping)
+
+		if (foundHeadersMapping.length > metaColsThreshold){
+			metaRowsCounter++;
+		}
+
+		if (metaRowsCounter > metaRowsThreshold){
+			return true;
+		}
+	}
+
+	return false;
+
 }
 
 
