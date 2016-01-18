@@ -279,7 +279,7 @@ var readRow = function(workbook, sheetName, dim, rowIdx){
 
 var parseSingleSheet = function(workbook, sheetName, dim, tabIndex){
 
-	logger.info(">>parseSingleSheet","parsing sheet number", tabIndex, sheetName );
+	logger.debug(">>parseSingleSheet","parsing sheet number", tabIndex, sheetName );
 
 	var metaHeaders = metaTable.getHeadersForTab(tabIndex).map(function(x){return x});
 	var identifiedSheetIndexFromTabName = sheetSkipDetector([sheetName], tabIndex);
@@ -394,7 +394,7 @@ var sheetMetaIdentifier = function(cellContent, metaSheetNum){
 	var isMatch = optionalHeaders.some(function(value){ return cleanCellContent == detectors.cleanColumnHeaderStr(value) })
 
 	if (isMatch){
-		logger.info("sheetMetaIdentifier", "isMatch",isMatch);
+		logger.debug("sheetMetaIdentifier", "isMatch",isMatch);
 	}
 
 	return isMatch;
@@ -486,7 +486,7 @@ var parseSheets = function(workbook){
 	}
 
 
-	logger.info("++++++ parsed & found all sheets");
+	logger.debug("++++++ parsed & found all sheets");
 
 	res.forEach(function(resSheet, metaIdx){
 		if (resSheet.headers && resSheet.data){
