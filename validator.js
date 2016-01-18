@@ -13,18 +13,12 @@ exports.validate = function(headers,data,tabIndex) {
 // 			]
 
 
-	var metaTable = MetaTable.getMetaTable();
-
-	var instrument = metaTable.instrumentTypes[tabIndex];
-	var instrumentSub = metaTable.instrumentSubTypes[tabIndex];
-
-
 	var tabData = parseTabSpecificData(tabIndex, headers, data);
 
-	return tabData.filter(function(l){
+	 return tabData.filter(function(l){
 		if(	isLineEmpty(l) 	|| 
 			_.intersection(l,
-					["1","2","3","4","5","6","7","8","9","10","11","12"]
+					["1","2","3","4","5","6","7","8","9","10","11","12",1,2,3,4,5,6,7,8,9,10,11,12]
 				).length > 3 ){
 
 				logger.warn('skipping line:' + l);
@@ -286,7 +280,7 @@ var normalizeCurrency = function(input){
 }
 
 var normalizeRating = function(input){
-	
+
 	var _input = cleanString(input);
 
 	if (_.isEmpty(input)) return input;
@@ -374,6 +368,9 @@ var shumNehaseiHakeren = function(headers,dataLines){
 			isNotEmpty(l[ enHeaders.indexOf("fair_value") ])
 			&& isNumber(l[ enHeaders.indexOf("fair_value") ])
 			&& isNotEmpty(l[ enHeaders.indexOf("instrument_symbol") ])
+			&& l[ enHeaders.indexOf("instrument_id") ] != -1
+			&& isNotEmpty(l[ enHeaders.indexOf("instrument_id") ])
+
 		)
 	}).map(function(l){
 		var row = _.object(enHeaders,l);
@@ -404,6 +401,8 @@ var mezumanim = function(headers, dataLines){
 				l[ enHeaders.indexOf("currency") ] != -1
 				)
 			)
+			&& l[ enHeaders.indexOf("instrument_id") ] != -1
+			&& isNotEmpty(l[ enHeaders.indexOf("instrument_id") ])
 		)
 	}).map(function(l){
 		var row = _.object(enHeaders,l);
@@ -421,7 +420,10 @@ var teudatHihayvutMimshalti = function(headers, dataLines){
 			&& l[ enHeaders.indexOf("par_value") ] != -1
 			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
 			&& l[ enHeaders.indexOf("rate") ] != -1
-			&& isNumber(l[ enHeaders.indexOf("rate") ])
+			&& isNumber(l[ enHeaders.indexOf("rate") ]
+			&& l[ enHeaders.indexOf("instrument_id") ] != -1
+			&& isNotEmpty(l[ enHeaders.indexOf("instrument_id") ])
+			)
 		);
 	}).map(function(l){
 		var row = _.object(enHeaders,l);
@@ -438,6 +440,9 @@ var taudatHovMisharit = function(headers, dataLines){
 			&& l[ enHeaders.indexOf("par_value") ] != -1
 			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
 			&& l[ enHeaders.indexOf("rate") ] != -1
+			&& l[ enHeaders.indexOf("instrument_id") ] != -1
+			&& isNotEmpty(l[ enHeaders.indexOf("instrument_id") ])
+
 		);
 	}).map(function(l){
 		var row = _.object(enHeaders,l);
@@ -458,6 +463,8 @@ var agahKontzerni = function(headers, dataLines){
 			&& l[ enHeaders.indexOf("par_value") ] != -1
 			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
 			&& l[ enHeaders.indexOf("rate") ] != -1
+			&& l[ enHeaders.indexOf("instrument_id") ] != -1
+			&& isNotEmpty(l[ enHeaders.indexOf("instrument_id") ])
 		);
 	}).map(function(l){
 		var row = _.object(enHeaders,l);
@@ -474,6 +481,8 @@ var menayot = function(headers, dataLines){
 			&& l[ enHeaders.indexOf("par_value") ] != -1
 			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
 			&& l[ enHeaders.indexOf("rate") ] != -1
+			&& l[ enHeaders.indexOf("instrument_id") ] != -1
+			&& isNotEmpty(l[ enHeaders.indexOf("instrument_id") ])
 		);
 	}).map(function(l){
 		var row = _.object(enHeaders,l);
@@ -490,6 +499,8 @@ var teudotSal = function(headers, dataLines){
 			&& l[ enHeaders.indexOf("par_value") ] != -1
 			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
 			&& l[ enHeaders.indexOf("rate") ] != -1
+			&& l[ enHeaders.indexOf("instrument_id") ] != -1
+			&& isNotEmpty(l[ enHeaders.indexOf("instrument_id") ])
 		);
 	}).map(function(l){
 		var row = _.object(enHeaders,l);
@@ -506,6 +517,8 @@ var kranotNemanut = function(headers, dataLines){
 			&& l[ enHeaders.indexOf("par_value") ] != -1
 			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
 			&& l[ enHeaders.indexOf("rate") ] != -1
+			&& l[ enHeaders.indexOf("instrument_id") ] != -1
+			&& isNotEmpty(l[ enHeaders.indexOf("instrument_id") ])
 		);
 	}).map(function(l){
 		var row = _.object(enHeaders,l);
@@ -522,6 +535,8 @@ var kitveiOptzia = function(headers, dataLines){
 			&& l[ enHeaders.indexOf("par_value") ] != -1
 			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
 			&& l[ enHeaders.indexOf("rate") ] != -1
+			&& l[ enHeaders.indexOf("instrument_id") ] != -1
+			&& isNotEmpty(l[ enHeaders.indexOf("instrument_id") ])
 		);
 	}).map(function(l){
 		var row = _.object(enHeaders,l);
@@ -538,6 +553,8 @@ var opttziyot = function(headers, dataLines){
 			&& l[ enHeaders.indexOf("par_value") ] != -1
 			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
 			&& l[ enHeaders.indexOf("rate") ] != -1
+			&& l[ enHeaders.indexOf("instrument_id") ] != -1
+			&& isNotEmpty(l[ enHeaders.indexOf("instrument_id") ])
 		);
 	}).map(function(l){
 		var row = _.object(enHeaders,l);
@@ -554,6 +571,8 @@ var hozimAtidiim = function(headers, dataLines){
 			&& l[ enHeaders.indexOf("par_value") ] != -1
 			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
 			&& l[ enHeaders.indexOf("rate") ] != -1
+			&& l[ enHeaders.indexOf("instrument_id") ] != -1
+			&& isNotEmpty(l[ enHeaders.indexOf("instrument_id") ])
 		);
 	}).map(function(l){
 		var row = _.object(enHeaders,l);
@@ -570,6 +589,8 @@ var motzarimMuvnim = function(headers, dataLines){
 			&& l[ enHeaders.indexOf("par_value") ] != -1
 			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
 			&& l[ enHeaders.indexOf("rate") ] != -1
+			&& l[ enHeaders.indexOf("instrument_id") ] != -1
+			&& isNotEmpty(l[ enHeaders.indexOf("instrument_id") ])
 		);
 	}).map(function(l){
 		var row = _.object(enHeaders,l);
@@ -587,6 +608,9 @@ var teudatHihayvutMimshaltiLoSahir = function(headers, dataLines){
 			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
 			&& l[ enHeaders.indexOf("rate") ] != -1
 			&& isNumber(l[ enHeaders.indexOf("rate") ])
+			&& l[ enHeaders.indexOf("instrument_id") ] != -1
+			&& isNotEmpty(l[ enHeaders.indexOf("instrument_id") ])
+
 		);
 	}).map(function(l){
 		var row = _.object(enHeaders,l);
@@ -603,6 +627,9 @@ var taudatHovMisharitLoSahir = function(headers, dataLines){
 			&& l[ enHeaders.indexOf("par_value") ] != -1
 			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
 			&& l[ enHeaders.indexOf("rate") ] != -1
+			&& l[ enHeaders.indexOf("instrument_id") ] != -1
+			&& isNotEmpty(l[ enHeaders.indexOf("instrument_id") ])
+
 		);
 	}).map(function(l){
 		var row = _.object(enHeaders,l);
@@ -623,6 +650,9 @@ var agahKontzerniLoSahir = function(headers, dataLines){
 			&& l[ enHeaders.indexOf("par_value") ] != -1
 			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
 			&& l[ enHeaders.indexOf("rate") ] != -1
+			&& l[ enHeaders.indexOf("instrument_id") ] != -1
+			&& isNotEmpty(l[ enHeaders.indexOf("instrument_id") ])
+
 		);
 	}).map(function(l){
 		var row = _.object(enHeaders,l);
@@ -639,6 +669,9 @@ var menayotLoSahir = function(headers, dataLines){
 			&& l[ enHeaders.indexOf("par_value") ] != -1
 			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
 			&& l[ enHeaders.indexOf("rate") ] != -1
+			&& l[ enHeaders.indexOf("instrument_id") ] != -1
+			&& isNotEmpty(l[ enHeaders.indexOf("instrument_id") ])
+
 		);
 	}).map(function(l){
 		var row = _.object(enHeaders,l);
@@ -655,6 +688,9 @@ var kranotHashkaaLoSahir = function(headers, dataLines){
 			&& l[ enHeaders.indexOf("par_value") ] != -1
 			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
 			&& l[ enHeaders.indexOf("rate") ] != -1
+			&& l[ enHeaders.indexOf("instrument_id") ] != -1
+			&& isNotEmpty(l[ enHeaders.indexOf("instrument_id") ])
+
 		);
 	}).map(function(l){
 		var row = _.object(enHeaders,l);
@@ -670,6 +706,9 @@ var kitveiOptziaLoSahir = function(headers, dataLines){
 			&& isNotEmpty(l[ enHeaders.indexOf("par_value") ])
 			&& l[ enHeaders.indexOf("par_value") ] != -1
 			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
+			&& l[ enHeaders.indexOf("instrument_id") ] != -1
+			&& isNotEmpty(l[ enHeaders.indexOf("instrument_id") ])
+
 		);
 	}).map(function(l){
 		var row = _.object(enHeaders,l);
@@ -686,6 +725,8 @@ var opttziyotLoSahir = function(headers, dataLines){
 			&& l[ enHeaders.indexOf("par_value") ] != -1
 			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
 			&& l[ enHeaders.indexOf("rate") ] != -1
+			&& l[ enHeaders.indexOf("instrument_id") ] != -1
+			&& isNotEmpty(l[ enHeaders.indexOf("instrument_id") ])
 		);
 	}).map(function(l){
 		var row = _.object(enHeaders,l);
@@ -702,6 +743,8 @@ var hozimAtidiimLoSahir = function(headers, dataLines){
 			&& l[ enHeaders.indexOf("par_value") ] != -1
 			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
 			&& l[ enHeaders.indexOf("rate") ] != -1
+			&& l[ enHeaders.indexOf("instrument_id") ] != -1
+			&& isNotEmpty(l[ enHeaders.indexOf("instrument_id") ])
 		);
 	}).map(function(l){
 		var row = _.object(enHeaders,l);
@@ -718,6 +761,9 @@ var motzarimMuvnimLoSahir = function(headers, dataLines){
 			&& l[ enHeaders.indexOf("par_value") ] != -1
 			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
 			&& l[ enHeaders.indexOf("rate") ] != -1
+			&& l[ enHeaders.indexOf("instrument_id") ] != -1
+			&& isNotEmpty(l[ enHeaders.indexOf("instrument_id") ])
+
 		);
 	}).map(function(l){
 		var row = _.object(enHeaders,l);
@@ -738,6 +784,9 @@ var halvaot = function(headers, dataLines){
 			&& isNumber(l[ enHeaders.indexOf("fair_value") ])
 			&& isNotEmpty(l[ enHeaders.indexOf("fair_value") ])
 			&& l[ enHeaders.indexOf("fair_value") ] != -1
+			&& l[ enHeaders.indexOf("instrument_id") ] != -1
+			&& isNotEmpty(l[ enHeaders.indexOf("instrument_id") ])
+
 		);
 	}).map(function(l){
 		var row = _.object(enHeaders,l);
@@ -754,6 +803,9 @@ var pikdonot = function(headers, dataLines){
 			&& l[ enHeaders.indexOf("par_value") ] != -1
 			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
 			&& l[ enHeaders.indexOf("rate") ] != -1
+			&& l[ enHeaders.indexOf("instrument_id") ] != -1
+			&& isNotEmpty(l[ enHeaders.indexOf("instrument_id") ])
+
 		);
 	}).map(function(l){
 		var row = _.object(enHeaders,l);
@@ -770,6 +822,9 @@ var zhuyotMekarkein = function(headers, dataLines){
 			&& l[ enHeaders.indexOf("fair_value") ] != -1	
 			&& l[ enHeaders.indexOf("fair_value") ] > 0.1
 			&& isNotEmpty(l[ enHeaders.indexOf("type_of_asset") ])
+			&& l[ enHeaders.indexOf("instrument_id") ] != -1
+			&& isNotEmpty(l[ enHeaders.indexOf("instrument_id") ])
+
 		);
 	}).map(function(l){
 		var row = _.object(enHeaders,l);
