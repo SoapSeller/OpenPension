@@ -7,8 +7,6 @@ var URL = require("url"),
 	utils = require("./utils.js"),
 	path = require("path");
 
-
-
 //downloadFundFile
 exports.downloadFundFile = function(fund, trgdir, overwrite) {
 
@@ -21,8 +19,7 @@ exports.downloadFundFile = function(fund, trgdir, overwrite) {
 		var urlExt = path.extname(fund.url); //get extention from URL
 		var xlFilename = utils.filename(trgdir, fund, urlExt);
 
-
-		if (!overwrite && fs.existsSync(xlFilename)){
+		if (!overwrite &&  exports.excelFileExists(trgdir, fund)){
 			console.log("tried to fetch existing file: " + xlFilename);
 			return resolve(xlFilename);
 		}
@@ -128,3 +125,10 @@ function getExtByResponseContentType(res){
 	return ext;
 }
 
+
+exports.excelFileExists = function(trgdir, fund){
+
+	var xlsFilename = utils.filename(trgdir, fund, '.xls');
+	var xlsxFilename = utils.filename(trgdir, fund, '.xlsx');
+	return fs.existsSync(xlsFilename ) || fs.existsSync(xlsxFilename)
+}
