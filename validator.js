@@ -421,12 +421,11 @@ var teudatHihayvutMimshalti = function(headers, dataLines){
 			&& l[ enHeaders.indexOf("par_value") ] != -1
 			&& isNotEmpty(l[ enHeaders.indexOf("rate") ])
 			&& l[ enHeaders.indexOf("rate") ] != -1
-			&& isNumber(l[ enHeaders.indexOf("rate") ]
+			&& isNumber(l[ enHeaders.indexOf("rate") ])
 			&& l[ enHeaders.indexOf("instrument_id") ] != -1
 			&& isNotEmpty(l[ enHeaders.indexOf("instrument_id") ])
 			&& l[ enHeaders.indexOf("instrument_id") ] != "0"
-			)
-		);
+		)
 	}).map(function(l){
 		var row = _.object(enHeaders,l);
 		return l.map(function(c,i){ return normalizeValues(enHeaders[i],c, row) });
