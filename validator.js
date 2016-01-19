@@ -891,7 +891,7 @@ var normalizeValues = function(enName, value, row){
 		case 'date_of_revaluation': return parseDate(value);
 		case 'type_of_asset': 		return cleanString(value);
 		case 'tmp_name': 			return cleanString(value);
-		case 'issuer_number':		return cleanNumber(cleanString(value));
+		case 'issuer_number':		return cleanString(value);
 		default:
 			throw new Error("Unexpected column header value given: \"" + enName + "\"")
 	}
