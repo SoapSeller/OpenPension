@@ -20,19 +20,13 @@ exports.writeParsedResult = function(managing_body, fund_number, report_year, re
 
 		var fundObj = utils.getFundObj(managing_body, report_year, report_qurater, fund_number);
 		var filename = utils.filename(trgdir, fundObj, ".csv");
-		var exists = fs.existsSync(filename);
+
 		// var stream = fs.createWriteStream(filename, { flags: 'a+', encoding: "utf8", mode: 0666 });
 
 		var data = "";
-		if (exists){
-			console.log("tried to import existing file:" + filename )
-			return;
-		}
-		else{
-			// stream.write(columnsNames.join(',') + "\n");
-			data = columnsNames.join(',') + "\n";
 
-		}
+		// stream.write(columnsNames.join(',') + "\n");
+		data = columnsNames.join(',') + "\n";
 
 		result.map(function(r){
 

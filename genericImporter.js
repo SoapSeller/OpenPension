@@ -2,10 +2,11 @@ var MetaTable = require('./common/MetaTable'),
 	xlsx = require("./xlsxparser"),
 	LevDistance = require('./LevDistance'),
 	path = require('path'),
-	logger = require('./logger.js'),
+	logger = require('./logger.js')(module),
 	detectors = require("./detectors");
 
-
+var metaTable = MetaTable.getMetaTable();
+var _ = require('underscore');
 
 exports.parseXls = function(filename){
 	return xlsx.getSheets(filename)
@@ -20,47 +21,15 @@ exports.parseXls = function(filename){
 }
 
 
-var columnLetterFromNumber = function(number){
-
-	var enStart = 65;
-	var enEnd = 90;
-	var enDiff = enEnd - enStart;
-	
-	var remainder = (number <= enDiff) ? null : columnLetterFromNumber( Math.floor( number / enDiff ) -1 );
-	
-	if (number == enDiff) { var thisLetterNum = number }
-	else if (number > enDiff)  { var thisLetterNum = number % enDiff -1 }
-	else var thisLetterNum = number
-	
-	var thisLetter = String.fromCharCode(enStart + thisLetterNum)
-
-	if (remainder) 
-		return remainder + thisLetter
-	else 
-		return thisLetter
-}
-
 
 /* CONFIGURATION */
-global.debug = false;
-
-function debugM(name,message /*,...*/ ){
-	if (global.debug){
-		var args = Array.apply(null, arguments);
-		console.log.apply(null,["#DEBUG",args.shift(),">"].concat(args));
-	}
-}
-
-function notifyM(name, message /*,...*/){
-	var args = Array.apply(null, arguments);
-	console.log.apply(null, ["#NOTIFY", args.shift(),">"].concat(args));
-}
+global.debug = true;
 
 var levTolerance = 2;
 var aliasMap = {
 	"סוג מטבע" : [ "מטבע" ],
-	"שם נייר ערך" : [ "מזומנים ושווי מזומנים","שם ני''ע", "סוג נכס", "שם" ],
-	"שיעור מנכסי ההשקעה" : [ "שיעור מנכסי הקרן", "שיעור מהנכסים" ],
+	"שם נייר ערך" : [ "מזומנים ושווי מזומנים","שם ני''ע", "סוג נכס", "שם", "שם המנפיק/שם נייר ערך" ],
+	"שיעור מנכסי ההשקעה" : [ "שיעור מנכסי הקרן", "שיעור מהנכסים","שעור מנכסי השקעה" ],
 	"מספר נייר ערך" : [ "מספר ני\"ע", "מס' נייר ערך" ],
 	"שיעור מהערך הנקוב המונפק" : [ "שיעור מהע.נ המונפק", "שיעור מהע.נ המונפק" ],
 	"שווי הוגן" : [ "שווי שוק", "שווי השקעה", "שווי הוגן באלפי ש\"ח","עלות מתואמת", "שווי הוגן באלפי  ₪" ],
@@ -85,11 +54,6 @@ var knownSheetContentIdentifiers = {
 }
 
 /* DATA MANIPULATION */
-
-var cleanDataStr = function(inputStr){
-	return inputStr;
-}
-
 
 
 var findFromAliasMap = function(input, headers, headersAliasMap){
@@ -196,9 +160,16 @@ var headersExtractor = function(inputLine, headers, foundHeadersMapping){
 
 				if (foundInHeader) {
 					if (global.debug){
-						debugM({ column: column, origCell: cellContent, foundCell: foundInHeader })
+						logger.debug("headersExtractor","column:",column,"origCell:",cellContent,"foundCell:",foundInHeader);
 					}
-					res.push({ column: column, origCell: cellContent, foundCell: foundInHeader });
+
+                    if (_.find(res,{'foundCell':foundInHeader})){ //don't add cell if already found
+                        logger.debug("headersExtractor","cell already found");
+                    }
+                    else{
+                        res.push({ column: column, origCell: cellContent, foundCell: foundInHeader });
+                    }
+
 				}
 			} 
 
@@ -208,7 +179,7 @@ var headersExtractor = function(inputLine, headers, foundHeadersMapping){
 
 		foundFromHeader.forEach(function(fhm){
 			if (global.debug){
-				debugM("headersExtractor","matched header from header line:", fhm.foundCell, " original content:",fhm.origCell);
+				logger.debug("headersExtractor","matched header from header line:", fhm.foundCell, " original content:",fhm.origCell);
 			}
 			foundHeadersMapping.push(fhm)
 		});
@@ -238,7 +209,7 @@ var headersExtractor = function(inputLine, headers, foundHeadersMapping){
 		if (foundFromData.length > 0){
 			foundFromData.forEach(function(ffd){
 				if (global.debug){
-					debugM("headersExtractor","* matched header from content:", ffd.foundCell, " original content:",ffd.origCell);
+					logger.debug("headersExtractor","* matched header from content:", ffd.foundCell, " original content:",ffd.origCell);
 				}
 				foundHeadersMapping.push(ffd);
 			});
@@ -251,13 +222,13 @@ var headersExtractor = function(inputLine, headers, foundHeadersMapping){
 
 	if (foundHeadersMapping.length == 1){
 		if (global.debug){
-			debugM("headersExtractor","false positive on header row, emptying results");
+			logger.debug("headersExtractor","false positive on header row, emptying results");
 		}
 		foundHeadersMapping.splice(0,1);
 		return false;
 	} else if (foundHeadersMapping.length > 1 && isLookingForHeaderLine){
 		if (global.debug){
-			debugM("headersExtractor","positive match for header line!");
+			logger.debug("headersExtractor","positive match for header line!");
 		}
 		return false;
 	} else if (foundHeadersMapping.length == 0){
@@ -284,166 +255,215 @@ var contentExtractor = function(inputLine, headersMapping){
 
 var sheetValidator = function(headers, foundHeadersMapping){
 	if (global.debug){
-		debugM("sheetValidator", "found headers #", foundHeadersMapping.length, "num headers", headers.length)
+		logger.debug("sheetValidator", "found ", foundHeadersMapping.length, " headers out of ", headers.length)
 	}
 	return (
 		(foundHeadersMapping.length == headers.length) ||
 		(foundHeadersMapping.length > 5 && foundHeadersMapping.length >= headers.length / 3  ) ||
-		(headers.length - foundHeadersMapping.length < Math.ceil(headers.length * 0.3))
+		(headers.length - foundHeadersMapping.length <= Math.ceil(headers.length / 0.3))
 	);
 }
 
+var readRow = function(workbook, sheetName, dim, rowIdx){
 
-var parseSingleSheet = function(metaTable, workbook, sheetName, dim, indexMetaTable){
-	var foundMatchingSheet = false;
-	var headers = metaTable.columnMappingForRow(indexMetaTable).map(function(x){return x});
-	var identifiedSheetIndexFromTabName = sheetSkipDetector([sheetName], indexMetaTable, metaTable);
-	if (global.debug){
-		debugM("parseSingleSheet",indexMetaTable);
-		debugM("parseSingleSheet", "trying to metch tab by sheet name",sheetName);
-	}
-	if (identifiedSheetIndexFromTabName != indexMetaTable){
-		notifyM("parseSingleSheet","identified different sheet by looking into tab name",
-			indexMetaTable,"(" + metaTable.getNameForSheetNum(indexMetaTable) + ")", " identified as:", identifiedSheetIndexFromTabName, "("+metaTable.getNameForSheetNum(identifiedSheetIndexFromTabName)+")" );
-		return parseSingleSheet(metaTable, workbook, sheetName, dim, identifiedSheetIndexFromTabName);
+	var rowContent = [];
+
+	for (var column = dim.min.col || 0; column <= dim.max.col; column++){
+		var cellContent = xlsx.readCell(workbook, sheetName, column, rowIdx);
+		rowContent[column] = cellContent;
 	}
 
+	return rowContent;
+
+}
+
+var parseSingleSheet = function(workbook, sheetName, dim, tabIndex){
+
+	logger.debug(">>parseSingleSheet","parsing sheet number", tabIndex, sheetName );
+
+	var metaHeaders = metaTable.getHeadersForTab(tabIndex).map(function(x){return x});
+	var identifiedSheetIndexFromTabName = sheetSkipDetector([sheetName], tabIndex);
+
 	if (global.debug){
-		debugM("parseSingleSheet","headers",headers);
+		logger.debug("parseSingleSheet","identifiedSheetIndexFromTabName", identifiedSheetIndexFromTabName);
+		logger.debug("parseSingleSheet", tabIndex);
+		logger.debug("parseSingleSheet", "trying to match tab by sheet name",sheetName);
 	}
+	if (identifiedSheetIndexFromTabName != tabIndex){
+		logger.debug("parseSingleSheet","identified different sheet by looking into sheet name",
+			tabIndex,"(" + metaTable.getNameForSheetNum(tabIndex) + ")", " identified as:", identifiedSheetIndexFromTabName, "("+metaTable.getNameForSheetNum(identifiedSheetIndexFromTabName)+")" );
+		return parseSingleSheet(workbook, sheetName, dim, identifiedSheetIndexFromTabName);
+	}
+
+
+	if (isMetaSheet(workbook, sheetName, dim)){
+		return;
+	}
+
+	if (global.debug){
+		logger.debug("parseSingleSheet","headers",JSON.stringify(metaHeaders));
+	}
+
+	if (dim.max.col < metaHeaders.length){
+		logger.debug("dim too small");
+	}
+
 	var sheetData = [];
 	var foundHeadersMapping = [];
 	var emptyRows = 0;
 
-	for(var row = dim.min.row || 1; row <= dim.max.row; row++){
+	for(var rowIdx = dim.min.row || 1; rowIdx <= dim.max.row; rowIdx++){
 	
 
-		// if the number of empty rowns is above 10, the sheet is reporting a size which is too
+		// if the number of empty rows is above 20, the sheet is reporting a size which is too
 		// big and needs to be trimmed
 		if (emptyRows >= 20) 
 			break;
 		
-		var rowContent = []
+		var rowContent = readRow(workbook, sheetName, dim, rowIdx);
 
-		for (var column = dim.min.col || 0; column <= dim.max.col; column++){
-			var letter = columnLetterFromNumber(column);		
-			var cellId = letter + row;
-			
-			var cellContent = xlsx.readCell(workbook, sheetName, cellId);
-			rowContent[column] = cellContent;
-		}
 
 		if (global.debug){
-			debugM("parseSingleSheet","row",rowContent.join("|"));
+			logger.debug("parseSingleSheet","row",rowContent.join("|"));
 		}
 
+		//empty rows streak counter
 		if (rowContent.some(function(x){return !!x})) {
 			emptyRows = 0;
 		} else {
 			emptyRows += 1;
+			continue;
 		}
 
-		var shouldExtractContent = headersExtractor(rowContent,headers, foundHeadersMapping)
+		//true when header is found and sheet body is reached
+		var shouldExtractContent = headersExtractor(rowContent,metaHeaders, foundHeadersMapping)
 
+		// Look for header
 		// Allow looking few lines after the headers line to detect the correct sheet
-		if ((indexMetaTable != 0 && indexMetaTable != 1) && (!shouldExtractContent ||  sheetData.length < 4)) {
-			var identifiedSheetIndex = sheetSkipDetector(rowContent, indexMetaTable, metaTable);
-			if (identifiedSheetIndex != indexMetaTable){
-				notifyM("parseSingleSheet","identified different sheet while looking for:",
-					indexMetaTable,"(" + metaTable.getNameForSheetNum(indexMetaTable) + ")", " identified as:", identifiedSheetIndex, "("+metaTable.getNameForSheetNum(identifiedSheetIndex)+")" );
-				return parseSingleSheet(metaTable, workbook, sheetName, dim, identifiedSheetIndex);
+		if ((tabIndex != 0 && tabIndex != 1) && (!shouldExtractContent ||  sheetData.length < 4)) {
+			var identifiedSheetIndex = sheetSkipDetector(rowContent, tabIndex);
+			if (identifiedSheetIndex != tabIndex){
+				logger.debug("parseSingleSheet","identified different sheet while looking for:",
+					tabIndex,"(" + metaTable.getNameForSheetNum(tabIndex) + ")", " identified as:", identifiedSheetIndex, "("+metaTable.getNameForSheetNum(identifiedSheetIndex)+")" );
+				return parseSingleSheet(workbook, sheetName, dim, identifiedSheetIndex);
 			}
 		}
 
 		if (shouldExtractContent){
 			var extractedData = contentExtractor(rowContent,foundHeadersMapping);
 			if (global.debug){
-				debugM("parseSingleSheet","extracted data",extractedData.join(","))
+				logger.debug("parseSingleSheet","extracted data",extractedData.join(","))
 			}
 			sheetData.push(extractedData);
 		}
-		
-	}
+    }
 
-	var sheetMatchVerified = sheetValidator(headers,foundHeadersMapping);
-	
-	if (sheetMatchVerified){
+	var sheetMatchVerified = sheetValidator(metaHeaders,foundHeadersMapping);
+
+    if (sheetMatchVerified){
 		if (global.debug){
-			debugM("parseSingleSheet","verified positive match for sheet!");
+			logger.debug("<<parseSingleSheet","verified positive match for sheet!");
 		}
-		return {"data":sheetData,"finalIndex":indexMetaTable,"headers":foundHeadersMapping.map(function(hm){ return hm.foundCell; })};
+		return {"data":sheetData,"finalIndex":tabIndex,"headers":foundHeadersMapping.map(function(hm){ return hm.foundCell; })};
 	} else {
 		if (global.debug){
-			debugM("parseSingleSheet","negative match for sheet...");
+			logger.debug("<<parseSingleSheet","negative match for sheet...");
 		}
 		return null;
 	}
 }
 
-
-var sheetMetaIdentifier = function(cellContent, metaSheetNum, metaTable){
+/**
+ * Check if cell content matches optional headers by index
+ *
+ * @param cellContent - cell content
+ * @param metaSheetNum - current
+ * @param metaTable -
+ * @returns {boolean}
+ */
+var sheetMetaIdentifier = function(cellContent, metaSheetNum){
 
 	var nameFromMetaTable = metaTable.instrumentSubTypes[metaSheetNum] || metaTable.instrumentTypes[metaSheetNum];
 	
 	var cleanCellContent = detectors.cleanColumnHeaderStr(cellContent);
-	var options = [nameFromMetaTable].concat(knownSheetContentIdentifiers[metaSheetNum] || []);
-	return options.some(function(value){ return cleanCellContent == detectors.cleanColumnHeaderStr(value) })
+	var optionalHeaders = [nameFromMetaTable].concat(knownSheetContentIdentifiers[metaSheetNum] || []);
 
+	logger.debug("sheetMetaIdentifier", "cleanCellContent",JSON.stringify(cleanCellContent));
+	logger.debug("sheetMetaIdentifier", "optionalHeaders",JSON.stringify(optionalHeaders));
+
+	var isMatch = optionalHeaders.some(function(value){ return cleanCellContent == detectors.cleanColumnHeaderStr(value) })
+
+	if (isMatch){
+		logger.debug("sheetMetaIdentifier", "isMatch",isMatch);
+	}
+
+	return isMatch;
 }
+/**
+ *
+ * @param inputLine
+ * @param metaSheetNum
+ * @returns {*}
+ */
+var sheetSkipDetector = function(inputLine, metaSheetNum){
 
-var sheetSkipDetector = function(inputLine, metaSheetNum, metaTable){
-	// for the first two tabs, skip detection
-	return inputLine.reduce(function(_metaSheetNum, cellContent){
-		if (_metaSheetNum == metaSheetNum) {
-			var i = _metaSheetNum + 1;
-			for (i = _metaSheetNum; i < metaTable.instrumentTypes.length ; i++){
-				if (sheetMetaIdentifier(cellContent, i, metaTable)){
-					if (global.debug){
-						debugM("sheetSkipDetector","matched to meta sheet #" + i);
-					}
-					return i;
+    logger.debug("sheetSkipDetector","inputLine", JSON.stringify(inputLine));
+	logger.debug("sheetSkipDetector","metaSheetNum", metaSheetNum);
+
+
+	for (var i = 0; i < inputLine.length; i++){
+		var cellContent = inputLine[i];
+		logger.debug("sheetSkipDetector","cellContent",cellContent)
+		for (var j = 0; j < metaTable.instrumentTypes.length ; j++){
+			logger.debug("sheetSkipDetector","reduce2",j)
+			if (sheetMetaIdentifier(cellContent, j)){
+				if (global.debug){
+					logger.debug("sheetSkipDetector","matched to meta sheet #" + j);
 				}
+				return j;
 			}
-			return metaSheetNum;
-		} else {
-			return _metaSheetNum
 		}
-	},metaSheetNum);
+	}
+
+    logger.debug("<<sheetSkipDetector","result", metaSheetNum);
+
+    return metaSheetNum;
 }
 
 
 var parseSheets = function(workbook){
 
-	var metaTable = MetaTable.getMetaTable();
-	var lastSheetNum = metaTable.getLastSheetNum();
+    var lastSheetNum = metaTable.getLastSheetNum();
 	var debugSheet;
 	var parsedSheetsData = []
 	var res = []
-	var _sheets = workbook.SheetNames.map(function(x){return x});
-	var maxSheets = 25;
-	
-	while (res.length < /*lastSheetNum*/ maxSheets && _sheets.length > 0){
-		var sheetTabNum = workbook.SheetNames.length - _sheets.length;
+	var sheetNamesInWorkbook = workbook.SheetNames.map(function(x){return x});
+    var numOfSheetsInWorkbook = sheetNamesInWorkbook.length;
+    var maxSheets = 25;
+
+	while (res.length < /*lastSheetNum*/ maxSheets && sheetNamesInWorkbook.length > 0){
+		var sheetTabNum = numOfSheetsInWorkbook - sheetNamesInWorkbook.length;
 
 		if (debugSheet != null && debugSheet == sheetTabNum ) {
 			global.debug = true;
 		}
 
-		if (global.debug)
-			console.log("%%%%%% parsing file tab #",sheetTabNum, " looking for meta table #",res.length, "called",metaTable.getNameForSheetNum(res.length));
+		if (global.debug){
+			logger.debug("%%%%%% parsing file tab #",sheetTabNum, " looking for meta table #", res.length, "called", metaTable.getNameForSheetNum(res.length));
+		}
 
-		var sheetName = _sheets.shift();
+		var sheetName = sheetNamesInWorkbook.shift();
 
 		var dim = xlsx.getDimension(workbook, sheetName);
 
-		debugM("parseSheets","sheet dim",dim)
+		logger.debug("parseSheets","sheet dim",JSON.stringify(dim));
 
-		var sheetOutput = parseSingleSheet(metaTable,workbook,sheetName,dim,res.length);
+		var sheetOutput = parseSingleSheet(workbook,sheetName,dim,res.length);
 
 		if (sheetOutput && sheetOutput.finalIndex != res.length){
 			while(res.length < sheetOutput.finalIndex){
 				if (global.debug){
-					debugM("lookForNextSheet","padding output array with empty data to match expected progress of meta table idx")
+					logger.debug("lookForNextSheet","padding output array with empty data to match expected progress of meta table idx")
 				}
 				res.push([]);
 			}
@@ -451,7 +471,10 @@ var parseSheets = function(workbook){
 
 		if (sheetOutput && sheetOutput.data && sheetOutput.data.length > 0){
 			if (global.debug){
-				debugM("parseSheets","adding sheet lines count #",sheetOutput.data.length);
+				logger.debug("parseSheets","adding sheet lines count #",sheetOutput.data.length);
+                sheetOutput.data.forEach(function(row){
+                    logger.debug("parseSheets","adding sheet row", row.join("|"));
+                });
 			}
 			res.push(sheetOutput);
 		}
@@ -463,19 +486,54 @@ var parseSheets = function(workbook){
 	}
 
 
-	logger.info("++++++ parsed & found all sheets");
+	logger.debug("++++++ parsed & found all sheets");
 
 	res.forEach(function(resSheet, metaIdx){
 		if (resSheet.headers && resSheet.data){
-			var engMap = resSheet.headers.map(function(column){ return { "columnName" : metaTable.englishColumns[ metaTable.hebrewColumns.indexOf(column) ] || column }  });
+			var engMap = resSheet.headers.map(
+                function(column){
+                    return {
+                        "columnName" : metaTable.englishColumns[ metaTable.hebrewColumns.indexOf(column) ] || column
+                    }
+                });
+
 			parsedSheetsData.push({engMap : engMap, data: resSheet.data, idx: metaIdx})
 		}
 	});
-		
-
-
 
 	return parsedSheetsData;
+}
+
+//check if sheet is MetaSheet,
+//which is sometimes present in Excel files
+var isMetaSheet = function(workbook, sheetName, dim){
+
+	var metaRowsCounter = 0;
+	var metaColsThreshold = 4;
+	var metaRowsThreshold = 4;
+
+	var metaHeaders = metaTable.getHeadersForTab(2).map(function(x){return x});
+
+
+	for(var rowIdx = dim.min.row || 1; rowIdx <= dim.max.row; rowIdx++) {
+
+		var foundHeadersMapping = [];
+
+		var rowContent = readRow(workbook, sheetName, dim, rowIdx);
+
+		headersExtractor(rowContent,metaHeaders, foundHeadersMapping)
+
+		if (foundHeadersMapping.length > metaColsThreshold){
+			metaRowsCounter++;
+		}
+
+		if (metaRowsCounter > metaRowsThreshold){
+			return true;
+		}
+	}
+
+	return false;
+
 }
 
 

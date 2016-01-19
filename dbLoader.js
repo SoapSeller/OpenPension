@@ -1,4 +1,3 @@
-var Promise = require('bluebird');
 var fsep = require('fs-extra-promise');
 var pg = require('postgres-bluebird');
 var copyFrom = require('pg-copy-streams').from;
@@ -6,8 +5,11 @@ var config = require('./config');
 var throat = require('throat')
 var path = require('path');
 var fs = require('fs');
-var logger = require('./logger');
+var logger = require('./logger')(module);
 var Utils = require('./utils');
+var Promise = require('bluebird');
+var handlebars = require('handlebars');
+var countFundRowsTemplate = handlebars.compile(fs.readFileSync(__dirname + '/sql/countFundRows.hbs').toString());
 
 module.exports.importFilesCmd = function(parentDir, body, year, quarter, fund_number, tableName, concurrency){	
 	return fsep.readdirAsync(parentDir)
@@ -36,10 +38,10 @@ module.exports.importFileCmd = function(filePath, tableName){
     return module.exports.importFile(parentDir, filename, tableName)
 	.then(function(res){
 		if (!res){
-			logger.info("Not imported")
+			logger.warn("Not imported",res);
 		}
 		else{
-			logger.info("Done importing.")
+			logger.info("Done importing.");
 		}
 	})
 	.catch(function(err){
@@ -114,9 +116,15 @@ module.exports.importFile = function(parentDir, filename, tableName){
 					var fund = filename.split('_')[3].split('.')[0];
 					var managing_body = filename.split('_')[0];
 
-					var countFundSql = "SELECT count(*) FROM "+ tableName +" WHERE managing_body='" +managing_body +"'"
-										+ " AND report_year='"+year+"' AND report_qurater='"+quarter+"'"
-										+ " AND fund='"+fund+"' ";
+					var data = {
+						tableName : tableName,
+						report_year : year,
+						report_quarter : quarter,
+						fund : fund,
+						managing_body : managing_body
+					};
+
+					var countFundSql = countFundRowsTemplate(data);
 
 					return client.queryAsync(countFundSql)
 						.then(function(qresult){

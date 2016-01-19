@@ -54,7 +54,7 @@ exports.getFundFromFile = function(filename){
 exports.filterFunds = function(allFunds, body, year, quarter, fund_number) {
 
 	var chosenFunds = allFunds.filter(function(f){
-		return (body == undefined? true: f.body == body ||  ( _.isArray(body) && body.indexOf(f.body) > -1 ) ) 
+		return (body == undefined? true: f.body.toLowerCase() == body.toLowerCase() ||  ( _.isArray(body) && body.indexOf(f.body) > -1 ) ) 
 		&& (fund_number == undefined ? true: f.number == fund_number ||  ( _.isArray(fund_number) && fund_number.indexOf(f.number) > -1 ))
 		&& (year == undefined ? true: f.year == year ||  ( _.isArray(year) && year.indexOf(f.year) > -1 ))
 		&& (quarter == undefined? true: f.quarter == quarter ||  ( _.isArray(quarter) && quarter.indexOf(f.quarter) > -1 ))
@@ -65,8 +65,6 @@ exports.filterFunds = function(allFunds, body, year, quarter, fund_number) {
 
 
 exports.filterFiles = function(allFiles, body, year, quarter, fund_number) {
-
-	var funds = allFiles.map(exports.getFundFromFile);
 
 	var chosenFiles = allFiles.filter(function(file){
 		
