@@ -3,10 +3,9 @@ var fs = require("fs"),
 	path = require('path'),
 	_ = require('underscore'),
 	Promise = require('bluebird'),
-	fetcherCommon = require('./fetcher.common'),
 	genericImporter = require("./genericImporter.js"),
 	fse = require("fs-extra"),
-	logger = require("./logger.js"),
+	logger = require('./logger.js')(module),
 	CSVWriter = require("./CSVWriter.js"),
 	Utils = require("./utils.js"),
 	CSVParser = Promise.promisify(require('json-2-csv').csv2json);
@@ -14,37 +13,57 @@ var fs = require("fs"),
 /**
  * Convert XLS/XLSX files to CSV
  * 
- * body - managing body of files to convert
- * fund_number - fund of files to convert
- * year - year of files to convert
- * quarter - quarter of files to convert
- * srcdir - path of excel files
- * trgdir - path to write csv files
+ * @param body - managing body of files to convert
+ * @param fund_number - fund of files to convert
+ * @param year - year of files to convert
+ * @param quarter - quarter of files to convert
+ * @param srcdir - path of excel files
+ * @param trgdir - path to write csv files
  */
-exports.convertFiles = function(body, fund_number, year, quarter, srcdir, trgdir){
+exports.convertFilesCmd = function(body, fund_number, year, quarter, srcdir, trgdir, overwrite){
+
+	logger.info("convertFilesCmd","Converting Excel files in "+srcdir);
 
 	if (srcdir.indexOf(path.sep) != srcdir.length){
 		srcdir += path.sep;
 	}
 
-	console.log("loading dir:" + srcdir);
+	if (!fs.existsSync(srcdir)){
+		throw("Unknown directory:" +srcdir);
+	}
+
+	if (!fs.existsSync(trgdir)){
+		logger.info("convertFilesCmd","Creating directory:" +trgdir);
+		fs.mkdirSync(trgdir);
+	}
+
 	var xlfiles = fs.readdirSync(srcdir).filter(function(file){
 		return file.indexOf(".xlsx") > -1 || file.indexOf(".xls") > -1;
 	});
 
 	xlfiles = Utils.filterFiles(xlfiles, body, year, quarter, fund_number);
 
+	return exports.convertFiles(xlfiles, srcdir, trgdir, overwrite)
+	.then(function(){
+		logger.info("convertFilesCmd","All done");
+	})
+}
+
+exports.convertFiles = function(xlfiles, srcdir, trgdir, overwrite){
+	var total = xlfiles.length;
+	var counter = 0;
+
 	return new Promise.each(xlfiles, function(file){
 
-		logger.info("Converting: "+  file);
-	
+		//process.stdout.cursorTo (0);
+		process.stdout.write(++counter+'/'+total + ":"+ file + "\n");
+
 		var xlFilename = path.join(srcdir,file);
 		var fund = Utils.getFundFromFile(file);
 		var csvFilename = Utils.filename(trgdir, fund, '.csv');
 
-		if (fs.existsSync(csvFilename)){
-			logger.warn("converted file exists:" + csvFilename );
-			// throw({"msg" : "Converted file exists"});
+		if (fs.existsSync(csvFilename) && !overwrite){
+			logger.warn("Converted file exists:" + csvFilename );
 			return;
 		}
 
@@ -53,7 +72,7 @@ exports.convertFiles = function(body, fund_number, year, quarter, srcdir, trgdir
 				return CSVWriter.writeParsedResult(fund.body, fund.number, fund.year, fund.quarter, result, trgdir);
 			})
 			.catch(function(e){
-				logger.warn("error converting file: " + file);
+				logger.error("Error converting file: " + file, e.message);
 
 				if (fs.existsSync(csvFilename)){
 					fs.unlinkSync(csvFilename);
@@ -61,20 +80,17 @@ exports.convertFiles = function(body, fund_number, year, quarter, srcdir, trgdir
 
 				//Try to fix by file format
 				fixFileFormat(xlFilename)
-				.then(genericImporter.parseXls)
-				.then(function(result){
-					logger.info("fixed by converting:"+xlFilename);
-					return CSVWriter.writeParsedResult(fund.body, fund.number, fund.year, fund.quarter, result, trgdir);
-				})
-				.catch(function(e){
-					logger.error("final: error converting file: " + file);
-					// throw({"msg" : "Error converting file " + e});
-					return;
-				});
+					.then(genericImporter.parseXls)
+					.then(function(result){
+						logger.debug("fixed by converting:"+xlFilename);
+						return CSVWriter.writeParsedResult(fund.body, fund.number, fund.year, fund.quarter, result, trgdir);
+					})
+					.catch(function(e){
+						logger.error("final: error converting file: " + file);
+						// throw({"msg" : "Error converting file " + e});
+						return;
+					});
 			});
-	})
-	.then(function(){
-		logger.info("all done");
 	})
 }
 
@@ -102,7 +118,7 @@ exports.countFileValues = function(dir, body, year, quarter, fund_number){
 	        	if (row.instrument_id == undefined) return memo;
 
 
-        		return memo + ( row.market_cap || 0 ) * 1000 + 
+        		return memo + ( row.market_cap || 0 ) * 1000 +
         						( row.fair_value || 0 ) * 1000;
         	},0);
 
@@ -125,11 +141,11 @@ function fixFileFormat(xlFilename){
 
 	return new Promise(function(resolve, reject){
 
-		logger.info("Checking format: " + xlFilename);	
+		logger.info("Checking format: " + xlFilename);
 
 		cp.exec("file " + xlFilename, function (err, stdout, stderr) {
 
-			logger.info("Got file info :"+ stdout);
+			logger.debug("Got file info :"+ stdout);
 			//if file is XLSX format, convert to XLSX
 			if (!err &&
 				(
@@ -141,7 +157,7 @@ function fixFileFormat(xlFilename){
 			{
 				var cmd = "ssconvert --export-type=Gnumeric_Excel:xlsx " + xlFilename;
 
-				logger.info("converting to XLSX: " + xlFilename );
+				logger.debug("converting to XLSX: " + xlFilename );
 				cp.exec(cmd, function(err, stdout, stderr) {
 					if (err){
 						logger.warn("error converting file:" + xlFilename + " err:" + err);
@@ -150,15 +166,15 @@ function fixFileFormat(xlFilename){
 
 //					fs.renameSync(xlFilename, newPath)
 
-					fs.unlink(xlFilename, function() {
+					//fs.unlink(xlFilename, function() {
 
 						var fund = Utils.getFundFromFile(xlFilename);
 						var xlsxFilename = Utils.filename("",fund,".xlsx");
 
-						logger.info("converted "+xlFilename+" to XLSX: " + xlsxFilename);
+						logger.debug("converted "+xlFilename+" to XLSX: " + xlsxFilename);
 
 						resolve(xlsxFilename);
-	       			});
+	       			//});
 				});
 			} 
 			else if (stdout.toString().indexOf("Zip archive data, at least v2.0 to extract") !== -1) {

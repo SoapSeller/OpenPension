@@ -3,7 +3,7 @@
 
 npm-debug.log
 node_modules
-
+.idea
 output.csv
 dump.csv
 res/test
@@ -26,3 +26,4 @@ results
 npm-debug.log
 
 csv/
+.idea/

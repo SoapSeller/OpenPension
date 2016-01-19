@@ -13,32 +13,51 @@ var trim = function (s) {
   return s;
 }
 
-var cellIdToCellIdx = function(cellId) {
+var cellIdToRowCol = function(cellId) {
 
   var i, col = 0;
-  for ( i = 0; i < cellId.length; ++i) {
-    if (cellId[i] < 65) {
-      break;
-    }
 
-    if (i == 1 && col == 0){ //for handing "A_"
-      col += ("Z".charCodeAt(0) -65 +1);
-    }
-    
-    col += cellId.charCodeAt(i) - 65;  // cell[i] - 'A'; zero based
+  //calc column from letters
+  var letters = cellId.replace(/[0-9]/g, '');
+  for ( i = 0; i < letters.length; i++) {    
+      col += (letters.charCodeAt(i) - 64) * Math.pow(26, i);
   }
+
+  col--;//zero based
 
   // col can not be larger then 50
   // thats silly
   if (col > 50)
     col = 50;
 
+  //calc row from numbers
   var row = parseInt(cellId.substr(i), 10) - 1;  // the row number the user is looking for (zero-based)
 
   return {
     row : row,
     col : col
   };
+}
+
+
+var columnLetterFromNumber = function(number){
+
+  var enStart = 65;
+  var enEnd = 90;
+  var enDiff = enEnd - enStart;
+
+  var remainder = (number <= enDiff) ? null : columnLetterFromNumber( Math.floor( number / enDiff ) -1 );
+
+  if (number == enDiff) { var thisLetterNum = number }
+  else if (number > enDiff)  { var thisLetterNum = number % enDiff -1 }
+  else var thisLetterNum = number
+
+  var thisLetter = String.fromCharCode(enStart + thisLetterNum)
+
+  if (remainder)
+    return remainder + thisLetter
+  else
+    return thisLetter
 }
 
 
@@ -88,13 +107,16 @@ exports.getDimension = function(workbook, sheetName) {
   }
 
   return {
-    min : cellIdToCellIdx(splt[0] || 'A1'),
-    max : cellIdToCellIdx(splt[1] || 'A1')
+    min : cellIdToRowCol(splt[0] || 'A1'),
+    max : cellIdToRowCol(splt[1] || 'A1')
   };
 };
  
-exports.readCell = function(workbook, sheetName, cellId){
-      var cellContent;
+exports.readCell = function(workbook, sheetName, column, row){
+    var letter = columnLetterFromNumber(column);
+    var cellId = letter + row;
+
+    var cellContent;
 
       if (workbook.Sheets[sheetName][cellId] == undefined){
         cellContent = "";
